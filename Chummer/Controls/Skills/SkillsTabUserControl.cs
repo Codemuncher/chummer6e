@@ -31,6 +31,7 @@ using System.Xml.XPath;
 using Chummer.Backend.Attributes;
 using Chummer.Backend.Skills;
 using Chummer.Controls.Shared;
+using System.ComponentModel;
 
 namespace Chummer.UI.Skills
 {
@@ -42,6 +43,7 @@ namespace Chummer.UI.Skills
         private BindingListDisplay<SkillGroup> _lstSkillGroups;
         private BindingListDisplay<KnowledgeSkill> _lstKnowledgeSkills;
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public CancellationToken MyToken { get; set; }
 
         public Character CharacterObject => _objCharacter;
@@ -137,6 +139,7 @@ namespace Chummer.UI.Skills
             }
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Character CachedCharacter { get; set; }
 
         public async Task RealLoad(CancellationToken objMyToken = default, CancellationToken token = default)

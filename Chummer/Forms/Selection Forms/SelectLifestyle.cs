@@ -1001,6 +1001,7 @@ namespace Chummer
         /// <summary>
         /// Lifestyle that was created in the dialogue.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Lifestyle SelectedLifestyle { get; set; }
 
         #endregion Properties

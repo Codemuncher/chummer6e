@@ -17,9 +17,11 @@
  *  https://github.com/chummer5a/chummer5a
  */
 
+using System.ComponentModel;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.ComponentModel;
 
 namespace Chummer
 {
@@ -33,6 +35,7 @@ namespace Chummer
 
         private string _strToolTipText = string.Empty;
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string ToolTipText
         {
             get => _strToolTipText;

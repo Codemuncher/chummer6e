@@ -1,12 +1,44 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net481</TargetFramework>
+    <TargetFramework>net9.0-windows10.0.26100.0</TargetFramework>
     <OutputType>Library</OutputType>
     <GenerateAssemblyInfo>True</GenerateAssemblyInfo>
     <UseWindowsForms>true</UseWindowsForms>
     <ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
 	<Configurations>Debug;Release;Debuggable Release</Configurations>
     <EmbeddedResourceUseDependentUponConvention>true</EmbeddedResourceUseDependentUponConvention>
+    <PreBuildEvent>echo Statement 1: mkdir "$(TargetDir)Plugins\SamplePlugin\"
+mkdir "$(TargetDir)Plugins\SamplePlugin\"
+echo Statement 2: mkdir "$(SolutionDir)Chummer\bin\$(ConfigurationName)\Plugins\SamplePlugin\"
+mkdir "$(SolutionDir)Chummer\bin\$(ConfigurationName)\Plugins\SamplePlugin\"
+Exit 0</PreBuildEvent>
+    <PostBuildEvent>echo Statement 1: copy "$(TargetDir)*" "$(TargetDir)Plugins\SamplePlugin\" /Y
+copy "$(TargetDir)$(TargetName).*" "$(TargetDir)Plugins\SamplePlugin\" /Y
+echo ----------------------------------------------------------------------------------------------------
+echo ----------------------------------------------------------------------------------------------------
+echo Statement 2: You need to copy every DLL here in the post-build step! This HAS to be done here!
+echo ----------------------------------------------------------------------------------------------------
+echo ----------------------------------------------------------------------------------------------------
+echo Statement 3: copy "$(TargetDir)Newtonsoft.Json.*" "$(TargetDir)Plugins\SamplePlugin\" /Y
+copy "$(TargetDir)Newtonsoft.Json.*" "$(TargetDir)Plugins\SamplePlugin\" /Y
+echo Statement 4: copy "$(TargetDir)NLog.*" "$(TargetDir)Plugins\SamplePlugin\" /Y
+copy "$(TargetDir)NLog.*" "$(TargetDir)Plugins\SamplePlugin\" /Y
+echo Statement 5: copy "$(TargetDir)System.Composition.*" "$(TargetDir)Plugins\SamplePlugin\" /Y
+copy "$(TargetDir)System.Composition.*" "$(TargetDir)Plugins\SamplePlugin\" /Y
+echo Statement 6: copy "$(TargetDir)System.Diagnostics.DiagnosticSource.*" "$(TargetDir)Plugins\SamplePlugin\" /Y
+copy "$(TargetDir)System.Diagnostics.DiagnosticSource.*" "$(TargetDir)Plugins\SamplePlugin\" /Y
+echo Statement 7: copy "$(TargetDir)Microsoft.ApplicationInsights.*" "$(TargetDir)Plugins\SamplePlugin\" /Y
+copy "$(TargetDir)Microsoft.ApplicationInsights.*" "$(TargetDir)Plugins\SamplePlugin\" /Y
+echo Statement 11: copy "$(TargetDir)System.Memory.*" "$(TargetDir)Plugins\SamplePlugin\" /Y
+copy "$(TargetDir)System.Memory.*" "$(TargetDir)Plugins\SamplePlugin\" /Y
+echo Statement 12: copy "$(TargetDir)*.txt" "$(TargetDir)Plugins\SamplePlugin\" /Y
+copy "$(TargetDir)*.txt" "$(TargetDir)Plugins\SamplePlugin\" /Y
+echo Statement last: copy "$(TargetDir)Plugins\SamplePlugin\*" "$(SolutionDir)Chummer\bin\$(ConfigurationName)\Plugins\SamplePlugin\" /Y
+copy "$(TargetDir)Plugins\SamplePlugin\*" "$(SolutionDir)Chummer\bin\$(ConfigurationName)\Plugins\SamplePlugin\" /Y</PostBuildEvent>
+    <EnableNETAnalyzers>True</EnableNETAnalyzers>
+    <AnalysisLevel>latest-minimum</AnalysisLevel>
+    <NeutralLanguage>en-US</NeutralLanguage>
+    <SupportedOSPlatformVersion>10.0.26100.0</SupportedOSPlatformVersion>
   </PropertyGroup>
   <ItemGroup>
     <AssemblyAttribute Include="System.Runtime.InteropServices.ComVisible">
@@ -16,6 +48,20 @@
     <AssemblyAttribute Include="System.Runtime.InteropServices.Guid">
       <_Parameter1>ea016472-2f78-43f9-af2c-809bdf766645</_Parameter1>
     </AssemblyAttribute>
+    <PackageReference Include="Microsoft.ApplicationInsights" Version="2.23.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="4.14.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="9.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="NLog" Version="6.0.2" />
+    <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="9.0.8" />
+    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.2" />
   </ItemGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <OutputPath>$(MSBuildProjectDirectory)\bin\$(Configuration)\</OutputPath>
@@ -65,64 +111,9 @@
     <Folder Include="Resources\" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.ApplicationInsights" Version="2.23.0" />
-    <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="4.14.0">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="9.0.0">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="NLog" Version="6.0.1" />
-    <PackageReference Include="System.Buffers" Version="4.6.1" />
-    <PackageReference Include="System.Data.DataSetExtensions" Version="4.5.0" />
-    <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="9.0.7" />
-    <PackageReference Include="System.Memory" Version="4.6.3" />
-    <PackageReference Include="System.Numerics.Vectors" Version="4.6.1" />
-    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.2" />
-  </ItemGroup>
-  <ItemGroup>
     <EmbeddedResource Update="Properties\Resources.resx">
       <Generator>PublicResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
-  <PropertyGroup>
-    <PreBuildEvent>echo Statement 1: mkdir "$(TargetDir)Plugins\SamplePlugin\"
-mkdir "$(TargetDir)Plugins\SamplePlugin\"
-echo Statement 2: mkdir "$(SolutionDir)Chummer\bin\$(ConfigurationName)\Plugins\SamplePlugin\"
-mkdir "$(SolutionDir)Chummer\bin\$(ConfigurationName)\Plugins\SamplePlugin\"
-Exit 0</PreBuildEvent>
-  </PropertyGroup>
-  <PropertyGroup>
-    <PostBuildEvent>echo Statement 1: copy "$(TargetDir)*" "$(TargetDir)Plugins\SamplePlugin\" /Y
-copy "$(TargetDir)$(TargetName).*" "$(TargetDir)Plugins\SamplePlugin\" /Y
-echo ----------------------------------------------------------------------------------------------------
-echo ----------------------------------------------------------------------------------------------------
-echo Statement 2: You need to copy every DLL here in the post-build step! This HAS to be done here!
-echo ----------------------------------------------------------------------------------------------------
-echo ----------------------------------------------------------------------------------------------------
-echo Statement 3: copy "$(TargetDir)Newtonsoft.Json.*" "$(TargetDir)Plugins\SamplePlugin\" /Y
-copy "$(TargetDir)Newtonsoft.Json.*" "$(TargetDir)Plugins\SamplePlugin\" /Y
-echo Statement 4: copy "$(TargetDir)NLog.*" "$(TargetDir)Plugins\SamplePlugin\" /Y
-copy "$(TargetDir)NLog.*" "$(TargetDir)Plugins\SamplePlugin\" /Y
-echo Statement 5: copy "$(TargetDir)System.Composition.*" "$(TargetDir)Plugins\SamplePlugin\" /Y
-copy "$(TargetDir)System.Composition.*" "$(TargetDir)Plugins\SamplePlugin\" /Y
-echo Statement 6: copy "$(TargetDir)System.Diagnostics.DiagnosticSource.*" "$(TargetDir)Plugins\SamplePlugin\" /Y
-copy "$(TargetDir)System.Diagnostics.DiagnosticSource.*" "$(TargetDir)Plugins\SamplePlugin\" /Y
-echo Statement 7: copy "$(TargetDir)Microsoft.ApplicationInsights.*" "$(TargetDir)Plugins\SamplePlugin\" /Y
-copy "$(TargetDir)Microsoft.ApplicationInsights.*" "$(TargetDir)Plugins\SamplePlugin\" /Y
-echo Statement 11: copy "$(TargetDir)System.Memory.*" "$(TargetDir)Plugins\SamplePlugin\" /Y
-copy "$(TargetDir)System.Memory.*" "$(TargetDir)Plugins\SamplePlugin\" /Y
-echo Statement 12: copy "$(TargetDir)*.txt" "$(TargetDir)Plugins\SamplePlugin\" /Y
-copy "$(TargetDir)*.txt" "$(TargetDir)Plugins\SamplePlugin\" /Y
-echo Statement last: copy "$(TargetDir)Plugins\SamplePlugin\*" "$(SolutionDir)Chummer\bin\$(ConfigurationName)\Plugins\SamplePlugin\" /Y
-copy "$(TargetDir)Plugins\SamplePlugin\*" "$(SolutionDir)Chummer\bin\$(ConfigurationName)\Plugins\SamplePlugin\" /Y</PostBuildEvent>
-    <EnableNETAnalyzers>True</EnableNETAnalyzers>
-    <AnalysisLevel>latest-minimum</AnalysisLevel>
-    <NeutralLanguage>en-US</NeutralLanguage>
-  </PropertyGroup>
 </Project>

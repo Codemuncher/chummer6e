@@ -18,6 +18,7 @@
  */
 
 using System;
+using System.ComponentModel;
 using System.Windows.Forms;
 
 namespace Chummer
@@ -61,6 +62,7 @@ namespace Chummer
         /// <summary>
         /// Value that was entered in the dialogue.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public decimal SelectedValue
         {
             get => _decReturnValue;
@@ -70,6 +72,7 @@ namespace Chummer
         /// <summary>
         /// Minimum number.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public decimal Minimum
         {
             set => nudNumber.Minimum = value;
@@ -78,6 +81,7 @@ namespace Chummer
         /// <summary>
         /// Maximum number.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public decimal Maximum
         {
             set => nudNumber.Maximum = value;
@@ -86,6 +90,7 @@ namespace Chummer
         /// <summary>
         /// Description to display in the dialogue.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string Description
         {
             set => lblDescription.Text = value;
@@ -94,6 +99,7 @@ namespace Chummer
         /// <summary>
         /// Whether the Cancel button is enabled.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool AllowCancel
         {
             set

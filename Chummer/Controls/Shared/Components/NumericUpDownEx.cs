@@ -32,6 +32,7 @@ using System.ComponentModel;
 using System.Drawing;
 using System.Threading;
 using System.Windows.Forms;
+using System.ComponentModel;
 
 namespace Chummer
 {
@@ -538,6 +539,7 @@ namespace Chummer
         /// <summary>
         /// The minimum allowed value of the spin box.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public new decimal Minimum
         {
             get => base.Minimum;
@@ -565,6 +567,7 @@ namespace Chummer
         /// <summary>
         /// The maximum allowed value of the spin box.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public new decimal Maximum
         {
             get => base.Maximum;

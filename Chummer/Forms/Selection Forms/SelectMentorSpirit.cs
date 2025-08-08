@@ -19,6 +19,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Windows.Forms;
 using System.Xml.XPath;
 
@@ -273,6 +274,7 @@ namespace Chummer
         /// <summary>
         /// Forced selection for mentor spirit
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string ForcedMentor
         {
             set => _strForceMentor = value;

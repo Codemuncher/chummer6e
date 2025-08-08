@@ -18,7 +18,9 @@
  */
 
 using System;
+using System.ComponentModel;
 using System.Windows.Forms;
+using System.ComponentModel;
 
 namespace Chummer
 {
@@ -29,6 +31,7 @@ namespace Chummer
         /// <summary>
         /// The HP of the character
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public int MaxPhysical
         {
             get => _progressBarPhysical.DoThreadSafeFunc(x => x.Maximum);
@@ -38,6 +41,7 @@ namespace Chummer
         /// <summary>
         /// The stun chart of the character
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public int MaxStun
         {
             get => _progressBarStun.DoThreadSafeFunc(x => x.Maximum);
@@ -47,6 +51,7 @@ namespace Chummer
         /// <summary>
         /// The physical health of the current npc
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public int Physical
         {
             get => _progressBarPhysical.DoThreadSafeFunc(x => x.Value);
@@ -56,6 +61,7 @@ namespace Chummer
         /// <summary>
         /// The stun health of the current npc
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public int Stun
         {
             get => _progressBarStun.DoThreadSafeFunc(x => x.Value);

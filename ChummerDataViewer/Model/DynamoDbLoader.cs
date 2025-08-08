@@ -25,6 +25,8 @@ using System.Linq;
 using Amazon;
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.Model;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace ChummerDataViewer.Model
 {
@@ -47,7 +49,7 @@ namespace ChummerDataViewer.Model
         private readonly Stopwatch _objTimeoutStopwatch = Stopwatch.StartNew();
         private int _intCurrentTimeout;
 
-        private void WorkerEntryPrt(object sender, DoWorkEventArgs e)
+        private async void WorkerEntryPrt(object sender, DoWorkEventArgs e)
         {
             try
             {
@@ -59,7 +61,7 @@ namespace ChummerDataViewer.Model
                     try
                     {
                         //Scan 10 items. If middle of scan, pick up there
-                        ScanResponse response = ScanData(
+                        ScanResponse response = await ScanData(
                             PersistentState.Database.GetKey("crashdumps_last_timestamp"),
                             PersistentState.Database.GetKey("crashdumps_last_key")); //Start scanning based on last key in db
 
@@ -169,7 +171,7 @@ namespace ChummerDataViewer.Model
                 );
         }
 
-        private ScanResponse ScanData(string lastTimeStamp, string lastKey)
+        private Task<ScanResponse> ScanData(string lastTimeStamp, string lastKey)
         {
             var request = new ScanRequest
             {
@@ -187,7 +189,8 @@ namespace ChummerDataViewer.Model
                 };
             }
 
-            return _client.Scan(request);
+            CancellationToken cancellationToken = default;
+            return _client.ScanAsync(request, cancellationToken);
         }
 
         public event StatusChangedEvent StatusChanged;

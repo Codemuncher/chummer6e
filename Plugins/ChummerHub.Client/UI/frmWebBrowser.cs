@@ -76,14 +76,14 @@ namespace ChummerHub.Client.UI
         {
             if (e.Url == null)
                 return;
-            if(e.Url.AbsoluteUri == LoginUrl.AbsoluteUri)
+            if(e.Url.Equals(LoginUrl.AbsoluteUri))
                 return;
-            if(e.Url.AbsoluteUri.Contains("/Identity/Account/Logout"))
+            if(e.Url.PathAndQuery.Contains("/Identity/Account/Logout"))
             {
                 //maybe we are logged in now
                 GetCookieContainer();
             }
-            else if (e.Url.AbsoluteUri.Contains("/Identity/Account/Manage"))
+            else if (e.Url.PathAndQuery.Contains("/Identity/Account/Manage"))
             {
                 try
                 {

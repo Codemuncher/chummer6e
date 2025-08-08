@@ -19,6 +19,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Text;
 using System.Windows.Forms;
 using System.Xml.XPath;
@@ -124,6 +125,7 @@ namespace Chummer
         public string SelectedSkillGroup => _strReturnValue;
 
         // Description to show in the window.
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string Description
         {
             set => lblDescription.Text = value;
@@ -132,6 +134,7 @@ namespace Chummer
         /// <summary>
         /// Force a specific SkillGroup to be selected.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string OnlyGroup
         {
             set => _strForceValue = value;
@@ -140,6 +143,7 @@ namespace Chummer
         /// <summary>
         /// Only Skills not in the selected Category should be in the list.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string ExcludeCategory
         {
             set => _strExcludeCategory = value;

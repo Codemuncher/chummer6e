@@ -16,19 +16,22 @@
  *  You can obtain the full source code for Chummer5a at
  *  https://github.com/chummer5a/chummer5a
  */
-using System;
-using System.Windows.Forms;
+using Chummer;
 using Chummer.Plugins;
 using ChummerHub.Client.Backend;
 using ChummerHub.Client.Sinners;
-using Chummer;
+using System;
+using System.ComponentModel;
+using System.Windows.Forms;
 
 
 namespace ChummerHub.Client.UI
 {
     public partial class ucSINnerGroupCreate : UserControl
     {
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public SINnerGroup MyGroup { get; set; }
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool EditMode { get; set; }
         private string _strSelectedLanguage = GlobalSettings.Language;
 

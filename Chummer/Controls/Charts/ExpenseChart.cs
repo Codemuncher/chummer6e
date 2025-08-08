@@ -26,6 +26,7 @@ using System.Windows.Media;
 using LiveCharts;
 using LiveCharts.Defaults;
 using LiveCharts.Wpf;
+using System.ComponentModel;
 
 namespace Chummer.UI.Charts
 {
@@ -34,8 +35,8 @@ namespace Chummer.UI.Charts
         private Character _objCharacter;
         private readonly LineSeries _objMainSeries;
         private readonly Axis _objYAxis;
-        private static readonly SolidColorBrush s_ObjKarmaFillBrush = new SolidColorBrush(Color.FromArgb(0x7F, 0, 0, 0xFF));
-        private static readonly SolidColorBrush s_ObjNuyenFillBrush = new SolidColorBrush(Color.FromArgb(0x7F, 0xFF, 0, 0));
+        private static readonly SolidColorBrush s_ObjKarmaFillBrush = new SolidColorBrush(System.Windows.Media.Color.FromArgb(0x7F, 0, 0, 0xFF));
+        private static readonly SolidColorBrush s_ObjNuyenFillBrush = new SolidColorBrush(System.Windows.Media.Color.FromArgb(0x7F, 0xFF, 0, 0));
 
         public ExpenseChart()
         {
@@ -45,7 +46,7 @@ namespace Chummer.UI.Charts
                 Title = LanguageManager.GetString("String_KarmaRemaining"),
                 Values = ExpenseValues,
                 LineSmoothness = 0.1,
-                Stroke = Brushes.Blue,
+                Stroke = System.Windows.Media.Brushes.Blue,
                 Fill = s_ObjKarmaFillBrush,
                 PointGeometrySize = 8
             };
@@ -136,6 +137,7 @@ namespace Chummer.UI.Charts
 
         private int _intNuyenMode;
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool NuyenMode
         {
             get => _intNuyenMode > 0;
@@ -154,7 +156,7 @@ namespace Chummer.UI.Charts
                             val.ToString((_objCharacter?.Settings.NuyenFormat ?? "#,0.##") + LanguageManager.GetString("String_NuyenSymbol"),
                                          GlobalSettings.CultureInfo);
                         _objMainSeries.Title = LanguageManager.GetString("String_NuyenRemaining");
-                        _objMainSeries.Stroke = Brushes.Red;
+                        _objMainSeries.Stroke = System.Windows.Media.Brushes.Red;
                         _objMainSeries.Fill = s_ObjNuyenFillBrush;
                     }
                     else
@@ -162,7 +164,7 @@ namespace Chummer.UI.Charts
                         _objYAxis.Title = LanguageManager.GetString("String_Karma");
                         _objYAxis.LabelFormatter = val => val.ToString("#,0.##", GlobalSettings.CultureInfo);
                         _objMainSeries.Title = LanguageManager.GetString("String_KarmaRemaining");
-                        _objMainSeries.Stroke = Brushes.Blue;
+                        _objMainSeries.Stroke = System.Windows.Media.Brushes.Blue;
                         _objMainSeries.Fill = s_ObjKarmaFillBrush;
                     }
                 }

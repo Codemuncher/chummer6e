@@ -795,6 +795,7 @@ namespace Chummer.UI.Table
         /// <summary>
         /// The list of items displayed in the table.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public ThreadSafeBindingList<T> Items
         {
             get
@@ -1044,6 +1045,7 @@ namespace Chummer.UI.Table
             }
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Func<TableRow> RowFactory { get; set; }
 
         private TableRow CreateRow()
@@ -1055,6 +1057,7 @@ namespace Chummer.UI.Table
 
         public override LayoutEngine LayoutEngine => _layoutEngine = _layoutEngine ?? new TableLayoutEngine(this);
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public SortOrder SortOrder
         {
             get => _eSortType;

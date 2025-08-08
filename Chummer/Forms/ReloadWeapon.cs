@@ -25,6 +25,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Chummer.Backend.Equipment;
+using System.ComponentModel;
 
 namespace Chummer
 {
@@ -151,6 +152,7 @@ namespace Chummer
         /// <summary>
         /// List of Ammo Gear that the user can selected.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public IEnumerable<Gear> Ammo
         {
             set
@@ -163,6 +165,7 @@ namespace Chummer
         /// <summary>
         /// List of ammunition that the user can select.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public IEnumerable<string> Count
         {
             set

@@ -16,15 +16,16 @@
  *  You can obtain the full source code for Chummer5a at
  *  https://github.com/chummer5a/chummer5a
  */
+using Chummer;
+using Chummer.Plugins;
+using ChummerHub.Client.Backend;
+using ChummerHub.Client.Sinners;
+using NLog;
 using System;
+using System.ComponentModel;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using Chummer;
-using ChummerHub.Client.Sinners;
-using ChummerHub.Client.Backend;
-using Chummer.Plugins;
-using NLog;
 
 namespace ChummerHub.Client.UI
 {
@@ -39,6 +40,7 @@ namespace ChummerHub.Client.UI
 
         private ucSINnersAdvanced TabSINnersAdvanced;
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public CharacterExtended MyCE { get; set; }
 
         public Character CharacterObject => MySINner.CharacterObject;

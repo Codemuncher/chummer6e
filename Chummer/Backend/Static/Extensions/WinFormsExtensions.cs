@@ -1884,7 +1884,7 @@ namespace Chummer
 
         public static Task PopulateWithListItemsAsync([NotNull] this ElasticComboBox cboThis, IEnumerable<ListItem> lstItems, CancellationToken token = default)
         {
-            return cboThis.DoThreadSafeAsync(x => PopulateWithListItemsCore(x, lstItems, token), token);
+            return cboThis.DoThreadSafeAsync(x=> PopulateWithListItemsCore(x, lstItems, token), token);
         }
 
         private static void PopulateWithListItemsCore(this ListBox lsbThis, IEnumerable<ListItem> lstItems, CancellationToken token = default)

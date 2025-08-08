@@ -17,8 +17,10 @@
  *  https://github.com/chummer5a/chummer5a
  */
 
+using Chummer.Backend.Equipment;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
 using System.Text;
@@ -26,7 +28,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Xml.XPath;
-using Chummer.Backend.Equipment;
 
 namespace Chummer
 {
@@ -243,6 +244,7 @@ namespace Chummer
         /// <summary>
         /// The slots taken up by a weapon mount to which the vehicle mod might be being added
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public int WeaponMountSlots
         {
             set => _intWeaponMountSlots = value;
@@ -271,6 +273,7 @@ namespace Chummer
         /// <summary>
         /// Is the mod being added to a vehicle weapon mount?
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool VehicleMountMods { get; set; }
 
         #endregion Properties

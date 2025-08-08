@@ -21,6 +21,8 @@ using System;
 using System.Drawing;
 using System.Threading;
 using System.Windows.Forms;
+using System.ComponentModel;
+using System.ComponentModel;
 
 namespace Chummer.UI.Table
 {
@@ -118,6 +120,7 @@ namespace Chummer.UI.Table
             }
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public SortOrder SortType
         {
             get => _eSortType;
@@ -128,12 +131,14 @@ namespace Chummer.UI.Table
             }
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public object TextTag
         {
             get => _lblCellText.DoThreadSafeFunc(x => x.Tag);
             set => _lblCellText.DoThreadSafe(x => x.Tag = value);
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         internal bool Sortable { get; set; }
 
         public virtual event EventHandler HeaderClick

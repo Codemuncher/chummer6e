@@ -17,8 +17,10 @@
  *  https://github.com/chummer5a/chummer5a
  */
 
+using Chummer.Backend.Equipment;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
 using System.Text;
@@ -27,8 +29,6 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Xml;
 using System.Xml.XPath;
-using Chummer.Backend.Equipment;
-
 namespace Chummer
 {
     public partial class SelectGear : Form
@@ -602,6 +602,7 @@ namespace Chummer
         /// <summary>
         /// Only items that grant Capacity should be shown.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool ShowPositiveCapacityOnly
         {
             get => _blnShowPositiveCapacityOnly;
@@ -616,6 +617,7 @@ namespace Chummer
         /// <summary>
         /// Only items that consume Capacity should be shown.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool ShowNegativeCapacityOnly
         {
             get => _blnShowNegativeCapacityOnly;
@@ -630,16 +632,19 @@ namespace Chummer
         /// <summary>
         /// Only items that consume Armor Capacity should be shown.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool ShowArmorCapacityOnly { get; set; }
 
         /// <summary>
         /// Only items that are marked as being flechette ammo should be shown.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool ShowFlechetteAmmoOnly { get; set; }
 
         /// <summary>
         /// Guid of Gear that was selected in the dialogue.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string SelectedGear
         {
             get => _strSelectedGear;
@@ -659,6 +664,7 @@ namespace Chummer
         /// <summary>
         /// Set the maximum Capacity the piece of Gear is allowed to be.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public decimal MaximumCapacity
         {
             get => _decMaximumCapacity;
@@ -692,6 +698,7 @@ namespace Chummer
         /// <summary>
         /// Whether the Stack Checkbox should be shown (default true).
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool EnableStack
         {
             set
@@ -705,6 +712,7 @@ namespace Chummer
         /// <summary>
         /// Capacity display style.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public CapacityStyle CapacityDisplayStyle
         {
             set => _eCapacityStyle = value;
@@ -718,11 +726,13 @@ namespace Chummer
         /// <summary>
         /// Default text string to filter by.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string DefaultSearchText { get; set; }
 
         /// <summary>
         /// What weapon type is our gear allowed to have
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string ForceItemAmmoForWeaponType { get; set; }
 
         #endregion Properties

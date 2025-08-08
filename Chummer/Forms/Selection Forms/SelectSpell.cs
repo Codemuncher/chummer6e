@@ -17,15 +17,16 @@
  *  https://github.com/chummer5a/chummer5a
  */
 
+using RtfPipe.Tokens;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Xml.XPath;
-using RtfPipe.Tokens;
 
 namespace Chummer
 {
@@ -225,11 +226,13 @@ namespace Chummer
         /// </summary>
         public bool Alchemical => chkAlchemical.DoThreadSafeFunc(x => x.Checked);
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool FreeOnly { get; set; }
 
         /// <summary>
         /// Limit the Spell list to a particular Category.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string LimitCategory
         {
             set => _strLimitCategory = value;
@@ -238,6 +241,7 @@ namespace Chummer
         /// <summary>
         /// Force a particular Spell to be selected.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string ForceSpellName
         {
             set => _strForceSpell = value;
@@ -248,12 +252,14 @@ namespace Chummer
         /// </summary>
         public string SelectedSpell => _strSelectedSpell;
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool IgnoreRequirements
         {
             get => _blnIgnoreRequirements;
             set => _blnIgnoreRequirements = value;
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool FreeBonus { get; set; }
 
         #endregion Properties

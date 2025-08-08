@@ -16,16 +16,17 @@
  *  You can obtain the full source code for Chummer5a at
  *  https://github.com/chummer5a/chummer5a
  */
+using Chummer;
+using ChummerHub.Client.Backend;
+using ChummerHub.Client.Properties;
+using ChummerHub.Client.Sinners;
+using NLog;
 using System;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using Chummer;
-using ChummerHub.Client.Backend;
-using ChummerHub.Client.Sinners;
-using ChummerHub.Client.Properties;
-using NLog;
 
 
 namespace ChummerHub.Client.UI
@@ -34,9 +35,12 @@ namespace ChummerHub.Client.UI
     {
         private static readonly Lazy<Logger> s_ObjLogger = new Lazy<Logger>(LogManager.GetCurrentClassLogger);
         private static Logger Log => s_ObjLogger.Value;
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public frmSINnerShare MyFrmSINnerShare { get; set; }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public CharacterCache MyCharacterCache { get; set; }
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public SINnerSearchGroup MySINnerSearchGroup { get; set; }
         public Func<Task<MyUserState>> DoWork { get; }
         public Action<MyUserState> RunWorkerCompleted { get; }

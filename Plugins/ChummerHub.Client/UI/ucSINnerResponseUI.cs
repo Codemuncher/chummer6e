@@ -16,16 +16,18 @@
  *  You can obtain the full source code for Chummer5a at
  *  https://github.com/chummer5a/chummer5a
  */
-using System;
-using System.Windows.Forms;
 using Chummer;
-using UserControl = System.Windows.Forms.UserControl;
 using ChummerHub.Client.Sinners;
+using System;
+using System.ComponentModel;
+using System.Windows.Forms;
+using UserControl = System.Windows.Forms.UserControl;
 
 namespace ChummerHub.Client.UI
 {
     public partial class ucSINnerResponseUI : UserControl
     {
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public ResultBase Result { get; internal set; }
 
         public ucSINnerResponseUI()

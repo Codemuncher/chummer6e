@@ -30,6 +30,7 @@ using System.Xml;
 using Chummer.Backend.Equipment;
 using Chummer.Properties;
 using Chummer.UI.Table;
+using System.ComponentModel;
 
 // ReSharper disable StringCompareToIsCultureSpecific
 
@@ -75,6 +76,7 @@ namespace Chummer.UI.Powers
 
         private CancellationToken _objMyToken;
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public CancellationToken MyToken
         {
             get => _objMyToken;
@@ -87,6 +89,7 @@ namespace Chummer.UI.Powers
             }
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Character CachedCharacter { get; set; }
 
         private async void PowersTabUserControl_Load(object sender, EventArgs e)

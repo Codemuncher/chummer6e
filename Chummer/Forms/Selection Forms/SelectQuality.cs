@@ -19,6 +19,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
 using System.Text;
@@ -327,6 +328,7 @@ namespace Chummer
         /// <summary>
         /// Forcefully add a Category to the list.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string ForceCategory
         {
             set
@@ -350,6 +352,7 @@ namespace Chummer
         /// <summary>
         /// A Quality the character has that should be ignored for checking Forbidden requirements (which would prevent upgrading/downgrading a Quality).
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string IgnoreQuality { get; set; } = string.Empty;
 
         /// <summary>

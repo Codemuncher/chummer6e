@@ -17,8 +17,10 @@
  *  https://github.com/chummer5a/chummer5a
  */
 
+using Chummer.Backend.Equipment;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Data;
 using System.Linq;
 using System.Text;
@@ -27,7 +29,6 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Xml;
 using System.Xml.XPath;
-using Chummer.Backend.Equipment;
 
 // ReSharper disable LocalizableElement
 
@@ -973,6 +974,7 @@ namespace Chummer
         /// <summary>
         /// Only the provided Weapon Categories should be shown in the list.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string LimitToCategories
         {
             set
@@ -985,6 +987,7 @@ namespace Chummer
             }
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Weapon ParentWeapon { get; set; }
 
         public HashSet<string> Mounts => _setMounts;

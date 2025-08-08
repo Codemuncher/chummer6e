@@ -40,6 +40,7 @@ namespace ChummerHub.Client.Backend
         private const string EXIT_STRING = "__EXIT__";
         private CancellationTokenSource _objCancellationTokenSource;
         private Task _objRunningTask;
+        private string pipeName;
 
         public NamedPipeManager(string name = "Chummer")
         {
@@ -174,10 +175,7 @@ namespace ChummerHub.Client.Backend
                     using (new Chummer.FetchSafelyFromPool<StringBuilder>(Chummer.Utils.StringBuilderPool, out StringBuilder sbdText))
                     {
                         token.ThrowIfCancellationRequested();
-                        using (NamedPipeServerStream objServerStream = new NamedPipeServerStream(NamedPipeName,
-                                   PipeDirection.InOut, 1,
-                                   PipeTransmissionMode.Message, PipeOptions.None,
-                                   4028, 4028, ps))
+                        using (NamedPipeServerStream objServerStream = new(NamedPipeName, PipeDirection.InOut, 1, PipeTransmissionMode.Message, PipeOptions.None, 4028, 4028))
                         {
                             await objServerStream.WaitForConnectionAsync(token).ConfigureAwait(false);
 
@@ -186,9 +184,9 @@ namespace ChummerHub.Client.Backend
                             using (StreamReader objReader = new StreamReader(objServerStream))
                             {
                                 token.ThrowIfCancellationRequested();
-                                for (string strLine = await objReader.ReadLineAsync().ConfigureAwait(false);
+                                for (string strLine = await objReader.ReadLineAsync(token).ConfigureAwait(false);
                                      strLine != null;
-                                     strLine = await objReader.ReadLineAsync().ConfigureAwait(false))
+                                     strLine = await objReader.ReadLineAsync(token).ConfigureAwait(false))
                                 {
                                     token.ThrowIfCancellationRequested();
                                     if (!string.IsNullOrEmpty(strLine))

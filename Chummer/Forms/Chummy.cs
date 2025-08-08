@@ -25,6 +25,7 @@ using System.Threading;
 using System.Windows.Forms;
 using System.Xml.XPath;
 using NLog;
+using System.ComponentModel;
 using TheArtOfDev.HtmlRenderer.WinForms;
 using Timer = System.Windows.Forms.Timer;
 
@@ -240,6 +241,7 @@ namespace Chummer
 
         #region Properties
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Character CharacterObject
         {
             get => _characterObject;

@@ -21,6 +21,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.ComponentModel;
 
 namespace Chummer.UI.Shared.Components
 {
@@ -66,6 +67,7 @@ namespace Chummer.UI.Shared.Components
             return lblDicePool.SetToolTipAsync(caption, token);
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool CanBeRolled
         {
             get => _blnCanBeRolled;
@@ -78,6 +80,7 @@ namespace Chummer.UI.Shared.Components
             }
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool CanEverBeRolled
         {
             get => _blnCanEverBeRolled;
@@ -90,6 +93,7 @@ namespace Chummer.UI.Shared.Components
             }
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public decimal DicePool
         {
             get
@@ -175,6 +179,7 @@ namespace Chummer.UI.Shared.Components
             }
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string ToolTipText
         {
             get => lblDicePool.ToolTipText;

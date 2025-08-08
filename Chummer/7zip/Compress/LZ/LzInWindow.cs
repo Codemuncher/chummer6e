@@ -133,15 +133,13 @@ namespace SevenZip.Compression.LZ
         [CLSCompliant(false)]
         public void Create(int keepSizeBefore, int keepSizeAfter, int keepSizeReserve)
         {
-            if (keepSizeBefore > 2147483591) // System.Array.MaxByteArrayLength
-                throw new ArgumentOutOfRangeException(nameof(keepSizeBefore));
+            ArgumentOutOfRangeException.ThrowIfGreaterThan(keepSizeBefore, 2147483591);
             _keepSizeBefore = keepSizeBefore;
             if (keepSizeBefore + keepSizeAfter > 2147483591) // System.Array.MaxByteArrayLength
                 throw new ArgumentOutOfRangeException(nameof(keepSizeAfter));
             _keepSizeAfter = keepSizeAfter;
             int blockSize = keepSizeBefore + keepSizeAfter + keepSizeReserve;
-            if (blockSize > 2147483591) // System.Array.MaxByteArrayLength
-                throw new ArgumentOutOfRangeException(nameof(blockSize));
+            ArgumentOutOfRangeException.ThrowIfGreaterThan(blockSize, 2147483591); // System.Array.MaxByteArrayLength            
             if (_bufferBase == null || _blockSize != blockSize)
             {
                 Free();

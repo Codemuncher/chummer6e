@@ -22,6 +22,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.ComponentModel;
 
 namespace Chummer
 {
@@ -37,6 +38,7 @@ namespace Chummer
             Initializing
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string CharacterFile
         {
             get => _strCharacterFile;

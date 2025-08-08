@@ -1098,6 +1098,7 @@ namespace Chummer
             }
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         [CLSCompliant(false)]
         public PageViewTelemetry MyStartupPvt { get; set; }
 

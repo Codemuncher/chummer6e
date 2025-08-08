@@ -2484,6 +2484,7 @@ namespace Chummer
         [JsonIgnore]
         [XmlIgnore]
         [IgnoreDataMember]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public EventHandler<MouseEventArgs> OnMyMouseDown { get; set; }
 
         private void TreeView_MouseDown(object sender, MouseEventArgs e)

@@ -20,6 +20,7 @@
 using System;
 using System.Drawing;
 using System.Windows.Forms;
+using System.ComponentModel;
 
 namespace Chummer
 {
@@ -208,6 +209,7 @@ namespace Chummer
         /// <summary>
         /// Membership.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public int Membership
         {
             get => _intMembership;
@@ -217,6 +219,7 @@ namespace Chummer
         /// <summary>
         /// Area of Influence.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public int AreaOfInfluence
         {
             get => _intAreaOfInfluence;
@@ -226,6 +229,8 @@ namespace Chummer
         /// <summary>
         /// Magical Resources.
         /// </summary>
+
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public int MagicalResources
         {
             get => _intMagicalResources;
@@ -235,6 +240,7 @@ namespace Chummer
         /// <summary>
         /// Matrix Resources.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public int MatrixResources
         {
             get => _intMatrixResources;
@@ -244,6 +250,7 @@ namespace Chummer
         /// <summary>
         /// Group Name.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string GroupName
         {
             get => _strGroupName;
@@ -253,6 +260,7 @@ namespace Chummer
         /// <summary>
         /// Contact Color.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Color Color
         {
             get => _objColor;
@@ -262,6 +270,7 @@ namespace Chummer
         /// <summary>
         /// Whether this is a free contact.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool Free
         {
             get => _blnFree;

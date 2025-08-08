@@ -16,13 +16,14 @@
  *  You can obtain the full source code for Chummer5a at
  *  https://github.com/chummer5a/chummer5a
  */
-using System;
-using System.Collections.Generic;
-using System.Windows.Forms;
 using Chummer;
 using Chummer.Plugins;
 using ChummerHub.Client.Sinners;
 using NLog;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Windows.Forms;
 
 
 namespace ChummerHub.Client.UI
@@ -32,6 +33,8 @@ namespace ChummerHub.Client.UI
         private static readonly Lazy<Logger> s_ObjLogger = new Lazy<Logger>(LogManager.GetCurrentClassLogger);
         private static Logger Log => s_ObjLogger.Value;
         private SINnerVisibility _mySINnerVisibility;
+
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public SINnerVisibility MyVisibility
         {
             get => _mySINnerVisibility;

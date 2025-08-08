@@ -17,12 +17,13 @@
  *  https://github.com/chummer5a/chummer5a
  */
 
+using Chummer.Backend.Skills;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Text;
 using System.Windows.Forms;
 using System.Xml.XPath;
-using Chummer.Backend.Skills;
 
 namespace Chummer
 {
@@ -200,11 +201,13 @@ namespace Chummer
         /// <summary>
         /// Type of skill that we're selecting. Used to differentiate knowledge skills.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string Mode { get; set; }
 
         /// <summary>
         /// Whether to force the .
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool BuyWithKarma
         {
             get => chkKarma.Checked;

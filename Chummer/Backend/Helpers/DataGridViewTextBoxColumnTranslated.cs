@@ -18,6 +18,7 @@
  */
 
 using System.Windows.Forms;
+using System.ComponentModel;
 
 namespace Chummer
 {
@@ -26,6 +27,8 @@ namespace Chummer
         /// <summary>
         /// String used to translate the HeaderText of the column.
         /// </summary>
+
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string TranslationTag { get; set; }
     }
 }

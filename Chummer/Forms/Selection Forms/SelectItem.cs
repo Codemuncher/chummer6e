@@ -17,13 +17,15 @@
  *  https://github.com/chummer5a/chummer5a
  */
 
+using Chummer.Backend.Equipment;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using System.Xml.XPath;
-using Chummer.Backend.Equipment;
+
 
 namespace Chummer
 {
@@ -409,6 +411,7 @@ namespace Chummer
         /// <summary>
         /// Internal ID of the item that was selected.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string SelectedItem
         {
             get
@@ -430,6 +433,7 @@ namespace Chummer
         /// <summary>
         /// Whether the Form should be accepted if there is only one item left in the list.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool AllowAutoSelect
         {
             get => _blnAllowAutoSelect;
@@ -439,6 +443,7 @@ namespace Chummer
         /// <summary>
         /// Description to show in the window.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string Description
         {
             get => lblDescription.Text;

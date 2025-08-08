@@ -27,6 +27,7 @@ using System.Windows.Forms;
 using System.Xml.XPath;
 using Chummer.Backend.Equipment;
 using NLog;
+using System.ComponentModel;
 
 namespace Chummer
 {
@@ -901,26 +902,31 @@ namespace Chummer
         /// <summary>
         /// Essence cost multiplier from the character.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public decimal CharacterESSMultiplier { get; set; } = 1.0m;
 
         /// <summary>
         /// Total Essence cost multiplier from the character (stacks multiplicatively at the very last step.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public decimal CharacterTotalESSMultiplier { get; set; } = 1.0m;
 
         /// <summary>
         /// Cost multiplier for Genetech.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public decimal GenetechCostMultiplier { get; set; } = 1.0m;
 
         /// <summary>
         /// Essence cost multiplier for Genetech.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public decimal GenetechEssMultiplier { get; set; } = 1.0m;
 
         /// <summary>
         /// Essence cost multiplier for Basic Bioware.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public decimal BasicBiowareESSMultiplier { get; set; } = 1.0m;
 
         /// <summary>
@@ -936,6 +942,7 @@ namespace Chummer
         /// <summary>
         /// Set the maximum Capacity the piece of Cyberware is allowed to be.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public decimal MaximumCapacity
         {
             get => _decMaximumCapacity;
@@ -951,6 +958,7 @@ namespace Chummer
         /// <summary>
         /// Comma-separate list of Categories to show for Subsystems.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string Subsystems
         {
             set => _strSubsystems = value;
@@ -959,6 +967,7 @@ namespace Chummer
         /// <summary>
         /// Comma-separate list of mount locations that are disallowed.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string DisallowedMounts
         {
             set => _strDisallowedMounts = value;
@@ -967,6 +976,7 @@ namespace Chummer
         /// <summary>
         /// Comma-separate list of mount locations that already exist on the parent.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string HasModularMounts
         {
             set => _strHasModularMounts = value;
@@ -975,6 +985,7 @@ namespace Chummer
         /// <summary>
         /// Manually set the Grade of the piece of Cyberware.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Grade ForcedGrade
         {
             get => _objForcedGrade;
@@ -1009,8 +1020,10 @@ namespace Chummer
         /// <summary>
         /// Parent vehicle that the cyberlimb will be attached to.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Vehicle ParentVehicle { get; set; }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public decimal Markup { get; set; }
 
         /// <summary>
@@ -1026,6 +1039,7 @@ namespace Chummer
         /// <summary>
         /// Default text string to filter by.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string DefaultSearchText { get; set; }
 
         #endregion Properties
@@ -1909,6 +1923,7 @@ namespace Chummer
         /// <summary>
         /// Is a given piece of ware being Upgraded?
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool Upgrading { get; set; }
 
         /// <summary>

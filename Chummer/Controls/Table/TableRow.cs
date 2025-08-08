@@ -22,6 +22,7 @@ using System.Drawing;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.ComponentModel;
 
 namespace Chummer.UI.Table
 {
@@ -74,6 +75,7 @@ namespace Chummer.UI.Table
             }
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public int Index
         {
             get => _intIndex;
@@ -84,6 +86,7 @@ namespace Chummer.UI.Table
             }
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool Selected
         {
             get => _intSelected > 0;

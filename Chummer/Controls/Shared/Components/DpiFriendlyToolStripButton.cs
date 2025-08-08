@@ -22,6 +22,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Threading;
 using System.Windows.Forms;
+using System.ComponentModel;
 
 namespace Chummer
 {
@@ -137,6 +138,7 @@ namespace Chummer
 
         private Image _objImageDpi384;
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Image ImageDpi96
         {
             get => _objImageDpi96;
@@ -152,6 +154,7 @@ namespace Chummer
             }
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Image ImageDpi120
         {
             get => _objImageDpi120;
@@ -164,6 +167,7 @@ namespace Chummer
             }
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Image ImageDpi144
         {
             get => _objImageDpi144;
@@ -176,6 +180,7 @@ namespace Chummer
             }
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Image ImageDpi192
         {
             get => _objImageDpi192;
@@ -188,6 +193,7 @@ namespace Chummer
             }
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Image ImageDpi288
         {
             get => _objImageDpi288;
@@ -200,6 +206,7 @@ namespace Chummer
             }
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Image ImageDpi384
         {
             get => _objImageDpi384;

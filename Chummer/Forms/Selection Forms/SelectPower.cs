@@ -19,6 +19,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -171,11 +172,13 @@ namespace Chummer
         /// <summary>
         /// Whether we should ignore how many of a given power may be taken. Generally used when bonding Qi Foci.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool IgnoreLimits { get; set; }
 
         /// <summary>
         /// Whether this window is being shown to select a power for a bonus node or to just select a power for a character traditionally
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool ForBonus { get; set; }
 
         /// <summary>
@@ -186,6 +189,7 @@ namespace Chummer
         /// <summary>
         /// Only the provided Powers should be shown in the list.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string LimitToPowers
         {
             set => _strLimitToPowers = value;
@@ -194,6 +198,7 @@ namespace Chummer
         /// <summary>
         /// Limit the selections based on the Rating of an external source, where 1 Rating = 0.25 PP.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public int LimitToRating
         {
             set => _decLimitToRating = value * PointsPerLevel;
@@ -202,6 +207,7 @@ namespace Chummer
         /// <summary>
         /// Value of the PP per level if using LimitToRating. Defaults to 0.25.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public decimal PointsPerLevel { set; get; } = 0.25m;
 
         #endregion Properties

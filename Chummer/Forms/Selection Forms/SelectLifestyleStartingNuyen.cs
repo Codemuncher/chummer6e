@@ -17,12 +17,13 @@
  *  https://github.com/chummer5a/chummer5a
  */
 
+using Chummer.Backend.Equipment;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using Chummer.Backend.Equipment;
 
 namespace Chummer
 {
@@ -248,6 +249,7 @@ namespace Chummer
         /// <summary>
         /// Extra number that is added to the dice roll.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public decimal Extra { get; set; }
 
         /// <summary>

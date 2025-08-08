@@ -21,6 +21,7 @@ using System;
 using System.ComponentModel;
 using System.Threading;
 using System.Threading.Tasks;
+using System.ComponentModel;
 
 namespace Chummer.UI.Table
 {
@@ -210,28 +211,33 @@ namespace Chummer.UI.Table
             }
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Func<T, CancellationToken, Task<bool>> EnabledExtractor { get; set; }
 
         /// <summary>
         /// The extractor extracting the minimum value for the spinner
         /// form the value.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Func<T, CancellationToken, Task<decimal>> MinExtractor { get; set; }
 
         /// <summary>
         /// The extractor to extract the maximum value for the spinner
         /// from the value.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Func<T, CancellationToken, Task<decimal>> MaxExtractor { get; set; }
 
         /// <summary>
         /// The extractor for the property displayed in the spinner.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Func<T, CancellationToken, Task<decimal>> ValueGetter { get; set; }
 
         /// <summary>
         /// The extractor for the property displayed in the spinner.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Func<T, decimal, Task> ValueUpdater { get; set; }
 
         private readonly DebuggableSemaphoreSlim _objUpdateSemaphore = new DebuggableSemaphoreSlim();

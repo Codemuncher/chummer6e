@@ -17,16 +17,17 @@
  *  https://github.com/chummer5a/chummer5a
  */
 
+using Chummer.Backend.Equipment;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Xml.XPath;
-using Chummer.Backend.Equipment;
 
 namespace Chummer
 {
@@ -324,6 +325,8 @@ namespace Chummer
         /// <summary>
         /// Forcefully add a Category to the list.
         /// </summary>
+
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string ForceCategory
         {
             set
@@ -344,6 +347,7 @@ namespace Chummer
         /// <summary>
         /// A Quality the character has that should be ignored for checking Fobidden requirements (which would prevent upgrading/downgrading a Quality).
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string IgnoreQuality
         {
             set => _strIgnoreQuality = value;

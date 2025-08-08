@@ -29,6 +29,8 @@ using System.Xml;
 using System.Xml.XPath;
 using Chummer.Backend.Skills;
 using Microsoft.IO;
+using System.ComponentModel;
+
 
 namespace Chummer
 {
@@ -965,6 +967,7 @@ namespace Chummer
         /// <summary>
         /// Set Improvement object to edit.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Improvement EditImprovementObject { get; set; }
 
         #endregion Properties

@@ -20,6 +20,7 @@
 using System;
 using System.Collections.Generic;
 using System.Windows.Forms;
+using System.ComponentModel;
 
 namespace Chummer
 {
@@ -94,6 +95,7 @@ namespace Chummer
         /// <summary>
         /// Description to display on the form.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string Description
         {
             set => lblDescription.Text = value;
@@ -102,6 +104,7 @@ namespace Chummer
         /// <summary>
         /// Whether the Do not affect Metatype Maximum checkbox should be shown on the form.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool ShowMetatypeMaximum
         {
             set => chkDoNotAffectMetatypeMaximum.Visible = value;

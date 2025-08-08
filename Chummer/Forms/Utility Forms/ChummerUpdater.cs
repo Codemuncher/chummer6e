@@ -17,6 +17,7 @@
  *  https://github.com/chummer5a/chummer5a
  */
 
+using NLog;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -24,11 +25,12 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
+using System.Security.Authentication;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using NLog;
 using Application = System.Windows.Forms.Application;
 
 namespace Chummer
@@ -388,21 +390,28 @@ namespace Chummer
                 blnChummerVersionGotten = false;
             if (blnChummerVersionGotten)
             {
-                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
-                request.UserAgent = "Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.1; Trident/6.0)";
-                request.Accept = "application/json";
-                request.Timeout = 5000;
+                var handler = new HttpClientHandler { SslProtocols = SslProtocols.Tls12 | SslProtocols.Tls13 };
+                var httpClient = new HttpClient(handler);
+                httpClient.DefaultRequestHeaders.Add("User-Agent",
+                    "Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.1; Trident/6.0)");
+                httpClient.DefaultRequestHeaders.Accept.Add
+                    (new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+                httpClient.Timeout = TimeSpan.FromSeconds(5);
+                // ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+                //request.Headers["User-Agent"].ToString() = "Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.1; Trident/6.0)";
+                //request.Accept = "application/json";
+                //request.Timeout = 5000;
 
                 // Get the response.
-                HttpWebResponse response = null;
+                HttpResponseMessage response = null;
                 try
                 {
-                    response = await request.GetResponseAsync().ConfigureAwait(false) as HttpWebResponse;
+                    response = await httpClient.GetAsync(uriUpdateLocation, token).ConfigureAwait(false);
 
                     token.ThrowIfCancellationRequested();
 
                     // Get the stream containing content returned by the server.
-                    using (Stream dataStream = response?.GetResponseStream())
+                    using (Stream dataStream = await response.Content.ReadAsStreamAsync(token))
                     {
                         if (dataStream == null)
                             blnChummerVersionGotten = false;
@@ -418,9 +427,9 @@ namespace Chummer
                                 using (StreamReader objReader = new StreamReader(dataStream, Encoding.UTF8, true))
                                 {
                                     token.ThrowIfCancellationRequested();
-                                    for (string strLine = await objReader.ReadLineAsync().ConfigureAwait(false);
+                                    for (string strLine = await objReader.ReadLineAsync(token).ConfigureAwait(false);
                                          strLine != null;
-                                         strLine = await objReader.ReadLineAsync().ConfigureAwait(false))
+                                         strLine = await objReader.ReadLineAsync(token).ConfigureAwait(false))
                                     {
                                         token.ThrowIfCancellationRequested();
                                         if (!string.IsNullOrEmpty(strLine))
@@ -478,7 +487,7 @@ namespace Chummer
                 }
                 finally
                 {
-                    response?.Close();
+                    response.Dispose();
                 }
             }
             if (!blnChummerVersionGotten || LatestVersion == strError)
@@ -590,6 +599,7 @@ namespace Chummer
         /// <summary>
         /// When running in silent mode, the update window will not be shown.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool SilentMode
         {
             get => _intSilentMode > 0;
@@ -656,6 +666,7 @@ namespace Chummer
         /// <summary>
         /// Latest release build number located on Github.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string LatestVersion
         {
             get => _strLatestVersion;

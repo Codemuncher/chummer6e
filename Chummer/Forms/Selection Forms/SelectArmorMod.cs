@@ -25,6 +25,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Xml.XPath;
 using Chummer.Backend.Equipment;
+using System.ComponentModel;
 
 namespace Chummer
 {
@@ -150,6 +151,7 @@ namespace Chummer
         /// <summary>
         /// Armor's Cost.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public decimal ArmorCost
         {
             set => _decArmorCost = value;
@@ -158,6 +160,7 @@ namespace Chummer
         /// <summary>
         /// Armor's Cost.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public decimal ArmorCapacity
         {
             set => _decArmorCapacity = value;
@@ -181,11 +184,13 @@ namespace Chummer
         /// <summary>
         /// Categories that the Armor allows to be used.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string AllowedCategories { get; set; } = string.Empty;
 
         /// <summary>
         /// Whether the General category should be included.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool ExcludeGeneralCategory { get; set; }
 
         /// <summary>
@@ -201,6 +206,7 @@ namespace Chummer
         /// <summary>
         /// Capacity display style.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public CapacityStyle CapacityDisplayStyle
         {
             set => _eCapacityStyle = value;

@@ -18,9 +18,11 @@
  */
 
 using System;
+using System.ComponentModel;
 using System.Drawing;
 using System.Threading;
 using System.Windows.Forms;
+using System.ComponentModel;
 
 namespace Chummer
 {
@@ -76,6 +78,7 @@ namespace Chummer
         private SolidBrush _objBackColorBrush;
         private Pen _objForeColorPen;
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool DefaultColorScheme
         {
             get => _intDefaultColorScheme > 0;

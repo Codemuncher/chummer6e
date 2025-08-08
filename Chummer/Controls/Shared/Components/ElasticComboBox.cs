@@ -20,6 +20,7 @@
 using System;
 using System.Threading;
 using System.Windows.Forms;
+using System.ComponentModel;
 
 namespace Chummer
 {
@@ -31,6 +32,7 @@ namespace Chummer
 
         private string _strToolTipText = string.Empty;
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string TooltipText
         {
             get => _strToolTipText;

@@ -158,7 +158,7 @@ namespace SevenZip.Compression.LZ
             uint size = _pos - _streamPos;
             if (size == 0)
                 return;
-            await _stream.WriteAsync(_buffer, (int)_streamPos, (int)size, token).ConfigureAwait(false);
+            await _stream.WriteAsync(_buffer.AsMemory((int)_streamPos, (int)size), token).ConfigureAwait(false);
             if (_pos >= _windowSize)
                 _pos = 0;
             _streamPos = _pos;

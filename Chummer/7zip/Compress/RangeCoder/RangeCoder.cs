@@ -319,7 +319,7 @@ namespace SevenZip.Compression.RangeCoder
             byte[] achrBuffer = ArrayPool<byte>.Shared.Rent(5);
             try
             {
-                _ = await Stream.ReadAsync(achrBuffer, 0, 5, token).ConfigureAwait(false);
+                _ = await Stream.ReadAsync(achrBuffer.AsMemory(0, 5), token).ConfigureAwait(false);
                 unchecked
                 {
                     unsafe

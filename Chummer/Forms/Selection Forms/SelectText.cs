@@ -18,6 +18,7 @@
  */
 
 using System;
+using System.ComponentModel;
 using System.IO;
 using System.Windows.Forms;
 
@@ -86,6 +87,7 @@ namespace Chummer
         /// <summary>
         /// Value that was entered in the dialogue.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string SelectedValue
         {
             get => _strReturnValue;
@@ -95,17 +97,21 @@ namespace Chummer
         /// <summary>
         /// Description to display in the dialogue.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string Description
         {
             set => lblDescription.Text = value;
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool PreventXPathErrors { get; internal set; }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool PreventFileNameCharErrors { get; internal set; }
 
         private bool _blnAllowEmptyString;
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool AllowEmptyString
         {
             get => _blnAllowEmptyString;
@@ -118,6 +124,7 @@ namespace Chummer
             }
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string DefaultString { get; internal set; }
 
         #endregion Properties

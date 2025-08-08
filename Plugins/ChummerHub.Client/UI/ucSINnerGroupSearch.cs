@@ -16,19 +16,20 @@
  *  You can obtain the full source code for Chummer5a at
  *  https://github.com/chummer5a/chummer5a
  */
+using Chummer;
+using Chummer.Plugins;
+using ChummerHub.Client.Backend;
+using ChummerHub.Client.Sinners;
+using NLog;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Drawing;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using ChummerHub.Client.Backend;
 using System.Text;
 using System.Threading;
-using Chummer;
-using ChummerHub.Client.Sinners;
-using Chummer.Plugins;
+using System.Threading.Tasks;
+using System.Windows.Forms;
 using Point = System.Drawing.Point;
-using NLog;
 
 namespace ChummerHub.Client.UI
 {
@@ -36,11 +37,15 @@ namespace ChummerHub.Client.UI
     {
         private static readonly Lazy<Logger> s_ObjLogger = new Lazy<Logger>(LogManager.GetCurrentClassLogger);
         private static Logger Log => s_ObjLogger.Value;
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public CharacterExtended MyCE { get; set; }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public EventHandler<SINnerGroup> OnGroupJoinCallback { get; set; }
 
         private SINSearchGroupResult _mySINSearchGroupResult;
+
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public SINSearchGroupResult MySINSearchGroupResult
         {
             get => _mySINSearchGroupResult;
@@ -133,6 +138,7 @@ namespace ChummerHub.Client.UI
             return res;
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public frmSINnerGroupSearch MyParentForm { get; internal set; }
 
         public ucSINnerGroupSearch()

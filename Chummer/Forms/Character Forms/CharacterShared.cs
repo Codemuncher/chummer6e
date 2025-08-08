@@ -10641,6 +10641,7 @@ namespace Chummer
         /// <summary>
         /// Whether the character has changes that can be saved
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool IsDirty
         {
             get => _intIsDirty > 0;
@@ -10664,6 +10665,7 @@ namespace Chummer
         /// <summary>
         /// Whether the form is currently in the middle of refreshing some UI elements
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool IsRefreshing
         {
             get => _intRefreshingCount > 0;
@@ -10674,6 +10676,7 @@ namespace Chummer
             }
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool IsLoading
         {
             get => _intLoadingCount > 0;
@@ -10684,6 +10687,7 @@ namespace Chummer
             }
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool IsFinishedInitializing { get; protected set; }
 
         public async Task MakeDirtyWithCharacterUpdate(object sender, NotifyCollectionChangedEventArgs e, CancellationToken token = default)

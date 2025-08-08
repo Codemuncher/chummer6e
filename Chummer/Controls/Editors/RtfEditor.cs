@@ -20,6 +20,7 @@
 using System;
 using System.Drawing;
 using System.Windows.Forms;
+using System.ComponentModel;
 
 namespace Chummer.UI.Editors
 {
@@ -34,6 +35,7 @@ namespace Chummer.UI.Editors
                 tsControls.Visible = false;
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public KeyEventHandler ContentKeyDown { get; set; }
 
         public void FocusContent()
@@ -146,6 +148,7 @@ namespace Chummer.UI.Editors
 
         #region Properties
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string Rtf
         {
             get => rtbContent.Rtf;

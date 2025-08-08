@@ -19,6 +19,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Windows.Forms;
 using System.Xml.XPath;
 
@@ -29,6 +30,7 @@ namespace Chummer
         private string _strSelectedCategory = string.Empty;
         private string _strForceCategory = string.Empty;
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string WeaponType { get; set; }
 
         private readonly Character _objCharacter;
@@ -126,6 +128,7 @@ namespace Chummer
         /// <summary>
         /// Description to show in the window.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string Description
         {
             set => lblDescription.Text = value;
@@ -134,6 +137,7 @@ namespace Chummer
         /// <summary>
         /// Restrict the list to only a single Category.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string OnlyCategory
         {
             get => _strForceCategory;

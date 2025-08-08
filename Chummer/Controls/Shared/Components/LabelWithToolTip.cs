@@ -20,6 +20,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.ComponentModel;
 
 namespace Chummer
 {
@@ -35,6 +36,7 @@ namespace Chummer
 
         private string _strToolTipText = string.Empty;
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string ToolTipText
         {
             // ReSharper disable once UnusedMember.Global

@@ -20,6 +20,7 @@
 using System;
 using System.Globalization;
 using System.Windows.Forms;
+using System.ComponentModel;
 
 namespace Chummer
 {
@@ -93,6 +94,7 @@ namespace Chummer
         /// <summary>
         /// Amount gained or spent.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public decimal Amount
         {
             get
@@ -115,6 +117,7 @@ namespace Chummer
         /// <summary>
         /// Reason for the Karma change.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string Reason
         {
             get => txtDescription.Text;
@@ -124,6 +127,7 @@ namespace Chummer
         /// <summary>
         /// Whether this is a Karma refund.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool Refund
         {
             get => chkRefund.Checked;
@@ -133,6 +137,7 @@ namespace Chummer
         /// <summary>
         /// Whether this is a Karma refund.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool ForceCareerVisible
         {
             get => chkForceCareerVisible.Checked;
@@ -142,6 +147,7 @@ namespace Chummer
         /// <summary>
         /// Date and Time that was selected.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public DateTime SelectedDate
         {
             get => datDate.Value;
@@ -151,6 +157,7 @@ namespace Chummer
         /// <summary>
         /// The Expense's mode (either Karma or Nuyen).
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public ExpenseType Mode
         {
             set
@@ -175,9 +182,13 @@ namespace Chummer
             }
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool KarmaNuyenExchange { get; set; }
+
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string KarmaNuyenExchangeString { get; set; }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool IsInEditMode { get; set; }
 
         #endregion Properties

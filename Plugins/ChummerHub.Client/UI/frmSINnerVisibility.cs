@@ -20,12 +20,14 @@ using ChummerHub.Client.Sinners;
 using System;
 using System.Linq;
 using System.Windows.Forms;
+using System.ComponentModel;
 
 
 namespace ChummerHub.Client.UI
 {
     public partial class frmSINnerVisibility : Form
     {
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public SINnerVisibility MyVisibility
         {
             get => ucSINnerVisibility1.MyVisibility;

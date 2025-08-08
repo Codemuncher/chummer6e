@@ -17,16 +17,17 @@
  *  https://github.com/chummer5a/chummer5a
  */
 
+using Chummer.Backend.Skills;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Xml;
 using System.Xml.XPath;
-using Chummer.Backend.Skills;
 
 namespace Chummer
 {
@@ -45,6 +46,7 @@ namespace Chummer
         private int _intMinimumRating;
         private int _intMaximumRating = int.MaxValue;
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string LinkedAttribute { get; set; } = string.Empty;
 
         private readonly XPathNavigator _objXmlDocument;
@@ -429,6 +431,7 @@ namespace Chummer
         /// <summary>
         /// Only Skills of the selected Category should be in the list.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string OnlyCategory
         {
             set => _strIncludeCategory = value;
@@ -437,6 +440,7 @@ namespace Chummer
         /// <summary>
         /// Only Skills from the selected Categories should be in the list.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public XmlNode LimitToCategories
         {
             set
@@ -465,6 +469,7 @@ namespace Chummer
         /// <summary>
         /// Only Skills not in the selected Category should be in the list.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string ExcludeCategory
         {
             set => _strExcludeCategory = value;
@@ -473,6 +478,7 @@ namespace Chummer
         /// <summary>
         /// Only Skills in the selected Skill Group should be in the list.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string OnlySkillGroup
         {
             set => _strIncludeSkillGroup = value;
@@ -481,6 +487,7 @@ namespace Chummer
         /// <summary>
         /// Restrict the list to only a single Skill.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string OnlySkill
         {
             set => _strForceSkill = value;
@@ -489,6 +496,7 @@ namespace Chummer
         /// <summary>
         /// Only Skills not in the selected Skill Group should be in the list.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string ExcludeSkillGroup
         {
             set => _strExcludeSkillGroup = value;
@@ -497,6 +505,7 @@ namespace Chummer
         /// <summary>
         /// Only the provided Skills should be shown in the list.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string LimitToSkill
         {
             set => _strLimitToSkill = value;
@@ -505,6 +514,7 @@ namespace Chummer
         /// <summary>
         /// Only Skills not among the selected should be in the list.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string ExcludeSkill
         {
             set => _strExcludeSkill = value;
@@ -518,6 +528,7 @@ namespace Chummer
         /// <summary>
         /// Description to show in the window.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string Description
         {
             set => lblDescription.Text = value;
@@ -526,6 +537,7 @@ namespace Chummer
         /// <summary>
         /// Only show skills with a rating greater than or equal to this
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public int MinimumRating
         {
             set => _intMinimumRating = value;
@@ -534,6 +546,7 @@ namespace Chummer
         /// <summary>
         /// Only show skills with a rating less than or equal to this
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public int MaximumRating
         {
             set => _intMaximumRating = value;
