@@ -1526,9 +1526,7 @@
           <total>3</total>
           <natural />
         </attribute>
-          </allof>
-        <oneof>
-        </oneof>       
+          </allof>      
       </required>    
       <source>SR6</source>
       <page>76</page>     
