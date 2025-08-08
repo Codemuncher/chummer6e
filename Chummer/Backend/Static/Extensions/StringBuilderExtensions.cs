@@ -130,10 +130,14 @@ namespace Chummer
                         using (CancellationTokenTaskSource<string> objCancellationTokenTaskSource
                                = new CancellationTokenTaskSource<string>(token))
                         {
-                            await Task.WhenAny(Task.Factory.FromAsync(funcNewValueFactory.BeginInvoke,
-                                                                      x => strFactoryResult
-                                                                          = funcNewValueFactory.EndInvoke(x),
-                                                                      null), objCancellationTokenTaskSource.Task).ConfigureAwait(false);
+                            // Replace this block inside CheapReplaceAsync (Func<string> version):
+                            // await Task.WhenAny(Task.Run(async () => strFactoryResult = await funcNewValueFactory()),objCancellationTokenTaskSource.Task ).ConfigureAwait(false);
+
+                            // With the following:
+                            Task<string> tskReplaceTask = Task.Run(funcNewValueFactory, token);
+                            await Task.WhenAny(tskReplaceTask, objCancellationTokenTaskSource.Task).ConfigureAwait(false);
+                            strFactoryResult = tskReplaceTask.IsCompleted ? tskReplaceTask.Result : string.Empty;
+
                         }
                         token.ThrowIfCancellationRequested();
                         sbdInput.Replace(strOldValue, strFactoryResult);
