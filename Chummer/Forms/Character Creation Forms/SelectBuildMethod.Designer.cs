@@ -7,38 +7,7 @@ namespace Chummer
         /// </summary>
         private System.ComponentModel.IContainer components = null;
 
-        private System.Windows.Forms.TableLayoutPanel tlpMain = new System.Windows.Forms.TableLayoutPanel();
-        private ColorableCheckBox chkIgnoreRules = new ColorableCheckBox();
-        private System.Windows.Forms.Label lblMaxAvailLabel;
-        private ElasticComboBox cboCharacterSetting;
-        private System.Windows.Forms.Label lblKarmaLabel;
-        private System.Windows.Forms.Label lblDescription;
-        private System.Windows.Forms.Label lblMaxNuyenLabel;
-        private System.Windows.Forms.Label lblBuildMethodParamLabel;
-        private ButtonWithToolTip cmdEditCharacterSetting;
-        private System.Windows.Forms.Label lblCharacterSetting;
-        private System.Windows.Forms.Button cmdOK;
-        private System.Windows.Forms.Button cmdCancel;
-        private ElasticComboBox cboBuildMethod;
-        private System.Windows.Forms.TableLayoutPanel tlpSummary;
-        private System.Windows.Forms.Label lblBuildMethodLabel;
-        private System.Windows.Forms.Label lblBuildMethod;
-        private System.Windows.Forms.Label lblBuildMethodParam;
-        private System.Windows.Forms.Label lblMaxAvail;
-        private NumericUpDownEx nudMaxAvail;
-        private ElasticComboBox cboGamePlay;
-        private System.Windows.Forms.Label lblStartingKarma;
-        private System.Windows.Forms.Label lblMaxNuyen;
-        private System.Windows.Forms.Label lblKarma;
-        private System.Windows.Forms.Label lblQualityKarmaLabel;
-        private System.Windows.Forms.Label lblQualityKarma;
-        private System.Windows.Forms.Label lblBooks;
-        private System.Windows.Forms.Label lblCustomData;
-        private System.Windows.Forms.TableLayoutPanel tlpButtons;
-        private System.Windows.Forms.Panel pnlBooks;
-        private System.Windows.Forms.Panel pnlCustomData;
-        private System.Windows.Forms.GroupBox gpbBooks;
-        private System.Windows.Forms.GroupBox gpbCustomData;
+    
         /// <summary>
         /// Clean up any resources being used.
         /// </summary>
@@ -556,5 +525,37 @@ namespace Chummer
 
         #endregion
 
+        private ColorableCheckBox chkIgnoreRules;
+        private System.Windows.Forms.Label lblMaxAvailLabel;
+        private ElasticComboBox cboCharacterSetting;
+        private System.Windows.Forms.Label lblKarmaLabel;
+        private System.Windows.Forms.Label lblDescription;
+        private System.Windows.Forms.Label lblMaxNuyenLabel;
+        private System.Windows.Forms.TableLayoutPanel tlpMain;
+        private System.Windows.Forms.Label lblBuildMethodParamLabel;
+        private ButtonWithToolTip cmdEditCharacterSetting;
+        private System.Windows.Forms.Label lblCharacterSetting;
+        private System.Windows.Forms.Button cmdOK;
+        private System.Windows.Forms.Button cmdCancel;
+        private ElasticComboBox cboBuildMethod;
+        private System.Windows.Forms.TableLayoutPanel tlpSummary;
+        private System.Windows.Forms.Label lblBuildMethodLabel;
+        private System.Windows.Forms.Label lblBuildMethod;
+        private System.Windows.Forms.Label lblBuildMethodParam;
+        private System.Windows.Forms.Label lblMaxAvail;
+        private NumericUpDownEx nudMaxAvail;
+        private ElasticComboBox cboGamePlay;
+        private System.Windows.Forms.Label lblStartingKarma;
+        private System.Windows.Forms.Label lblMaxNuyen;
+        private System.Windows.Forms.Label lblKarma;
+        private System.Windows.Forms.Label lblQualityKarmaLabel;
+        private System.Windows.Forms.Label lblQualityKarma;
+        private System.Windows.Forms.Label lblBooks;
+        private System.Windows.Forms.Label lblCustomData;
+        private System.Windows.Forms.TableLayoutPanel tlpButtons;
+        private System.Windows.Forms.Panel pnlBooks;
+        private System.Windows.Forms.Panel pnlCustomData;
+        private System.Windows.Forms.GroupBox gpbBooks;
+        private System.Windows.Forms.GroupBox gpbCustomData;
     }
 }

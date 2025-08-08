@@ -277,7 +277,7 @@ namespace Chummer
                     {
                         object objOldSelected = objSelected ?? await cboCharacterSetting
                                                                          .DoThreadSafeFuncAsync(
-                                                                             x => x.SelectedValue, token: token)
+                                                                             l => l.SelectedValue, token: token)
                                                                         .ConfigureAwait(false);
                         // Populate the Gameplay Settings list.
                         using (new FetchSafelyFromPool<List<ListItem>>(
