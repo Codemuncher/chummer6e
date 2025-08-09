@@ -72,7 +72,7 @@ namespace Chummer
             return Task.Run(() =>
             {
                 using (FileStream objFileStream
-                       = new FileStream(strFileName, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite))
+                       = new FileStream(strFileName, FileMode.Open, FileAccess.Read, FileShare.Read))
                 {
                     token.ThrowIfCancellationRequested();
                     using (StreamReader objStreamReader = new StreamReader(objFileStream, Encoding.UTF8, true))
@@ -102,7 +102,7 @@ namespace Chummer
         {
             token.ThrowIfCancellationRequested();
             using (FileStream objFileStream
-                   = new FileStream(strFileName, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite))
+                   = new FileStream(strFileName, FileMode.Open, FileAccess.Read, FileShare.Read))
             {
                 token.ThrowIfCancellationRequested();
                 using (RecyclableMemoryStream objMemoryStream
@@ -142,7 +142,7 @@ namespace Chummer
         {
             return Task.Run(async () =>
             {
-                using (FileStream objFileStream = new FileStream(strFileName, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite))
+                using (FileStream objFileStream = new FileStream(strFileName, FileMode.Open, FileAccess.Read, FileShare.Read))
                 {
                     token.ThrowIfCancellationRequested();
                     using (RecyclableMemoryStream objMemoryStream = new RecyclableMemoryStream(Utils.MemoryStreamManager, "LzmaMemoryStream", (int)objFileStream.Length))

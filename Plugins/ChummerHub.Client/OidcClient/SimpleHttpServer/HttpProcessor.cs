@@ -129,6 +129,7 @@ namespace SimpleHttpServer
         {
             byte[] bytes = Encoding.UTF8.GetBytes(text);
             stream.Write(bytes, 0, bytes.Length);
+            stream.Dispose(); //close the stream after writing to open it again.
         }
 
         protected virtual Stream GetOutputStream(TcpClient tcpClient)
