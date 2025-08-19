@@ -31,6 +31,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Xml;
 using System.Xml.XPath;
+using Chummer.Backend.Enums;
 using NLog;
 
 namespace Chummer.Backend.Equipment
@@ -1135,10 +1136,12 @@ namespace Chummer.Backend.Equipment
                 await objWriter.WriteElementStringAsync("calculatedcapacity", await CalculatedCapacityAsync(objCulture, token).ConfigureAwait(false), token).ConfigureAwait(false);
                 await objWriter.WriteElementStringAsync("capacityremaining", (await GetCapacityRemainingAsync(token).ConfigureAwait(false)).ToString(objCulture), token).ConfigureAwait(false);
                 await objWriter.WriteElementStringAsync("avail", await TotalAvailAsync(objCulture, strLanguageToPrint, token).ConfigureAwait(false), token).ConfigureAwait(false);
-                await objWriter.WriteElementStringAsync("cost", (await GetTotalCostAsync(token).ConfigureAwait(false)).ToString(await _objCharacter.Settings.GetNuyenFormatAsync(token).ConfigureAwait(false), objCulture), token).ConfigureAwait(false);
-                await objWriter.WriteElementStringAsync("owncost", (await GetOwnCostAsync(token).ConfigureAwait(false)).ToString(await _objCharacter.Settings.GetNuyenFormatAsync(token).ConfigureAwait(false), objCulture), token).ConfigureAwait(false);
-                await objWriter.WriteElementStringAsync("weight", TotalWeight.ToString(await _objCharacter.Settings.GetWeightFormatAsync(token).ConfigureAwait(false), objCulture), token).ConfigureAwait(false);
-                await objWriter.WriteElementStringAsync("ownweight", OwnWeight.ToString(await _objCharacter.Settings.GetWeightFormatAsync(token).ConfigureAwait(false), objCulture), token).ConfigureAwait(false);
+                string strNuyenFormat = await (await _objCharacter.GetSettingsAsync(token).ConfigureAwait(false)).GetNuyenFormatAsync(token).ConfigureAwait(false);
+                await objWriter.WriteElementStringAsync("cost", (await GetTotalCostAsync(token).ConfigureAwait(false)).ToString(strNuyenFormat, objCulture), token).ConfigureAwait(false);
+                await objWriter.WriteElementStringAsync("owncost", (await GetOwnCostAsync(token).ConfigureAwait(false)).ToString(strNuyenFormat, objCulture), token).ConfigureAwait(false);
+                string strWeightFormat = await (await _objCharacter.GetSettingsAsync(token).ConfigureAwait(false)).GetWeightFormatAsync(token).ConfigureAwait(false);
+                await objWriter.WriteElementStringAsync("weight", TotalWeight.ToString(strWeightFormat, objCulture), token).ConfigureAwait(false);
+                await objWriter.WriteElementStringAsync("ownweight", OwnWeight.ToString(strWeightFormat, objCulture), token).ConfigureAwait(false);
                 await objWriter.WriteElementStringAsync("source", await _objCharacter.LanguageBookShortAsync(Source, strLanguageToPrint, token).ConfigureAwait(false), token).ConfigureAwait(false);
                 await objWriter.WriteElementStringAsync("page", await DisplayPageAsync(strLanguageToPrint, token).ConfigureAwait(false), token).ConfigureAwait(false);
                 await objWriter.WriteElementStringAsync("armorname", CustomName, token).ConfigureAwait(false);
@@ -1379,7 +1382,7 @@ namespace Chummer.Backend.Equipment
                 return;
             if (Equipped && _objCharacter != null)
             {
-                if (Weight.ContainsAny("FixedValues", "Rating") || GearChildren.Any(x => x.Equipped && x.Weight.Contains("Parent Rating"), token))
+                if (Weight.ContainsAny("FixedValues", "Rating") || await GearChildren.AnyAsync(x => x.Equipped && x.Weight.Contains("Parent Rating"), token).ConfigureAwait(false))
                 {
                     if (ArmorValue.ContainsAny("FixedValues", "Rating") || ArmorOverrideValue.ContainsAny("FixedValues", "Rating"))
                     {
@@ -2021,7 +2024,7 @@ namespace Chummer.Backend.Equipment
         {
             // Go through all of the Mods for this piece of Armor and add the Armor value.
             int intTotalArmor = await GetOwnArmorAsync(token).ConfigureAwait(false) + await ArmorMods.SumAsync(o => o.Equipped, o => o.Armor, token: token).ConfigureAwait(false);
-            if (_objCharacter != null && await _objCharacter.Settings.GetArmorDegradationAsync(token).ConfigureAwait(false))
+            if (_objCharacter != null && await (await _objCharacter.GetSettingsAsync(token).ConfigureAwait(false)).GetArmorDegradationAsync(token).ConfigureAwait(false))
                 intTotalArmor -= ArmorDamage;
 
             return Math.Max(intTotalArmor, 0);
@@ -2060,7 +2063,7 @@ namespace Chummer.Backend.Equipment
         {
             // Go through all of the Mods for this piece of Armor and add the Armor value.
             int intTotalArmor = await GetOwnOverrideArmorAsync(token).ConfigureAwait(false) + await ArmorMods.SumAsync(o => o.Equipped, o => o.Armor, token: token).ConfigureAwait(false);
-            if (_objCharacter != null && await _objCharacter.Settings.GetArmorDegradationAsync(token).ConfigureAwait(false))
+            if (_objCharacter != null && await (await _objCharacter.GetSettingsAsync(token).ConfigureAwait(false)).GetArmorDegradationAsync(token).ConfigureAwait(false))
                 intTotalArmor -= ArmorDamage;
 
             return Math.Max(intTotalArmor, 0);
@@ -3522,7 +3525,7 @@ namespace Chummer.Backend.Equipment
             AvailabilityValue objTotalAvail = await TotalAvailTupleAsync(token: token).ConfigureAwait(false);
             int intAvailInt = await objTotalAvail.GetValueAsync(token).ConfigureAwait(false);
             int intRestrictedCount = 0;
-            if (intAvailInt > await _objCharacter.Settings.GetMaximumAvailabilityAsync(token).ConfigureAwait(false))
+            if (intAvailInt > await (await _objCharacter.GetSettingsAsync(token).ConfigureAwait(false)).GetMaximumAvailabilityAsync(token).ConfigureAwait(false))
             {
                 int intLowestValidRestrictedGearAvail = -1;
                 foreach (int intValidAvail in dicRestrictedGearLimits.Keys)
