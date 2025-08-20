@@ -7382,12 +7382,17 @@ namespace Chummer
                                     foreach (XmlNode objXmlMentor in objXmlNodeList)
                                     {
                                         MentorSpirit objMentor = new MentorSpirit(this, objXmlMentor);
-                                        objMentor.Load(objXmlMentor);
                                         if (blnSync)
+                                        {
+                                            objMentor.Load(objXmlMentor);
                                             // ReSharper disable once MethodHasAsyncOverloadWithCancellation
                                             _lstMentorSpirits.Add(objMentor);
+                                        }
                                         else
+                                        {
+                                            await objMentor.LoadAsync(objXmlMentor, token).ConfigureAwait(false);
                                             await _lstMentorSpirits.AddAsync(objMentor, token).ConfigureAwait(false);
+                                        }
                                     }
                                 }
 
@@ -7693,9 +7698,9 @@ namespace Chummer
                                                 try
                                                 {
                                                     token.ThrowIfCancellationRequested();
-                                                    objQuality.Load(objXmlQuality);
                                                     if (blnSync)
                                                     {
+                                                        objQuality.Load(objXmlQuality);
                                                         // ReSharper disable once MethodHasAsyncOverload
                                                         if (_lstQualities.Any(x => x.InternalId == objQuality.InternalId, token))
                                                             // Corrects an issue arising from older versions of CorrectedUnleveledQuality()
@@ -7711,6 +7716,7 @@ namespace Chummer
                                                     }
                                                     else
                                                     {
+                                                        await objQuality.LoadAsync(objXmlQuality, token).ConfigureAwait(false);
                                                         if (await _lstQualities.AnyAsync(x => x.InternalId == objQuality.InternalId, token).ConfigureAwait(false))
                                                             // Corrects an issue arising from older versions of CorrectedUnleveledQuality()
                                                             objQuality.SetGUID(Guid.NewGuid());
@@ -8314,7 +8320,10 @@ namespace Chummer
                                         if (xpathTraditionNavigator.SelectSingleNodeAndCacheExpression("guid", token) != null
                                             || xpathTraditionNavigator.SelectSingleNodeAndCacheExpression("id", token) != null)
                                         {
-                                            _objTradition.Load(objXmlCharacter["tradition"]);
+                                            if (blnSync)
+                                                _objTradition.Load(objXmlCharacter["tradition"]);
+                                            else
+                                                await _objTradition.LoadAsync(objXmlCharacter["tradition"], token).ConfigureAwait(false);
                                         }
                                         else if (blnSync
                                                      ? MAGEnabled
@@ -8510,21 +8519,30 @@ namespace Chummer
                                 foreach (XmlNode objXmlLocation in objXmlLocationList)
                                 {
                                     Location objLocation = new Location(this, _lstGearLocations);
-                                    objLocation.Load(objXmlLocation);
+                                    if (blnSync)
+                                        objLocation.Load(objXmlLocation);
+                                    else
+                                        await objLocation.LoadAsync(objXmlLocation, token).ConfigureAwait(false);
                                 }
 
                                 objXmlLocationList = objXmlCharacter.SelectNodes("locations/location");
                                 foreach (XmlNode objXmlLocation in objXmlLocationList)
                                 {
                                     Location objLocation = new Location(this, _lstGearLocations);
-                                    objLocation.Load(objXmlLocation);
+                                    if (blnSync)
+                                        objLocation.Load(objXmlLocation);
+                                    else
+                                        await objLocation.LoadAsync(objXmlLocation, token).ConfigureAwait(false);
                                 }
 
                                 objXmlLocationList = objXmlCharacter.SelectNodes("gearlocations/location");
                                 foreach (XmlNode objXmlLocation in objXmlLocationList)
                                 {
                                     Location objLocation = new Location(this, _lstGearLocations);
-                                    objLocation.Load(objXmlLocation);
+                                    if (blnSync)
+                                        objLocation.Load(objXmlLocation);
+                                    else
+                                        await objLocation.LoadAsync(objXmlLocation, token).ConfigureAwait(false);
                                 }
 
                                 //Timekeeper.Finish("load_char_loc");
@@ -8537,21 +8555,30 @@ namespace Chummer
                                 foreach (XmlNode objXmlLocation in objXmlLocationList)
                                 {
                                     Location objLocation = new Location(this, _lstArmorLocations);
-                                    objLocation.Load(objXmlLocation);
+                                    if (blnSync)
+                                        objLocation.Load(objXmlLocation);
+                                    else
+                                        await objLocation.LoadAsync(objXmlLocation, token).ConfigureAwait(false);
                                 }
 
                                 objXmlLocationList = objXmlCharacter.SelectNodes("armorlocations/armorlocation");
                                 foreach (XmlNode objXmlLocation in objXmlLocationList)
                                 {
                                     Location objLocation = new Location(this, _lstArmorLocations);
-                                    objLocation.Load(objXmlLocation);
+                                    if (blnSync)
+                                        objLocation.Load(objXmlLocation);
+                                    else
+                                        await objLocation.LoadAsync(objXmlLocation, token).ConfigureAwait(false);
                                 }
 
                                 objXmlLocationList = objXmlCharacter.SelectNodes("armorlocations/location");
                                 foreach (XmlNode objXmlLocation in objXmlLocationList)
                                 {
                                     Location objLocation = new Location(this, _lstArmorLocations);
-                                    objLocation.Load(objXmlLocation);
+                                    if (blnSync)
+                                        objLocation.Load(objXmlLocation);
+                                    else
+                                        await objLocation.LoadAsync(objXmlLocation, token).ConfigureAwait(false);
                                 }
 
                                 //Timekeeper.Finish("load_char_abundle");
@@ -8565,7 +8592,10 @@ namespace Chummer
                                 foreach (XmlNode objXmlLocation in objXmlVehicleLocationList)
                                 {
                                     Location objLocation = new Location(this, _lstVehicleLocations);
-                                    objLocation.Load(objXmlLocation);
+                                    if (blnSync)
+                                        objLocation.Load(objXmlLocation);
+                                    else
+                                        await objLocation.LoadAsync(objXmlLocation, token).ConfigureAwait(false);
                                 }
 
                                 objXmlVehicleLocationList =
@@ -8573,7 +8603,10 @@ namespace Chummer
                                 foreach (XmlNode objXmlLocation in objXmlVehicleLocationList)
                                 {
                                     Location objLocation = new Location(this, _lstVehicleLocations);
-                                    objLocation.Load(objXmlLocation);
+                                    if (blnSync)
+                                        objLocation.Load(objXmlLocation);
+                                    else
+                                        await objLocation.LoadAsync(objXmlLocation, token).ConfigureAwait(false);
                                 }
 
                                 //Timekeeper.Finish("load_char_vloc");
@@ -8587,14 +8620,20 @@ namespace Chummer
                                 foreach (XmlNode objXmlLocation in objXmlWeaponLocationList)
                                 {
                                     Location objLocation = new Location(this, _lstWeaponLocations);
-                                    objLocation.Load(objXmlLocation);
+                                    if (blnSync)
+                                        objLocation.Load(objXmlLocation);
+                                    else
+                                        await objLocation.LoadAsync(objXmlLocation, token).ConfigureAwait(false);
                                 }
 
                                 objXmlWeaponLocationList = objXmlCharacter.SelectNodes("weaponlocations/location");
                                 foreach (XmlNode objXmlLocation in objXmlWeaponLocationList)
                                 {
                                     Location objLocation = new Location(this, _lstWeaponLocations);
-                                    objLocation.Load(objXmlLocation);
+                                    if (blnSync)
+                                        objLocation.Load(objXmlLocation);
+                                    else
+                                        await objLocation.LoadAsync(objXmlLocation, token).ConfigureAwait(false);
                                 }
 
                                 //Timekeeper.Finish("load_char_wloc");
@@ -8607,12 +8646,17 @@ namespace Chummer
                                 foreach (XmlNode objXmlStack in objXmlNodeList)
                                 {
                                     StackedFocus objStack = new StackedFocus(this);
-                                    objStack.Load(objXmlStack);
                                     if (blnSync)
+                                    {
+                                        objStack.Load(objXmlStack);
                                         // ReSharper disable once MethodHasAsyncOverloadWithCancellation
                                         _lstStackedFoci.Add(objStack);
+                                    }
                                     else
+                                    {
+                                        await objStack.LoadAsync(objXmlStack, token).ConfigureAwait(false);
                                         await _lstStackedFoci.AddAsync(objStack, token).ConfigureAwait(false);
+                                    }
                                 }
 
                                 //Timekeeper.Finish("load_char_sfoci");
@@ -8639,12 +8683,17 @@ namespace Chummer
                                 foreach (XmlNode objXmlArmor in objXmlNodeList)
                                 {
                                     Armor objArmor = new Armor(this);
-                                    objArmor.Load(objXmlArmor);
                                     if (blnSync)
+                                    {
+                                        objArmor.Load(objXmlArmor);
                                         // ReSharper disable once MethodHasAsyncOverloadWithCancellation
                                         _lstArmor.Add(objArmor);
+                                    }
                                     else
+                                    {
+                                        await objArmor.LoadAsync(objXmlArmor, token: token).ConfigureAwait(false);
                                         await _lstArmor.AddAsync(objArmor, token).ConfigureAwait(false);
+                                    }
                                 }
 
                                 //Timekeeper.Finish("load_char_armor");
@@ -8671,12 +8720,17 @@ namespace Chummer
                                 foreach (XmlNode objXmlDrug in objXmlNodeList)
                                 {
                                     Drug objDrug = new Drug(this);
-                                    objDrug.Load(objXmlDrug);
                                     if (blnSync)
+                                    {
+                                        objDrug.Load(objXmlDrug);
                                         // ReSharper disable once MethodHasAsyncOverloadWithCancellation
                                         _lstDrugs.Add(objDrug);
+                                    }
                                     else
+                                    {
+                                        await objDrug.LoadAsync(objXmlDrug, token).ConfigureAwait(false);
                                         await _lstDrugs.AddAsync(objDrug, token).ConfigureAwait(false);
+                                    }
                                 }
 
                                 //Timekeeper.Finish("load_char_drugs");
@@ -9118,12 +9172,17 @@ namespace Chummer
                                 foreach (XmlNode objXmlSpell in objXmlNodeList)
                                 {
                                     Spell objSpell = new Spell(this);
-                                    objSpell.Load(objXmlSpell);
                                     if (blnSync)
+                                    {
+                                        objSpell.Load(objXmlSpell);
                                         // ReSharper disable once MethodHasAsyncOverloadWithCancellation
                                         _lstSpells.Add(objSpell);
+                                    }
                                     else
+                                    {
+                                        await objSpell.LoadAsync(objXmlSpell, token).ConfigureAwait(false);
                                         await _lstSpells.AddAsync(objSpell, token).ConfigureAwait(false);
+                                    }
                                 }
                                 //Timekeeper.Finish("load_char_spells");
                             }
@@ -9307,12 +9366,17 @@ namespace Chummer
                                 foreach (XmlNode objXmlComplexForm in objXmlNodeList)
                                 {
                                     ComplexForm objComplexForm = new ComplexForm(this);
-                                    objComplexForm.Load(objXmlComplexForm);
                                     if (blnSync)
+                                    {
+                                        objComplexForm.Load(objXmlComplexForm);
                                         // ReSharper disable once MethodHasAsyncOverloadWithCancellation
                                         _lstComplexForms.Add(objComplexForm);
+                                    }
                                     else
+                                    {
+                                        await objComplexForm.LoadAsync(objXmlComplexForm, token).ConfigureAwait(false);
                                         await _lstComplexForms.AddAsync(objComplexForm, token).ConfigureAwait(false);
+                                    }
                                 }
 
                                 //Timekeeper.Finish("load_char_complex");
@@ -9340,12 +9404,17 @@ namespace Chummer
                                 foreach (XmlNode objXmlProgram in objXmlNodeList)
                                 {
                                     AIProgram objProgram = new AIProgram(this);
-                                    objProgram.Load(objXmlProgram);
                                     if (blnSync)
+                                    {
+                                        objProgram.Load(objXmlProgram);
                                         // ReSharper disable once MethodHasAsyncOverloadWithCancellation
                                         _lstAIPrograms.Add(objProgram);
+                                    }
                                     else
+                                    {
+                                        await objProgram.LoadAsync(objXmlProgram, token).ConfigureAwait(false);
                                         await _lstAIPrograms.AddAsync(objProgram, token).ConfigureAwait(false);
+                                    }
                                 }
 
                                 //Timekeeper.Finish("load_char_aiprogram");
@@ -9373,12 +9442,17 @@ namespace Chummer
                                 foreach (XmlNode objXmlArt in objXmlNodeList)
                                 {
                                     MartialArt objMartialArt = new MartialArt(this);
-                                    objMartialArt.Load(objXmlArt);
                                     if (blnSync)
+                                    {
+                                        objMartialArt.Load(objXmlArt);
                                         // ReSharper disable once MethodHasAsyncOverloadWithCancellation
                                         _lstMartialArts.Add(objMartialArt);
+                                    }
                                     else
+                                    {
+                                        await objMartialArt.LoadAsync(objXmlArt, token).ConfigureAwait(false);
                                         await _lstMartialArts.AddAsync(objMartialArt, token).ConfigureAwait(false);
+                                    }
                                 }
 
                                 //Timekeeper.Finish("load_char_marts");
@@ -9404,13 +9478,18 @@ namespace Chummer
                                 objXmlNodeList = objXmlCharacter.SelectNodes("limitmodifiers/limitmodifier");
                                 foreach (XmlNode objXmlLimit in objXmlNodeList)
                                 {
-                                    LimitModifier obLimitModifier = new LimitModifier(this);
-                                    obLimitModifier.Load(objXmlLimit);
+                                    LimitModifier objLimitModifier = new LimitModifier(this);
                                     if (blnSync)
+                                    {
+                                        objLimitModifier.Load(objXmlLimit);
                                         // ReSharper disable once MethodHasAsyncOverloadWithCancellation
-                                        _lstLimitModifiers.Add(obLimitModifier);
+                                        _lstLimitModifiers.Add(objLimitModifier);
+                                    }
                                     else
-                                        await _lstLimitModifiers.AddAsync(obLimitModifier, token).ConfigureAwait(false);
+                                    {
+                                        await objLimitModifier.LoadAsync(objXmlLimit, token).ConfigureAwait(false);
+                                        await _lstLimitModifiers.AddAsync(objLimitModifier, token).ConfigureAwait(false);
+                                    }
                                 }
 
                                 //Timekeeper.Finish("load_char_mod");
@@ -9437,12 +9516,17 @@ namespace Chummer
                                 foreach (XmlNode objXmlLifestyle in objXmlNodeList)
                                 {
                                     Lifestyle objLifestyle = new Lifestyle(this);
-                                    objLifestyle.Load(objXmlLifestyle);
                                     if (blnSync)
+                                    {
+                                        objLifestyle.Load(objXmlLifestyle);
                                         // ReSharper disable once MethodHasAsyncOverloadWithCancellation
                                         _lstLifestyles.Add(objLifestyle);
+                                    }
                                     else
+                                    {
+                                        await objLifestyle.LoadAsync(objXmlLifestyle, token: token).ConfigureAwait(false);
                                         await _lstLifestyles.AddAsync(objLifestyle, token).ConfigureAwait(false);
+                                    }
                                 }
 
                                 //Timekeeper.Finish("load_char_lifestyle");
@@ -9469,12 +9553,17 @@ namespace Chummer
                                 foreach (XmlNode objXmlGear in objXmlNodeList)
                                 {
                                     Gear objGear = new Gear(this);
-                                    objGear.Load(objXmlGear);
                                     if (blnSync)
+                                    {
+                                        objGear.Load(objXmlGear);
                                         // ReSharper disable once MethodHasAsyncOverloadWithCancellation
                                         _lstGear.Add(objGear);
+                                    }
                                     else
+                                    {
+                                        await objGear.LoadAsync(objXmlGear, token: token).ConfigureAwait(false);
                                         await _lstGear.AddAsync(objGear, token).ConfigureAwait(false);
+                                    }
                                 }
 
                                 // If the character has a technomancer quality but no Living Persona commlink, its improvements get re-applied immediately
@@ -9650,12 +9739,17 @@ namespace Chummer
                                 foreach (XmlNode objXmlVehicle in objXmlNodeList)
                                 {
                                     Vehicle objVehicle = new Vehicle(this);
-                                    objVehicle.Load(objXmlVehicle);
                                     if (blnSync)
+                                    {
+                                        objVehicle.Load(objXmlVehicle);
                                         // ReSharper disable once MethodHasAsyncOverloadWithCancellation
                                         _lstVehicles.Add(objVehicle);
+                                    }
                                     else
+                                    {
+                                        await objVehicle.LoadAsync(objXmlVehicle, token: token).ConfigureAwait(false);
                                         await _lstVehicles.AddAsync(objVehicle, token).ConfigureAwait(false);
+                                    }
                                 }
 
                                 //Timekeeper.Finish("load_char_car");
@@ -9720,12 +9814,17 @@ namespace Chummer
                                 foreach (XmlNode objXmlMetamagic in objXmlNodeList)
                                 {
                                     Metamagic objMetamagic = new Metamagic(this);
-                                    objMetamagic.Load(objXmlMetamagic);
                                     if (blnSync)
+                                    {
+                                        objMetamagic.Load(objXmlMetamagic);
                                         // ReSharper disable once MethodHasAsyncOverloadWithCancellation
                                         _lstMetamagics.Add(objMetamagic);
+                                    }
                                     else
+                                    {
+                                        await objMetamagic.LoadAsync(objXmlMetamagic, token).ConfigureAwait(false);
                                         await _lstMetamagics.AddAsync(objMetamagic, token).ConfigureAwait(false);
+                                    }
                                 }
 
                                 //Timekeeper.Finish("load_char_mmagic");
@@ -9752,12 +9851,17 @@ namespace Chummer
                                 foreach (XmlNode objXmlArt in objXmlNodeList)
                                 {
                                     Art objArt = new Art(this);
-                                    objArt.Load(objXmlArt);
                                     if (blnSync)
+                                    {
+                                        objArt.Load(objXmlArt);
                                         // ReSharper disable once MethodHasAsyncOverloadWithCancellation
                                         _lstArts.Add(objArt);
+                                    }
                                     else
+                                    {
+                                        await objArt.LoadAsync(objXmlArt, token).ConfigureAwait(false);
                                         await _lstArts.AddAsync(objArt, token).ConfigureAwait(false);
+                                    }
                                 }
 
                                 //Timekeeper.Finish("load_char_arts");
@@ -9785,12 +9889,17 @@ namespace Chummer
                                 foreach (XmlNode objXmlEnhancement in objXmlNodeList)
                                 {
                                     Enhancement objEnhancement = new Enhancement(this);
-                                    objEnhancement.Load(objXmlEnhancement);
                                     if (blnSync)
+                                    {
+                                        objEnhancement.Load(objXmlEnhancement);
                                         // ReSharper disable once MethodHasAsyncOverloadWithCancellation
                                         _lstEnhancements.Add(objEnhancement);
+                                    }
                                     else
+                                    {
+                                        await objEnhancement.LoadAsync(objXmlEnhancement, token).ConfigureAwait(false);
                                         await _lstEnhancements.AddAsync(objEnhancement, token).ConfigureAwait(false);
+                                    }
                                 }
 
                                 //Timekeeper.Finish("load_char_ench");
@@ -9817,12 +9926,17 @@ namespace Chummer
                                 foreach (XmlNode objXmlPower in objXmlNodeList)
                                 {
                                     CritterPower objPower = new CritterPower(this);
-                                    objPower.Load(objXmlPower);
                                     if (blnSync)
+                                    {
+                                        objPower.Load(objXmlPower);
                                         // ReSharper disable once MethodHasAsyncOverloadWithCancellation
                                         _lstCritterPowers.Add(objPower);
+                                    }
                                     else
+                                    {
+                                        await objPower.LoadAsync(objXmlPower, token).ConfigureAwait(false);
                                         await _lstCritterPowers.AddAsync(objPower, token).ConfigureAwait(false);
+                                    }
                                 }
 
                                 //Timekeeper.Finish("load_char_cpow");
@@ -9927,9 +10041,17 @@ namespace Chummer
                                     foreach (XmlNode objXmlExpense in objXmlExpenseList)
                                     {
                                         ExpenseLogEntry objExpenseLogEntry = new ExpenseLogEntry(this);
-                                        objExpenseLogEntry.Load(objXmlExpense);
-                                        await _lstExpenseLog.AddWithSortAsync(objExpenseLogEntry, token: token)
-                                                            .ConfigureAwait(false);
+                                        if (blnSync)
+                                        {
+                                            objExpenseLogEntry.Load(objXmlExpense);
+                                            _lstExpenseLog.AddWithSort(objExpenseLogEntry, token: token);
+                                        }
+                                        else
+                                        {
+                                            await objExpenseLogEntry.LoadAsync(objXmlExpense, token).ConfigureAwait(false);
+                                            await _lstExpenseLog.AddWithSortAsync(objExpenseLogEntry, token: token)
+                                                                .ConfigureAwait(false);
+                                        }
                                     }
 
                                     //Timekeeper.Finish("load_char_elog");
@@ -10044,10 +10166,18 @@ namespace Chummer
                                     try
                                     {
                                         token.ThrowIfCancellationRequested();
-                                        objWeek.Load(objXmlWeek);
-                                        await _lstCalendar
-                                              .AddWithSortAsync(objWeek, (x, y) => y.CompareTo(x), token: token)
-                                              .ConfigureAwait(false);
+                                        if (blnSync)
+                                        {
+                                            objWeek.Load(objXmlWeek);
+                                            _lstCalendar.AddWithSort(objWeek, (x, y) => y.CompareTo(x), token: token);
+                                        }
+                                        else
+                                        {
+                                            await objWeek.LoadAsync(objXmlWeek, token).ConfigureAwait(false);
+                                            await _lstCalendar
+                                                  .AddWithSortAsync(objWeek, (x, y) => y.CompareTo(x), token: token)
+                                                  .ConfigureAwait(false);
+                                        }
                                     }
                                     catch
                                     {
