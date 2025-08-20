@@ -174,29 +174,6 @@ namespace Chummer.Backend.Equipment
         #region Helper Methods
 
         /// <summary>
-        /// Convert a string to a Grade.
-        /// </summary>
-        /// <param name="strValue">String value to convert.</param>
-        /// <param name="objSource">Source representing whether this is a cyberware or bioware grade.</param>
-        /// <param name="objCharacter">Character from which to fetch a grade list</param>
-        public static Grade ConvertToCyberwareGrade(string strValue, Improvement.ImprovementSource objSource,
-            Character objCharacter)
-        {
-            if (objCharacter == null)
-                throw new ArgumentNullException(nameof(objCharacter));
-            Grade objStandardGrade = null;
-            foreach (Grade objGrade in objCharacter.GetGrades(objSource, true))
-            {
-                if (objGrade.Name == strValue)
-                    return objGrade;
-                if (objGrade.Name == "Standard")
-                    objStandardGrade = objGrade;
-            }
-
-            return objStandardGrade;
-        }
-
-        /// <summary>
         /// Returns the limb type associated with a particular mount.
         /// </summary>
         /// <param name="strMount">Mount to check.</param>
@@ -2464,7 +2441,7 @@ namespace Chummer.Backend.Equipment
                         _objGrade = blnSync
                             // ReSharper disable once MethodHasAsyncOverloadWithCancellation
                             ? Grade.ConvertToCyberwareGrade(objNode["grade"].InnerText, _eImprovementSource,
-                                _objCharacter)
+                                _objCharacter, token)
                             : await Grade.ConvertToCyberwareGradeAsync(objNode["grade"].InnerText, _eImprovementSource,
                                 _objCharacter, token).ConfigureAwait(false);
                     objNode.TryGetStringFieldQuickly("location", ref _strLocation);
@@ -2548,7 +2525,7 @@ namespace Chummer.Backend.Equipment
                             _objGrade = blnSync
                                 // ReSharper disable once MethodHasAsyncOverloadWithCancellation
                                 ? Grade.ConvertToCyberwareGrade(_strForceGrade, _eImprovementSource,
-                                    _objCharacter)
+                                    _objCharacter, token)
                                 : await Grade.ConvertToCyberwareGradeAsync(_strForceGrade, _eImprovementSource,
                                     _objCharacter, token).ConfigureAwait(false);
                     }
@@ -4437,7 +4414,7 @@ namespace Chummer.Backend.Equipment
 
                             string strSourceNameToUse = InternalId + "WirelessPair";
                             ImprovementManager.RemoveImprovements(_objCharacter, SourceType, strSourceNameToUse);
-                            if (intCount % 2 == 1)
+                            if ((intCount & 1) == 1)
                             {
                                 if (WirelessPairBonus?.SelectSingleNodeAndCacheExpressionAsNavigator("@mode")?.Value == "replace")
                                 {
@@ -4536,7 +4513,7 @@ namespace Chummer.Backend.Equipment
                             }
 
                             ImprovementManager.RemoveImprovements(_objCharacter, SourceType, InternalId + "WirelessPair");
-                            if (intCount % 2 == 1 && WirelessPairBonus.SelectSingleNodeAndCacheExpressionAsNavigator("@mode")?.Value == "replace")
+                            if ((intCount & 1) == 1 && WirelessPairBonus.SelectSingleNodeAndCacheExpressionAsNavigator("@mode")?.Value == "replace")
                             {
                                 ImprovementManager.EnableImprovements(_objCharacter,
                                                                           _objCharacter.Improvements
