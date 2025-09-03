@@ -18,8 +18,8 @@
  */
 
 using System;
-using System.Buffers;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -43,6 +43,8 @@ namespace Chummer
         private decimal _decCostMultiplier = 1.0m;
         private decimal _decESSMultiplier = 1.0m;
         private int _intAvailModifier;
+        private decimal _decMarkup;
+        private bool _blnFreeCost;
 
         private Grade _objForcedGrade;
         private string _strSubsystems = string.Empty;
@@ -580,7 +582,7 @@ namespace Chummer
                             {
                                 while (intMaxRating > intMinRating
                                        && !await xmlCyberware.CheckAvailRestrictionAsync(
-                                           _objCharacter, intMaxRating, _intAvailModifier, token: token).ConfigureAwait(false))
+                                           _objCharacter, intMaxRating, _intAvailModifier + (await ImprovementManager.ValueOfAsync(_objCharacter, Improvement.ImprovementType.Availability, strImprovedName: xmlCyberware.SelectSingleNodeAndCacheExpression("id", token)?.Value, blnIncludeNonImproved: true, token: token).ConfigureAwait(false)).StandardRound(), token: token).ConfigureAwait(false))
                                 {
                                     --intMaxRating;
                                 }
@@ -896,7 +898,7 @@ namespace Chummer
         /// <summary>
         /// Whether the item has no cost.
         /// </summary>
-        public bool FreeCost => chkFree.Checked;
+        public bool FreeCost => _blnFreeCost;
 
         /// <summary>
         /// Set the window's Mode to Cyberware or Bioware.
@@ -986,7 +988,7 @@ namespace Chummer
         /// </summary>
         public VehicleMod ParentVehicleMod { get; set; }
 
-        public decimal Markup { get; set; }
+        public decimal Markup => _decMarkup;
 
         private bool _blnPrototypeTranshumanAllowed;
 
@@ -1076,10 +1078,10 @@ namespace Chummer
                                                                        () => nudRating.DoThreadSafeFuncAsync(
                                                                            y => y.Minimum.ToString(
                                                                                GlobalSettings.InvariantCultureInfo), token: token),
-                                                                       token: token).ConfigureAwait(false), _intAvailModifier);
-                        await lblAvailLabel.DoThreadSafeAsync(x => x.Visible = true, token: token).ConfigureAwait(false);
+                                                                       token: token).ConfigureAwait(false),
+                            _intAvailModifier + (await ImprovementManager.ValueOfAsync(_objCharacter, Improvement.ImprovementType.Availability, strImprovedName: objXmlCyberware.SelectSingleNodeAndCacheExpression("id", token)?.Value, blnIncludeNonImproved: true, token: token).ConfigureAwait(false)).StandardRound());
                         string strAvail = await objTotalAvail.ToStringAsync(token).ConfigureAwait(false);
-
+                        await lblAvailLabel.DoThreadSafeAsync(x => x.Visible = true, token: token).ConfigureAwait(false);
                         await lblAvail.DoThreadSafeAsync(x => x.Text = strAvail, token: token).ConfigureAwait(false);
 
                         // Cost.
@@ -1101,27 +1103,24 @@ namespace Chummer
                                 // Check for a Variable Cost.
                                 if (strCost.StartsWith("Variable(", StringComparison.Ordinal))
                                 {
+                                    string strFirstHalf = strCost.TrimStartOnce("Variable(", true).TrimEndOnce(')');
+                                    string strSecondHalf = string.Empty;
+                                    int intHyphenIndex = strFirstHalf.IndexOf('-');
+                                    if (intHyphenIndex != -1)
+                                    {
+                                        if (intHyphenIndex + 1 < strFirstHalf.Length)
+                                            strSecondHalf = strFirstHalf.Substring(intHyphenIndex + 1);
+                                        strFirstHalf = strFirstHalf.Substring(0, intHyphenIndex);
+                                    }
                                     decimal decMin;
                                     decimal decMax = decimal.MaxValue;
-                                    strCost = strCost.TrimStartOnce("Variable(", true).TrimEndOnce(')');
-                                    if (strCost.Contains('-'))
+                                    if (intHyphenIndex != -1)
                                     {
-                                        string[] strValues = strCost.SplitFixedSizePooledArray('-', 2);
-                                        try
-                                        {
-                                            decMin = Convert.ToDecimal(strValues[0], GlobalSettings.InvariantCultureInfo);
-                                            decMax = Convert.ToDecimal(strValues[1], GlobalSettings.InvariantCultureInfo);
-                                        }
-                                        finally
-                                        {
-                                            ArrayPool<string>.Shared.Return(strValues);
-                                        }
+                                        decimal.TryParse(strFirstHalf, NumberStyles.Any, GlobalSettings.InvariantCultureInfo, out decMin);
+                                        decimal.TryParse(strSecondHalf, NumberStyles.Any, GlobalSettings.InvariantCultureInfo, out decMax);
                                     }
                                     else
-                                    {
-                                        decMin = Convert.ToDecimal(strCost.FastEscape('+'),
-                                                                   GlobalSettings.InvariantCultureInfo);
-                                    }
+                                        decimal.TryParse(strFirstHalf.FastEscape('+'), NumberStyles.Any, GlobalSettings.InvariantCultureInfo, out decMin);
 
                                     strCost = decMax == decimal.MaxValue
                                         ? decMin.ToString(strNuyenFormat,
@@ -1678,7 +1677,7 @@ namespace Chummer
 
                         if (blnHideOverAvailLimit && !await xmlCyberware.CheckAvailRestrictionAsync(
                                 _objCharacter, intMinRating,
-                                blnIsForceGrade ? 0 : _intAvailModifier, token).ConfigureAwait(false))
+                                (blnIsForceGrade ? 0 : _intAvailModifier) + (await ImprovementManager.ValueOfAsync(_objCharacter, Improvement.ImprovementType.Availability, strImprovedName: xmlCyberware.SelectSingleNodeAndCacheExpression("id", token)?.Value, blnIncludeNonImproved: true, token: token).ConfigureAwait(false)).StandardRound(), token).ConfigureAwait(false))
                         {
                             ++intOverLimit;
                             continue;
@@ -1851,7 +1850,8 @@ namespace Chummer
             SelectedCyberware = strSelectedId;
             SelectedRating = intRating;
             BlackMarketDiscount = await chkBlackMarketDiscount.DoThreadSafeFuncAsync(x => x.Checked, token: token).ConfigureAwait(false);
-            Markup = await nudMarkup.DoThreadSafeFuncAsync(x => x.Value, token: token).ConfigureAwait(false);
+            _decMarkup = await nudMarkup.DoThreadSafeFuncAsync(x => x.Value, token: token).ConfigureAwait(false);
+            _blnFreeCost = await chkFree.DoThreadSafeFuncAsync(x => x.Checked, token).ConfigureAwait(false);
             await nudESSDiscount.DoThreadSafeAsync(x =>
             {
                 if (x.Visible)

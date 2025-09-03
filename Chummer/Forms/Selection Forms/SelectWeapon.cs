@@ -36,6 +36,7 @@ namespace Chummer
     {
         private string _strSelectedWeapon = string.Empty;
         private decimal _decMarkup;
+        private bool _blnFreeCost;
 
         private int _intLoading = 1;
         private bool _blnAddAgain;
@@ -581,7 +582,7 @@ namespace Chummer
                                 continue;
                             if (blnHideOverAvailLimit
                                 && !await SelectionShared
-                                    .CheckAvailRestrictionAsync(objXmlWeapon, _objCharacter, token: token)
+                                    .CheckAvailRestrictionAsync(objXmlWeapon, _objCharacter, (await ImprovementManager.ValueOfAsync(_objCharacter, Improvement.ImprovementType.Availability, strImprovedName: objXmlWeapon["id"]?.InnerText, blnIncludeNonImproved: true, token: token).ConfigureAwait(false)).StandardRound(), token: token)
                                     .ConfigureAwait(false))
                                 continue;
                             if (!blnFreeItem && blnShowOnlyAffordItems)
@@ -741,7 +742,7 @@ namespace Chummer
                             if (blnForCategories)
                                 return true;
                             if (blnHideOverAvailLimit
-                                && !await SelectionShared.CheckAvailRestrictionAsync(objXmlWeapon, _objCharacter, token: token).ConfigureAwait(false))
+                                && !await SelectionShared.CheckAvailRestrictionAsync(objXmlWeapon, _objCharacter, (await ImprovementManager.ValueOfAsync(_objCharacter, Improvement.ImprovementType.Availability, strImprovedName: objXmlWeapon["id"]?.InnerText, blnIncludeNonImproved: true, token: token).ConfigureAwait(false)).StandardRound(), token: token).ConfigureAwait(false))
                             {
                                 ++intOverLimit;
                                 continue;
@@ -975,7 +976,7 @@ namespace Chummer
         /// <summary>
         /// Whether the item should be added for free.
         /// </summary>
-        public bool FreeCost => chkFreeItem.Checked;
+        public bool FreeCost => _blnFreeCost;
 
         /// <summary>
         /// Markup percentage.
@@ -1098,6 +1099,7 @@ namespace Chummer
                                 : objNode["category"]?.InnerText;
                             _strSelectedWeapon = objNode["id"]?.InnerText;
                             _decMarkup = nudMarkup.Value;
+                            _blnFreeCost = chkFreeItem.Checked;
                             _blnBlackMarketDiscount = chkBlackMarketDiscount.Checked;
 
                             DialogResult = DialogResult.OK;
@@ -1126,6 +1128,7 @@ namespace Chummer
                             _strSelectedWeapon = objNode["id"]?.InnerText;
                         }
                         _decMarkup = nudMarkup.Value;
+                        _blnFreeCost = chkFreeItem.Checked;
 
                         DialogResult = DialogResult.OK;
                     }
