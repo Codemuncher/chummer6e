@@ -245,10 +245,15 @@ namespace Chummer.Backend.Skills
                 return Task.CompletedTask;
             if (e.PropertyNames.Contains(nameof(KnowledgeSkill.CurrentSpCost)))
             {
-                return e.PropertyNames.Contains(nameof(KnowledgeSkill.IsNativeLanguage))
-                    ? OnMultiplePropertiesChangedAsync(
-                        new[] { nameof(KnowledgeSkillRanksSum), nameof(HasAvailableNativeLanguageSlots) }, token)
-                    : OnPropertyChangedAsync(nameof(KnowledgeSkillRanksSum), token);
+                if (e.PropertyNames.Contains(nameof(KnowledgeSkill.IsNativeLanguage)))
+                {
+                    return Task.Run(async () =>
+                    {
+                        using (TemporaryArray<string> aParams = new TemporaryArray<string>(nameof(KnowledgeSkillRanksSum), nameof(HasAvailableNativeLanguageSlots)))
+                            await OnMultiplePropertiesChangedAsync(aParams, token).ConfigureAwait(false);
+                    }, token);
+                }
+                return OnPropertyChangedAsync(nameof(KnowledgeSkillRanksSum), token);
             }
 
             return e.PropertyNames.Contains(nameof(KnowledgeSkill.IsNativeLanguage))
@@ -2404,6 +2409,15 @@ namespace Chummer.Backend.Skills
                                         }
                                     }
                                 }
+                                else if (_objCharacter.Settings.AllowSkillRegrouping)
+                                {
+                                    // TODO: Skill groups don't refresh their CanIncrease property correctly when the last of their skills is being added, as the total base rating will be zero. Call this here to force a refresh.
+                                    foreach (SkillGroup g in SkillGroups.ToList())
+                                    {
+                                        token.ThrowIfCancellationRequested();
+                                        g.OnMultiplePropertyChanged(nameof(SkillGroup.SkillList), nameof(SkillGroup.HasAnyBreakingSkills));
+                                    }
+                                }
                                 else
                                 {
                                     // TODO: Skill groups don't refresh their CanIncrease property correctly when the last of their skills is being added, as the total base rating will be zero. Call this here to force a refresh.
@@ -2438,6 +2452,16 @@ namespace Chummer.Backend.Skills
                                     }
                                 }
                             }
+                            else if (_objCharacter.Settings.AllowSkillRegrouping)
+                            {
+                                // TODO: Skill groups don't refresh their CanIncrease property correctly when the last of their skills is being added, as the total base rating will be zero. Call this here to force a refresh.
+                                foreach (SkillGroup objSkillGroup in await (await GetSkillGroupsAsync(token).ConfigureAwait(false)).ToListAsync(token)
+                                             .ConfigureAwait(false))
+                                {
+                                    token.ThrowIfCancellationRequested();
+                                    await objSkillGroup.OnMultiplePropertyChangedAsync(token, nameof(SkillGroup.SkillList), nameof(SkillGroup.HasAnyBreakingSkills)).ConfigureAwait(false);
+                                }
+                            }
                             else
                             {
                                 // TODO: Skill groups don't refresh their CanIncrease property correctly when the last of their skills is being added, as the total base rating will be zero. Call this here to force a refresh.
@@ -2465,15 +2489,16 @@ namespace Chummer.Backend.Skills
                             //Timekeeper.Finish("load_char_skills");
                             if (blnSync)
                             {
-                                // ReSharper disable MethodHasAsyncOverloadWithCancellation
-                                Utils.RunWithoutThreadLock(new Action[]
-                                {
+                                using (TemporaryArray<Action> aParams = new TemporaryArray<Action>(
                                     () => _lstSkills.Sort(CompareSkills),
                                     () => _lstKnowledgeSkills.Sort(CompareSkills),
                                     () => _lstKnowsoftSkills.Sort(CompareSkills),
-                                    () => _lstSkillGroups.Sort(CompareSkillGroups)
-                                }, token: token);
-                                // ReSharper restore MethodHasAsyncOverloadWithCancellation
+                                    () => _lstSkillGroups.Sort(CompareSkillGroups)))
+                                {
+                                    // ReSharper disable MethodHasAsyncOverloadWithCancellation
+                                    Utils.RunWithoutThreadLock(aParams, token: token);
+                                    // ReSharper restore MethodHasAsyncOverloadWithCancellation
+                                }
                             }
                             else
                             {
@@ -2833,10 +2858,13 @@ namespace Chummer.Backend.Skills
                     },
                     // ReSharper disable once AccessToDisposedClosure
                     () => Parallel.ForEach(KnowledgeSkills, x => dicSkills.TryAdd(x.Name, x.Id)));
-                UpdateUndoSpecific(
-                    dicSkills,
-                    EnumerableExtensions.ToEnumerable(KarmaExpenseType.AddSkill, KarmaExpenseType.ImproveSkill));
-                UpdateUndoSpecific(dicGroups, KarmaExpenseType.ImproveSkillGroup.Yield());
+                using (TemporaryArray<KarmaExpenseType> eYielded = new TemporaryArray<KarmaExpenseType>(KarmaExpenseType.AddSkill,
+                        KarmaExpenseType.ImproveSkill))
+                {
+                    UpdateUndoSpecific(dicSkills, eYielded);
+                }
+                using (TemporaryArray<KarmaExpenseType> eYielded = KarmaExpenseType.ImproveSkillGroup.YieldAsPooled())
+                    UpdateUndoSpecific(dicGroups, eYielded);
 
                 void UpdateUndoSpecific(IReadOnlyDictionary<string, Guid> map,
                     IEnumerable<KarmaExpenseType> typesRequiringConverting)
@@ -2900,11 +2928,13 @@ namespace Chummer.Backend.Skills
                             () => KnowledgeSkills.ForEachParallelAsync(x => dicSkills.TryAdd(x.Name, x.Id),
                                 token: token), token))
                     .ConfigureAwait(false);
-                UpdateUndoSpecific(
-                    dicSkills,
-                    EnumerableExtensions.ToEnumerable(KarmaExpenseType.AddSkill,
-                        KarmaExpenseType.ImproveSkill));
-                UpdateUndoSpecific(dicGroups, KarmaExpenseType.ImproveSkillGroup.Yield());
+                using (TemporaryArray<KarmaExpenseType> eYielded = new TemporaryArray<KarmaExpenseType>(KarmaExpenseType.AddSkill,
+                        KarmaExpenseType.ImproveSkill))
+                {
+                    UpdateUndoSpecific(dicSkills, eYielded);
+                }
+                using (TemporaryArray<KarmaExpenseType> eYielded = KarmaExpenseType.ImproveSkillGroup.YieldAsPooled())
+                    UpdateUndoSpecific(dicGroups, eYielded);
 
                 void UpdateUndoSpecific(IReadOnlyDictionary<string, Guid> map,
                     IEnumerable<KarmaExpenseType> typesRequiringConverting)
