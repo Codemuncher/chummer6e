@@ -38,13 +38,13 @@ namespace Chummer
             InitializeComponent();
             this.UpdateLightDarkMode();
             this.TranslateWinForm();
+            this.UpdateParentForToolTipControls();
             nudDice.Value = _intDice = intDice;
             ProcessGremlins(lstQualities);
 
             lblResultsLabel.Visible = false;
             lblResults.Text = string.Empty;
             _objRollDiceSemaphore = Utils.SemaphorePool.Get();
-            Disposed += (sender, args) => Utils.SemaphorePool.Return(ref _objRollDiceSemaphore);
         }
 
         private async void DiceRoller_Load(object sender, EventArgs e)

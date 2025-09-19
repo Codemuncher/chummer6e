@@ -110,6 +110,7 @@ namespace Chummer
 
             this.UpdateLightDarkMode();
             this.TranslateWinForm();
+            this.UpdateParentForToolTipControls();
 
             _lstGrades = _objCharacter.GetGradesList(objWareSource);
             _strNoneGradeId = _lstGrades.Find(x => x.Name == "None")?.SourceIDString;
@@ -142,36 +143,6 @@ namespace Chummer
             _objGenericToken = _objGenericCancellationTokenSource.Token;
             _setBlackMarketMaps = Utils.StringHashSetPool.Get();
             _setDisallowedGrades = Utils.StringHashSetPool.Get();
-            Disposed += (sender, args) =>
-            {
-                CancellationTokenSource objOldCancellationTokenSource = Interlocked.Exchange(ref _objProcessGradeChangedCancellationTokenSource, null);
-                if (objOldCancellationTokenSource?.IsCancellationRequested == false)
-                {
-                    objOldCancellationTokenSource.Cancel(false);
-                    objOldCancellationTokenSource.Dispose();
-                }
-                objOldCancellationTokenSource = Interlocked.Exchange(ref _objUpdateCyberwareInfoCancellationTokenSource, null);
-                if (objOldCancellationTokenSource?.IsCancellationRequested == false)
-                {
-                    objOldCancellationTokenSource.Cancel(false);
-                    objOldCancellationTokenSource.Dispose();
-                }
-                objOldCancellationTokenSource = Interlocked.Exchange(ref _objDoRefreshSelectedCyberwareCancellationTokenSource, null);
-                if (objOldCancellationTokenSource?.IsCancellationRequested == false)
-                {
-                    objOldCancellationTokenSource.Cancel(false);
-                    objOldCancellationTokenSource.Dispose();
-                }
-                objOldCancellationTokenSource = Interlocked.Exchange(ref _objDoRefreshListCancellationTokenSource, null);
-                if (objOldCancellationTokenSource?.IsCancellationRequested == false)
-                {
-                    objOldCancellationTokenSource.Cancel(false);
-                    objOldCancellationTokenSource.Dispose();
-                }
-                _objGenericCancellationTokenSource.Dispose();
-                Utils.StringHashSetPool.Return(ref _setBlackMarketMaps);
-                Utils.StringHashSetPool.Return(ref _setDisallowedGrades);
-            };
             _setBlackMarketMaps.AddRange(_objCharacter.GenerateBlackMarketMappings(_xmlBaseCyberwareDataNode));
         }
 
@@ -633,7 +604,7 @@ namespace Chummer
                         string strPage = xmlCyberware.SelectSingleNodeAndCacheExpression("altpage", token: token)?.Value ?? xmlCyberware.SelectSingleNodeAndCacheExpression("page", token)?.Value ?? await LanguageManager.GetStringAsync("String_Unknown", token: token).ConfigureAwait(false);
                         SourceString objSource = await SourceString.GetSourceStringAsync(strSource, strPage, GlobalSettings.Language,
                             GlobalSettings.CultureInfo, _objCharacter, token: token).ConfigureAwait(false);
-                        await objSource.SetControlAsync(lblSource, token: token).ConfigureAwait(false);
+                        await objSource.SetControlAsync(lblSource, this, token: token).ConfigureAwait(false);
                         bool blnShowSource = !string.IsNullOrEmpty(await lblSource.DoThreadSafeFuncAsync(x => x.Text, token: token).ConfigureAwait(false));
                         await lblSourceLabel.DoThreadSafeAsync(x => x.Visible = blnShowSource, token: token).ConfigureAwait(false);
 
@@ -916,8 +887,21 @@ namespace Chummer
                 _decMaximumCapacity = value;
                 lblMaximumCapacity.Text = LanguageManager.GetString("Label_MaximumCapacityAllowed")
                                           + LanguageManager.GetString("String_Space")
-                                          + _decMaximumCapacity.ToString("#,0.##", GlobalSettings.CultureInfo);
+                                          + value.ToString("#,0.##", GlobalSettings.CultureInfo);
             }
+        }
+
+        /// <summary>
+        /// Set the maximum Capacity the piece of Gear is allowed to be.
+        /// </summary>
+        public async Task SetMaximumCapacityAsync(decimal value, CancellationToken token = default)
+        {
+            token.ThrowIfCancellationRequested();
+            _decMaximumCapacity = value;
+            string strText = await LanguageManager.GetStringAsync("Label_MaximumCapacityAllowed", token: token).ConfigureAwait(false)
+                                + await LanguageManager.GetStringAsync("String_Space", token: token).ConfigureAwait(false)
+                                + value.ToString("#,0.##", GlobalSettings.CultureInfo);
+            await lblMaximumCapacity.DoThreadSafeAsync(x => x.Text = strText, token).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -1698,6 +1682,43 @@ namespace Chummer
                             }
                         }
 
+                        // Essence filtering
+                        bool blnHideOverEssenceLimit = await chkHideOverEssenceLimit
+                                                           .DoThreadSafeFuncAsync(x => x.Checked, token: token)
+                                                           .ConfigureAwait(false);
+                        if (blnHideOverEssenceLimit)
+                        {
+                            decimal decMaxEssence = await nudMaxEssence
+                                                       .DoThreadSafeFuncAsync(x => x.Value, token: token)
+                                                       .ConfigureAwait(false);
+                            
+                            // Calculate the essence cost of this cyberware
+                            string strEssenceExpr = xmlCyberware.SelectSingleNodeAndCacheExpression("ess", token: token)?.Value ?? "0";
+                            strEssenceExpr = strEssenceExpr.ProcessFixedValuesString(intMinRating);
+                            
+                            decimal decEssenceCost = 0;
+                            if (!string.IsNullOrEmpty(strEssenceExpr) && !decimal.TryParse(strEssenceExpr, out decEssenceCost))
+                            {
+                                (decimal decValue, bool blnIsSuccess) = await ProcessInvariantXPathExpression(xmlCyberware, strEssenceExpr, intMinRating, intMinRating, token).ConfigureAwait(false);
+                                if (blnIsSuccess)
+                                    decEssenceCost = decValue;
+                                else
+                                    decEssenceCost = 0;
+                            }
+                            
+                            // Apply essence discount if applicable
+                            if (decEssenceCost > 0 && _decESSMultiplier != 1.0m)
+                            {
+                                decEssenceCost *= _decESSMultiplier;
+                            }
+                            
+                            if (decEssenceCost > decMaxEssence)
+                            {
+                                ++intOverLimit;
+                                continue;
+                            }
+                        }
+
                         string strId = xmlCyberware.SelectSingleNodeAndCacheExpression("id", token: token)?.Value;
                         if (!string.IsNullOrEmpty(strId))
                             lstCyberwares.Add(new ListItem(
@@ -1717,7 +1738,7 @@ namespace Chummer
                         lstCyberwares.Add(new ListItem(string.Empty,
                                                        string.Format(GlobalSettings.CultureInfo,
                                                                      await LanguageManager.GetStringAsync(
-                                                                             "String_RestrictedItemsHidden",
+                                                                             "String_RestrictedItemsHiddenEssence",
                                                                              token: token)
                                                                          .ConfigureAwait(false),
                                                                      intOverLimit)));
@@ -2074,11 +2095,11 @@ namespace Chummer
         private readonly Microsoft.VisualStudio.Threading.AsyncLazy<string> _strCachedParentCost;
         private readonly Microsoft.VisualStudio.Threading.AsyncLazy<string> _strCachedParentGearCost;
 
-        private async Task<Tuple<decimal, bool>> ProcessInvariantXPathExpression(XPathNavigator xmlCyberware, string strExpression, int intMinRating, int intRating, CancellationToken token = default)
+        private async Task<ValueTuple<decimal, bool>> ProcessInvariantXPathExpression(XPathNavigator xmlCyberware, string strExpression, int intMinRating, int intRating, CancellationToken token = default)
         {
             token.ThrowIfCancellationRequested();
             if (string.IsNullOrEmpty(strExpression))
-                return new Tuple<decimal, bool>(0, true);
+                return new ValueTuple<decimal, bool>(0, true);
             bool blnSuccess = true;
             strExpression = strExpression.ProcessFixedValuesString(intRating).TrimStart('+');
             if (strExpression.DoesNeedXPathProcessingToBeConvertedToNumber(out decimal decValue))
@@ -2297,10 +2318,10 @@ namespace Chummer
                 (bool blnIsSuccess, object objProcess)
                             = await CommonFunctions.EvaluateInvariantXPathAsync(strExpression, token).ConfigureAwait(false);
                 if (blnIsSuccess)
-                    return new Tuple<decimal, bool>(Convert.ToDecimal((double)objProcess), true);
+                    return new ValueTuple<decimal, bool>(Convert.ToDecimal((double)objProcess), true);
             }
 
-            return new Tuple<decimal, bool>(decValue, blnSuccess);
+            return new ValueTuple<decimal, bool>(decValue, blnSuccess);
         }
 
         #endregion Methods

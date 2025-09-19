@@ -44,7 +44,6 @@ namespace Chummer
         private string _strForceSpell = string.Empty;
         private bool _blnCanGenericSpellBeFree;
         private bool _blnCanTouchOnlySpellBeFree;
-        private bool _blnAllowLimitedSpellsForBareHandedAdept;
         private static string _strSelectCategory = string.Empty;
 
         private readonly XPathNavigator _xmlBaseSpellDataNode;
@@ -60,17 +59,17 @@ namespace Chummer
             InitializeComponent();
             this.UpdateLightDarkMode();
             this.TranslateWinForm();
+            this.UpdateParentForToolTipControls();
 
             // Load the Spells information.
             _xmlBaseSpellDataNode = _objCharacter.LoadDataXPath("spells.xml").SelectSingleNodeAndCacheExpression("/chummer");
             _lstCategory = Utils.ListItemListPool.Get();
-            Disposed += (sender, args) => Utils.ListItemListPool.Return(ref _lstCategory);
         }
 
         private async void SelectSpell_Load(object sender, EventArgs e)
         {
-            await chkLimited.SetToolTipAsync(await LanguageManager.GetStringAsync("Tip_SelectSpell_LimitedSpell").ConfigureAwait(false)).ConfigureAwait(false);
-            await chkExtended.SetToolTipAsync(await LanguageManager.GetStringAsync("Tip_SelectSpell_ExtendedSpell").ConfigureAwait(false)).ConfigureAwait(false);
+            await chkLimited.SetToolTipTextAsync(await LanguageManager.GetStringAsync("Tip_SelectSpell_LimitedSpell").ConfigureAwait(false)).ConfigureAwait(false);
+            await chkExtended.SetToolTipTextAsync(await LanguageManager.GetStringAsync("Tip_SelectSpell_ExtendedSpell").ConfigureAwait(false)).ConfigureAwait(false);
             // If a value is forced, set the name of the spell and accept the form.
             if (!string.IsNullOrEmpty(_strForceSpell))
             {
@@ -84,8 +83,7 @@ namespace Chummer
             (bool blnCanTouchOnlySpellBeFree, bool blnCanGenericSpellBeFree) = await _objCharacter.AllowFreeSpellsAsync().ConfigureAwait(false);
             _blnCanTouchOnlySpellBeFree = blnCanTouchOnlySpellBeFree;
             _blnCanGenericSpellBeFree = blnCanGenericSpellBeFree;
-            _blnAllowLimitedSpellsForBareHandedAdept = await (await _objCharacter.GetSettingsAsync()).GetAllowLimitedSpellsForBareHandedAdeptAsync().ConfigureAwait(false);
-
+            
             await txtSearch.DoThreadSafeAsync(x => x.Text = string.Empty).ConfigureAwait(false);
             // Populate the Category list.
             foreach (XPathNavigator objXmlCategory in _xmlBaseSpellDataNode.SelectAndCacheExpression(
@@ -591,7 +589,8 @@ namespace Chummer
                     foreach (string strDescriptor in strDescriptors.SplitNoAlloc(
                                  ',', StringSplitOptions.RemoveEmptyEntries))
                     {
-                        switch (strDescriptor.Trim())
+                        string strTrimmedDescriptor = strDescriptor.Trim();
+                        switch (strTrimmedDescriptor)
                         {
                             case "Alchemical Preparation":
                                 blnAlchemicalFound = true;
@@ -620,7 +619,7 @@ namespace Chummer
                                 break;
 
                             default:
-                                sbdDescriptors.Append(await LanguageManager.GetStringAsync("String_Desc" + strDescriptor.Trim(), token: token).ConfigureAwait(false));
+                                sbdDescriptors.Append(await LanguageManager.GetStringAsync("String_Desc" + strTrimmedDescriptor, token: token).ConfigureAwait(false));
                                 break;
                         }
 
@@ -703,7 +702,7 @@ namespace Chummer
 
             string strSelectedSpellName = xmlSpell.SelectSingleNodeAndCacheExpression("name", token)?.Value ?? string.Empty;
             string strSelectedSpellCategory = xmlSpell.SelectSingleNodeAndCacheExpression("category", token)?.Value ?? string.Empty;
-            List<Improvement> lstDrainRelevantImprovements = new List<Improvement>();
+            List<Improvement> lstDrainRelevantImprovements = new List<Improvement>(await _objCharacter.Improvements.GetCountAsync(token).ConfigureAwait(false));
             using (new FetchSafelyFromSafeObjectPool<HashSet<string>>(Utils.StringHashSetPool,
                                                               out HashSet<string> setDescriptors))
             {
@@ -820,7 +819,7 @@ namespace Chummer
                 blnBarehandedAdept = true;
 
                 // Show/hide Limited checkbox based on settings
-                bool blnLimitedVisible = await (await _objCharacter.GetSettingsAsync()).GetAllowLimitedSpellsForBareHandedAdeptAsync().ConfigureAwait(false);
+                bool blnLimitedVisible = await (await _objCharacter.GetSettingsAsync(token).ConfigureAwait(false)).GetAllowLimitedSpellsForBareHandedAdeptAsync(token).ConfigureAwait(false);
 
                 await chkLimited.DoThreadSafeAsync(x =>
                 {
@@ -1007,7 +1006,7 @@ namespace Chummer
             string strPage = xmlSpell.SelectSingleNodeAndCacheExpression("altpage", token: token)?.Value ?? xmlSpell.SelectSingleNodeAndCacheExpression("page", token)?.Value ?? await LanguageManager.GetStringAsync("String_Unknown", token: token).ConfigureAwait(false);
             SourceString objSource = await SourceString.GetSourceStringAsync(strSource, strPage, GlobalSettings.Language,
                                                                              GlobalSettings.CultureInfo, _objCharacter, token: token).ConfigureAwait(false);
-            await objSource.SetControlAsync(lblSource, token: token).ConfigureAwait(false);
+            await objSource.SetControlAsync(lblSource, this, token: token).ConfigureAwait(false);
             await lblSourceLabel.DoThreadSafeAsync(x => x.Visible = !string.IsNullOrEmpty(objSource.ToString()), token: token).ConfigureAwait(false);
             await tlpRight.DoThreadSafeAsync(x => x.Visible = true, token: token).ConfigureAwait(false);
             _blnRefresh = false;

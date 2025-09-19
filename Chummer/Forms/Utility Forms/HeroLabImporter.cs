@@ -42,19 +42,11 @@ namespace Chummer
 
         public HeroLabImporter()
         {
-            Disposed += (sender, args) =>
-            {
-                _lstCharacterCache.Dispose();
-                List<Bitmap> lstImages = _dicImages.GetValuesToListSafe();
-                _dicImages.Clear();
-                foreach (Bitmap objImage in lstImages)
-                    objImage.Dispose();
-                dlgOpenFile?.Dispose();
-            };
             InitializeComponent();
             tabCharacterText.MouseWheel += CommonFunctions.ShiftTabsOnMouseScroll;
             this.UpdateLightDarkMode();
             this.TranslateWinForm();
+            this.UpdateParentForToolTipControls();
         }
 
         private async void HeroLabImporter_Load(object sender, EventArgs e)
@@ -121,7 +113,7 @@ namespace Chummer
                             // If we run into any problems loading the character cache, fail out early.
                             try
                             {
-                                await Task.Run(() =>
+                                await TaskExtensions.RunWithoutEC(() =>
                                 {
                                     XPathDocument xmlSourceDoc;
                                     using (Stream objStream = objEntry.Open())

@@ -284,7 +284,27 @@ namespace Chummer
         private static bool _blnPrintSkillsWithZeroRating = true;
         private static bool _blnInsertPdfNotesIfAvailable = true;
 
-        public const int MaxStackLimit = 1024;
+        /// <summary>
+        /// Maximum size of a stackalloc'ed array for an 8-bit type (byte, sbyte, bool)
+        /// </summary>
+        public const int MaxStackLimit8BitTypes = 4096;
+        /// <summary>
+        /// Maximum size of a stackalloc'ed array for a 16-bit type (short, ushort, char)
+        /// </summary>
+        public const int MaxStackLimit16BitTypes = MaxStackLimit8BitTypes * sizeof(byte) / sizeof(short);
+        /// <summary>
+        /// Maximum size of a stackalloc'ed array for a 32-bit type (int, uint, float)
+        /// </summary>
+        public const int MaxStackLimit32BitTypes = MaxStackLimit8BitTypes * sizeof(byte) / sizeof(int);
+        /// <summary>
+        /// Maximum size of a stackalloc'ed array for a 64-bit type (long, ulong, double)
+        /// </summary>
+        public const int MaxStackLimit64BitTypes = MaxStackLimit8BitTypes * sizeof(byte) / sizeof(long);
+        /// <summary>
+        /// Maximum size of a stackalloc'ed array for a 128-bit type (decimal)
+        /// </summary>
+        public const int MaxStackLimit128BitTypes = MaxStackLimit8BitTypes * sizeof(byte) / sizeof(decimal);
+
         private static bool _blnShowCharacterCustomDataWarning;
 
         public static ThreadSafeCachedRandom RandomGenerator { get; } = new ThreadSafeCachedRandom(new XoRoShiRo128starstar(), true);
@@ -745,6 +765,7 @@ namespace Chummer
                                         {
                                             Program.ShowScrollableMessageBox(
                                                 string.Format(
+                                                    GlobalSettings.CultureInfo,
                                                     LanguageManager.GetString("Message_Duplicate_CustomDataDirectory"),
                                                     objExistingInfo.Name, objCustomDataDirectory.Name),
                                                 LanguageManager.GetString("MessageTitle_Duplicate_CustomDataDirectory"),
@@ -778,7 +799,7 @@ namespace Chummer
             }
 
             // Add in default customdata directory's paths
-            string strCustomDataRootPath = Path.Combine(Utils.GetStartupPath, "customdata");
+            string strCustomDataRootPath = Utils.GetCustomDataFolderPath;
             if (Directory.Exists(strCustomDataRootPath))
             {
                 foreach (string strLoopDirectoryPath in Directory.EnumerateDirectories(strCustomDataRootPath))
@@ -812,6 +833,7 @@ namespace Chummer
                                 {
                                     Program.ShowScrollableMessageBox(
                                         string.Format(
+                                            GlobalSettings.CultureInfo,
                                             LanguageManager.GetString("Message_Duplicate_CustomDataDirectory"),
                                             objExistingInfo.Name, objCustomDataDirectory.Name),
                                         LanguageManager.GetString("MessageTitle_Duplicate_CustomDataDirectory"),
@@ -1513,7 +1535,7 @@ namespace Chummer
         /// </summary>
         public static CultureInfo SystemCultureInfo => CultureInfo.CurrentCulture;
 
-        private static XmlDocument _xmlClipboard = new XmlDocument { XmlResolver = null };
+        private static readonly XmlDocument s_xmlClipboard = new XmlDocument { XmlResolver = null };
         private static readonly AsyncFriendlyReaderWriterLock _objClipboardLocker = new AsyncFriendlyReaderWriterLock();
 
         private static ClipboardContentType _eClipboardContentType;
@@ -1570,7 +1592,7 @@ namespace Chummer
             get
             {
                 using (_objClipboardLocker.EnterReadLock())
-                    return _xmlClipboard;
+                    return s_xmlClipboard;
             }
         }
 
@@ -1580,23 +1602,30 @@ namespace Chummer
         public static void SetClipboard(XmlDocument value, ClipboardContentType eType, CancellationToken token = default)
         {
             token.ThrowIfCancellationRequested();
+            string strNewOuterXml = value.OuterXmlViaPool();
+            using (_objClipboardLocker.EnterReadLock(token))
+            {
+                token.ThrowIfCancellationRequested();
+                if (eType == _eClipboardContentType && s_xmlClipboard.OuterXmlViaPool() == strNewOuterXml)
+                    return;
+            }
             using (_objClipboardLocker.EnterUpgradeableReadLock(token))
             {
                 token.ThrowIfCancellationRequested();
-                if (_xmlClipboard == value && eType == _eClipboardContentType)
+                if (eType == _eClipboardContentType && s_xmlClipboard.OuterXmlViaPool() == strNewOuterXml)
                     return;
 
                 using (_objClipboardLocker.EnterWriteLock(token))
                 {
                     token.ThrowIfCancellationRequested();
-                    if (Interlocked.Exchange(ref _xmlClipboard, value) == value
-                        && InterlockedExtensions.Exchange(ref _eClipboardContentType, eType) == eType)
-                        return;
-                }
+                    _eClipboardContentType = eType;
+                    s_xmlClipboard.RemoveAll();
+                    s_xmlClipboard.ImportNode(value, true);
 
-                if (ClipboardChangedAsync != null)
-                    Utils.SafelyRunSynchronously(() => ClipboardChangedAsync.Invoke(null, new PropertyChangedEventArgs(nameof(Clipboard)), token), token);
-                ClipboardChanged?.Invoke(null, new PropertyChangedEventArgs(nameof(Clipboard)));
+                    if (ClipboardChangedAsync != null)
+                        Utils.SafelyRunSynchronously(() => ClipboardChangedAsync.Invoke(null, new PropertyChangedEventArgs(nameof(Clipboard)), token), token);
+                    ClipboardChanged?.Invoke(null, new PropertyChangedEventArgs(nameof(Clipboard)));
+                }
             }
         }
 
@@ -1610,7 +1639,7 @@ namespace Chummer
             try
             {
                 token.ThrowIfCancellationRequested();
-                return _xmlClipboard;
+                return s_xmlClipboard;
             }
             finally
             {
@@ -1621,32 +1650,44 @@ namespace Chummer
         /// <summary>
         /// Clipboard.
         /// </summary>
-        public static async Task SetClipboardAsync(XmlDocument value, ClipboardContentType eType, CancellationToken token = default)
+        public static async Task SetClipboardAsync(XmlNode value, ClipboardContentType eType, CancellationToken token = default)
         {
             token.ThrowIfCancellationRequested();
-            IAsyncDisposable objLocker = await _objClipboardLocker.EnterUpgradeableReadLockAsync(token).ConfigureAwait(false);
+            string strNewOuterXml = value.OuterXmlViaPool();
+            IAsyncDisposable objLocker = await _objClipboardLocker.EnterReadLockAsync(token).ConfigureAwait(false);
             try
             {
                 token.ThrowIfCancellationRequested();
-                if (_xmlClipboard == value && eType == _eClipboardContentType)
+                if (eType == _eClipboardContentType && s_xmlClipboard.OuterXmlViaPool() == strNewOuterXml)
+                    return;
+            }
+            finally
+            {
+                await objLocker.DisposeAsync().ConfigureAwait(false);
+            }
+            objLocker = await _objClipboardLocker.EnterUpgradeableReadLockAsync(token).ConfigureAwait(false);
+            try
+            {
+                token.ThrowIfCancellationRequested();
+                if (eType == _eClipboardContentType && s_xmlClipboard.OuterXmlViaPool() == strNewOuterXml)
                     return;
 
                 IAsyncDisposable objLocker2 = await _objClipboardLocker.EnterWriteLockAsync(token).ConfigureAwait(false);
                 try
                 {
                     token.ThrowIfCancellationRequested();
-                    if (Interlocked.Exchange(ref _xmlClipboard, value) == value
-                        && InterlockedExtensions.Exchange(ref _eClipboardContentType, eType) == eType)
-                        return;
+                    _eClipboardContentType = eType;
+                    s_xmlClipboard.RemoveAll();
+                    s_xmlClipboard.ImportNode(value, true);
+
+                    if (ClipboardChangedAsync != null)
+                        await ClipboardChangedAsync.Invoke(null, new PropertyChangedEventArgs(nameof(Clipboard)), token).ConfigureAwait(false);
+                    ClipboardChanged?.Invoke(null, new PropertyChangedEventArgs(nameof(Clipboard)));
                 }
                 finally
                 {
                     await objLocker2.DisposeAsync().ConfigureAwait(false);
                 }
-
-                if (ClipboardChangedAsync != null)
-                    await ClipboardChangedAsync.Invoke(null, new PropertyChangedEventArgs(nameof(Clipboard)), token).ConfigureAwait(false);
-                ClipboardChanged?.Invoke(null, new PropertyChangedEventArgs(nameof(Clipboard)));
             }
             finally
             {

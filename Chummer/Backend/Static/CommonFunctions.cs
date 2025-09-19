@@ -47,16 +47,11 @@ namespace Chummer
         #region XPath Evaluators
 
         // TODO: implement a sane expression evaluator
-        // A single instance of an XmlDocument and its corresponding XPathNavigator helps reduce overhead of evaluating XPaths that just contain mathematical operations
-        private static readonly XmlDocument s_ObjXPathNavigatorDocument = new XmlDocument { XmlResolver = null };
-
-        private static readonly DebuggableSemaphoreSlim s_ObjXPathNavigatorDocumentLock = new DebuggableSemaphoreSlim();
-
         private static readonly ConcurrentStack<XPathNavigator> s_StkXPathNavigatorPool
             = new ConcurrentStack<XPathNavigator>();
 
-        private static readonly ConcurrentDictionary<string, Tuple<bool, object>> s_DicCompiledEvaluations =
-            new ConcurrentDictionary<string, Tuple<bool, object>>();
+        private static readonly ConcurrentDictionary<string, ValueTuple<bool, object>> s_DicCompiledEvaluations =
+            new ConcurrentDictionary<string, ValueTuple<bool, object>>();
 
         private static readonly ReadOnlyCollection<char> s_LstInvariantXPathLegalChars = Array.AsReadOnly("1234567890+-*abcdefghilmnorstuvw()[]{}!=<>&;,. ".ToCharArray());
 
@@ -124,6 +119,7 @@ namespace Chummer
             return sbdExpression.Enumerate().AsParallel().Contains('{');
         }
 
+        // Treat as ReadOnlyCollection please, it's only not that because key string methods cannot use a ReadOnlyCollection as their argument
         private static readonly char[] s_achrUppercaseLatinCharsAndOpenCurlyBracket = new[]
         {
             '{', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
@@ -140,7 +136,7 @@ namespace Chummer
         /// <param name="token">Cancellation token to listen to.</param>
         /// <returns>A tuple where the first element is if the calculation was successful and the second element is a System.Boolean, System.Double, System.String, or System.Xml.XPath.XPathNodeIterator depending on the result type.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Task<Tuple<bool, object>> EvaluateInvariantXPathAsync(string strXPath, CancellationToken token = default)
+        public static Task<ValueTuple<bool, object>> EvaluateInvariantXPathAsync(string strXPath, CancellationToken token = default)
         {
             return EvaluateInvariantXPathAsync(strXPath, true, token);
         }
@@ -153,11 +149,11 @@ namespace Chummer
         /// <param name="token">Cancellation token to listen to.</param>
         /// <returns>A tuple where the first element is if the calculation was successful and the second element is a System.Boolean, System.Double, System.String, or System.Xml.XPath.XPathNodeIterator depending on the result type.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Task<Tuple<bool, object>> EvaluateInvariantXPathAsync(string strXPath, bool blnIsMathExpression, CancellationToken token = default)
+        public static Task<ValueTuple<bool, object>> EvaluateInvariantXPathAsync(string strXPath, bool blnIsMathExpression, CancellationToken token = default)
         {
             if (string.IsNullOrWhiteSpace(strXPath))
             {
-                Tuple<bool, object> tupReturn = new Tuple<bool, object>(false, null);
+                ValueTuple<bool, object> tupReturn = new ValueTuple<bool, object>(false, null);
                 s_DicCompiledEvaluations.TryAdd(string.Empty, tupReturn);
                 return Task.FromResult(tupReturn);
             }
@@ -165,13 +161,13 @@ namespace Chummer
                 strXPath = strXPath.Replace("/", " div ").Replace("\\", " div ").Replace("÷", " div ").Replace(" x ", " * ").Replace('∙', '*').Replace('×', '*').Replace('[', '(').Replace(']', ')').TrimStart('+');
             if (!strXPath.IsLegalCharsOnly(true, s_LstInvariantXPathLegalChars))
             {
-                Tuple<bool, object> tupReturn = new Tuple<bool, object>(false, strXPath);
+                ValueTuple<bool, object> tupReturn = new ValueTuple<bool, object>(false, strXPath);
                 s_DicCompiledEvaluations.TryAdd(strXPath, tupReturn);
                 return Task.FromResult(tupReturn);
             }
             if (strXPath == "-")
             {
-                Tuple<bool, object> tupReturn = new Tuple<bool, object>(true, 0.0);
+                ValueTuple<bool, object> tupReturn = new ValueTuple<bool, object>(true, 0.0);
                 s_DicCompiledEvaluations.TryAdd(strXPath, tupReturn);
                 return Task.FromResult(tupReturn);
             }
@@ -183,15 +179,7 @@ namespace Chummer
                 {
                     if (!s_StkXPathNavigatorPool.TryPop(out XPathNavigator objEvaluator))
                     {
-                        await s_ObjXPathNavigatorDocumentLock.WaitAsync(token).ConfigureAwait(false);
-                        try
-                        {
-                            objEvaluator = s_ObjXPathNavigatorDocument.CreateNavigator();
-                        }
-                        finally
-                        {
-                            s_ObjXPathNavigatorDocumentLock.Release();
-                        }
+                        objEvaluator = await XPathNavigatorExtensions.GetEmptyDocumentNavigatorAsync(token).ConfigureAwait(false);
                     }
 
                     try
@@ -212,7 +200,7 @@ namespace Chummer
                     blnIsSuccess = false;
                 }
 
-                return new Tuple<bool, object>(blnIsSuccess, objReturn); // don't want to store managed objects, only primitives
+                return new ValueTuple<bool, object>(blnIsSuccess, objReturn); // don't want to store managed objects, only primitives
             }, token: token);
         }
 
@@ -223,7 +211,7 @@ namespace Chummer
         /// <param name="token">Cancellation token to listen to.</param>
         /// <returns>A tuple where the first element is if the calculation was successful and the second element is a System.Boolean, System.Double, System.String, or System.Xml.XPath.XPathNodeIterator depending on the result type.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Tuple<bool, object> EvaluateInvariantXPath(string strXPath, CancellationToken token = default)
+        public static ValueTuple<bool, object> EvaluateInvariantXPath(string strXPath, CancellationToken token = default)
         {
             return EvaluateInvariantXPath(strXPath, true, token);
         }
@@ -236,12 +224,12 @@ namespace Chummer
         /// <param name="token">Cancellation token to listen to.</param>
         /// <returns>A tuple where the first element is if the calculation was successful and the second element is a System.Boolean, System.Double, System.String, or System.Xml.XPath.XPathNodeIterator depending on the result type.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Tuple<bool, object> EvaluateInvariantXPath(string strXPath, bool blnIsMathExpression, CancellationToken token = default)
+        public static ValueTuple<bool, object> EvaluateInvariantXPath(string strXPath, bool blnIsMathExpression, CancellationToken token = default)
         {
             token.ThrowIfCancellationRequested();
             if (string.IsNullOrWhiteSpace(strXPath))
             {
-                Tuple<bool, object> tupReturn = new Tuple<bool, object>(false, null);
+                ValueTuple<bool, object> tupReturn = new ValueTuple<bool, object>(false, null);
                 s_DicCompiledEvaluations.TryAdd(string.Empty, tupReturn);
                 return tupReturn;
             }
@@ -249,13 +237,13 @@ namespace Chummer
                 strXPath = strXPath.Replace("/", " div ").Replace("\\", " div ").Replace("÷", " div ").Replace(" x ", " * ").Replace('∙', '*').Replace('×', '*').Replace('[', '(').Replace(']', ')').TrimStart('+');
             if (!strXPath.IsLegalCharsOnly(true, s_LstInvariantXPathLegalChars))
             {
-                Tuple<bool, object> tupReturn = new Tuple<bool, object>(false, strXPath);
+                ValueTuple<bool, object> tupReturn = new ValueTuple<bool, object>(false, strXPath);
                 s_DicCompiledEvaluations.TryAdd(strXPath, tupReturn);
                 return tupReturn;
             }
             if (strXPath == "-")
             {
-                Tuple<bool, object> tupReturn = new Tuple<bool, object>(true, 0.0);
+                ValueTuple<bool, object> tupReturn = new ValueTuple<bool, object>(true, 0.0);
                 s_DicCompiledEvaluations.TryAdd(strXPath, tupReturn);
                 return tupReturn;
             }
@@ -267,17 +255,7 @@ namespace Chummer
                 try
                 {
                     if (!s_StkXPathNavigatorPool.TryPop(out XPathNavigator objEvaluator))
-                    {
-                        s_ObjXPathNavigatorDocumentLock.SafeWait(token);
-                        try
-                        {
-                            objEvaluator = s_ObjXPathNavigatorDocument.CreateNavigator();
-                        }
-                        finally
-                        {
-                            s_ObjXPathNavigatorDocumentLock.Release();
-                        }
-                    }
+                        objEvaluator = XPathNavigatorExtensions.GetEmptyDocumentNavigator(token);
 
                     try
                     {
@@ -297,7 +275,7 @@ namespace Chummer
                     blnIsSuccess = false;
                 }
 
-                return new Tuple<bool, object>(blnIsSuccess, objReturn); // don't want to store managed objects, only primitives
+                return new ValueTuple<bool, object>(blnIsSuccess, objReturn); // don't want to store managed objects, only primitives
             });
         }
 
@@ -308,7 +286,7 @@ namespace Chummer
         /// <param name="token">Cancellation token to listen to.</param>
         /// <returns>A tuple where the first element is if the calculation was successful and the second element is a System.Boolean, System.Double, System.String, or System.Xml.XPath.XPathNodeIterator depending on the result type.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Task<Tuple<bool, object>> EvaluateInvariantXPathAsync(XPathExpression objXPath, CancellationToken token = default)
+        public static Task<ValueTuple<bool, object>> EvaluateInvariantXPathAsync(XPathExpression objXPath, CancellationToken token = default)
         {
             string strExpression = objXPath.Expression;
             return s_DicCompiledEvaluations.GetOrAddAsync(strExpression, async x =>
@@ -319,15 +297,7 @@ namespace Chummer
                 {
                     if (!s_StkXPathNavigatorPool.TryPop(out XPathNavigator objEvaluator))
                     {
-                        await s_ObjXPathNavigatorDocumentLock.WaitAsync(token).ConfigureAwait(false);
-                        try
-                        {
-                            objEvaluator = s_ObjXPathNavigatorDocument.CreateNavigator();
-                        }
-                        finally
-                        {
-                            s_ObjXPathNavigatorDocumentLock.Release();
-                        }
+                        objEvaluator = await XPathNavigatorExtensions.GetEmptyDocumentNavigatorAsync(token).ConfigureAwait(false);
                     }
 
                     try
@@ -349,7 +319,7 @@ namespace Chummer
                 }
 
                 return
-                    new Tuple<bool, object>(blnIsSuccess,
+                    new ValueTuple<bool, object>(blnIsSuccess,
                         objReturn); // don't want to store managed objects, only primitives
             }, token);
         }
@@ -361,7 +331,7 @@ namespace Chummer
         /// <param name="token">Cancellation token to listen to.</param>
         /// <returns>A tuple where the first element is if the calculation was successful and the second element is a System.Boolean, System.Double, System.String, or System.Xml.XPath.XPathNodeIterator depending on the result type.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Tuple<bool, object> EvaluateInvariantXPath(XPathExpression objXPath, CancellationToken token = default)
+        public static ValueTuple<bool, object> EvaluateInvariantXPath(XPathExpression objXPath, CancellationToken token = default)
         {
             string strExpression = objXPath.Expression;
             return s_DicCompiledEvaluations.GetOrAdd(strExpression, x =>
@@ -371,17 +341,8 @@ namespace Chummer
                 try
                 {
                     if (!s_StkXPathNavigatorPool.TryPop(out XPathNavigator objEvaluator))
-                    {
-                        s_ObjXPathNavigatorDocumentLock.SafeWait(token);
-                        try
-                        {
-                            objEvaluator = s_ObjXPathNavigatorDocument.CreateNavigator();
-                        }
-                        finally
-                        {
-                            s_ObjXPathNavigatorDocumentLock.Release();
-                        }
-                    }
+                        objEvaluator = XPathNavigatorExtensions.GetEmptyDocumentNavigator(token);
+
                     try
                     {
                         objReturn = objEvaluator?.Evaluate(objXPath);
@@ -399,7 +360,7 @@ namespace Chummer
                     blnIsSuccess = false;
                 }
                 
-                return new Tuple<bool, object>(blnIsSuccess, objReturn); // don't want to store managed objects, only primitives
+                return new ValueTuple<bool, object>(blnIsSuccess, objReturn); // don't want to store managed objects, only primitives
             });
         }
 
@@ -510,7 +471,7 @@ namespace Chummer
         /// <param name="strGuid">InternalId of the Gear to find.</param>
         /// <param name="lstVehicles">List of Vehicles to search.</param>
         /// <param name="token">Cancellation token to listen to.</param>
-        public static async Task<Tuple<Gear, Vehicle, WeaponAccessory, Cyberware>> FindVehicleGearAsync(this IAsyncEnumerable<Vehicle> lstVehicles, string strGuid,
+        public static async Task<ValueTuple<Gear, Vehicle, WeaponAccessory, Cyberware>> FindVehicleGearAsync(this IAsyncEnumerable<Vehicle> lstVehicles, string strGuid,
             CancellationToken token = default)
         {
             token.ThrowIfCancellationRequested();
@@ -534,7 +495,7 @@ namespace Chummer
                 }, token).ConfigureAwait(false);
             }
 
-            return new Tuple<Gear, Vehicle, WeaponAccessory, Cyberware>(objReturn, objReturnVehicle, objReturnAccessory, objReturnCyberware);
+            return new ValueTuple<Gear, Vehicle, WeaponAccessory, Cyberware>(objReturn, objReturnVehicle, objReturnAccessory, objReturnCyberware);
         }
 
         /// <summary>
@@ -582,7 +543,7 @@ namespace Chummer
         /// <param name="funcPredicate">Predicate to locate the VehicleMod.</param>
         /// <param name="lstVehicles">List of Vehicles to search.</param>
         /// <param name="token">Cancellation token to listen to.</param>
-        public static async Task<Tuple<VehicleMod, Vehicle, WeaponMount>> FindVehicleModAsync([NotNull] this IEnumerable<Vehicle> lstVehicles, [NotNull] Func<VehicleMod, bool> funcPredicate, CancellationToken token = default)
+        public static async Task<ValueTuple<VehicleMod, Vehicle, WeaponMount>> FindVehicleModAsync([NotNull] this IEnumerable<Vehicle> lstVehicles, [NotNull] Func<VehicleMod, bool> funcPredicate, CancellationToken token = default)
         {
             if (lstVehicles == null)
                 throw new ArgumentNullException(nameof(lstVehicles));
@@ -591,11 +552,11 @@ namespace Chummer
                 (VehicleMod objMod, WeaponMount objFoundWeaponMount) = await objVehicle.FindVehicleModAsync(funcPredicate, token).ConfigureAwait(false);
                 if (objMod != null)
                 {
-                    return new Tuple<VehicleMod, Vehicle, WeaponMount>(objMod, objVehicle, objFoundWeaponMount);
+                    return new ValueTuple<VehicleMod, Vehicle, WeaponMount>(objMod, objVehicle, objFoundWeaponMount);
                 }
             }
 
-            return new Tuple<VehicleMod, Vehicle, WeaponMount>(null, null, null);
+            return new ValueTuple<VehicleMod, Vehicle, WeaponMount>(null, null, null);
         }
 
         /// <summary>
@@ -686,7 +647,7 @@ namespace Chummer
         /// <param name="strGuid">InternalId of the Weapon to find.</param>
         /// <param name="lstVehicles">List of Vehicles to search.</param>
         /// <param name="token">Cancellation token to listen to.</param>
-        public static async Task<Tuple<Weapon, Vehicle, WeaponMount, VehicleMod>> FindVehicleWeaponAsync(this IAsyncEnumerable<Vehicle> lstVehicles, string strGuid, CancellationToken token = default)
+        public static async Task<ValueTuple<Weapon, Vehicle, WeaponMount, VehicleMod>> FindVehicleWeaponAsync(this IAsyncEnumerable<Vehicle> lstVehicles, string strGuid, CancellationToken token = default)
         {
             token.ThrowIfCancellationRequested();
             if (lstVehicles == null)
@@ -751,7 +712,7 @@ namespace Chummer
                 }, token).ConfigureAwait(false);
             }
 
-            return new Tuple<Weapon, Vehicle, WeaponMount, VehicleMod>(objReturn, objReturnVehicle, objReturnMount, objReturnMod);
+            return new ValueTuple<Weapon, Vehicle, WeaponMount, VehicleMod>(objReturn, objReturnVehicle, objReturnMount, objReturnMod);
         }
 
         /// <summary>
@@ -800,7 +761,7 @@ namespace Chummer
         /// <param name="strGuid">Internal Id with which to look for the vehicle mod.</param>
         /// <param name="lstVehicles">List of root vehicles to search.</param>
         /// <param name="token">Cancellation token to listen to.</param>
-        public static async Task<Tuple<WeaponMount, Vehicle>> FindVehicleWeaponMountAsync(this IEnumerable<Vehicle> lstVehicles, string strGuid, CancellationToken token = default)
+        public static async Task<ValueTuple<WeaponMount, Vehicle>> FindVehicleWeaponMountAsync(this IEnumerable<Vehicle> lstVehicles, string strGuid, CancellationToken token = default)
         {
             token.ThrowIfCancellationRequested();
             if (lstVehicles == null)
@@ -812,11 +773,11 @@ namespace Chummer
                     WeaponMount objMod =
                         await objVehicle.WeaponMounts.FirstOrDefaultAsync(x => x.InternalId == strGuid, token: token).ConfigureAwait(false);
                     if (objMod != null)
-                        return new Tuple<WeaponMount, Vehicle>(objMod, objVehicle);
+                        return new ValueTuple<WeaponMount, Vehicle>(objMod, objVehicle);
                 }
             }
 
-            return new Tuple<WeaponMount, Vehicle>(null, null);
+            return new ValueTuple<WeaponMount, Vehicle>(null, null);
         }
 
         /// <summary>
@@ -867,7 +828,7 @@ namespace Chummer
         /// <param name="strGuid">Internal Id with which to look for the vehicle mod.</param>
         /// <param name="lstVehicles">List of root vehicles to search.</param>
         /// <param name="token">Cancellation token to listen to.</param>
-        public static async Task<Tuple<VehicleMod, WeaponMount>> FindVehicleWeaponMountModAsync(this IEnumerable<Vehicle> lstVehicles, string strGuid, CancellationToken token = default)
+        public static async Task<ValueTuple<VehicleMod, WeaponMount>> FindVehicleWeaponMountModAsync(this IEnumerable<Vehicle> lstVehicles, string strGuid, CancellationToken token = default)
         {
             if (lstVehicles == null)
                 throw new ArgumentNullException(nameof(lstVehicles));
@@ -890,11 +851,11 @@ namespace Chummer
                         return true;
                     }, token).ConfigureAwait(false);
                     if (objReturnMod != null)
-                        return new Tuple<VehicleMod, WeaponMount>(objReturnMod, objReturnMount);
+                        return new ValueTuple<VehicleMod, WeaponMount>(objReturnMod, objReturnMount);
                 }
             }
 
-            return new Tuple<VehicleMod, WeaponMount>(null, null);
+            return new ValueTuple<VehicleMod, WeaponMount>(null, null);
         }
 
         /// <summary>
@@ -1025,7 +986,7 @@ namespace Chummer
         /// <param name="funcPredicate">Predicate to locate the Cyberware.</param>
         /// <param name="lstVehicles">List of Vehicles to search.</param>
         /// <param name="token">Cancellation token to listen to.</param>
-        public static async Task<Tuple<Cyberware, VehicleMod>> FindVehicleCyberwareAsync([NotNull] this IEnumerable<Vehicle> lstVehicles, [NotNull] Func<Cyberware, bool> funcPredicate, CancellationToken token = default)
+        public static async Task<ValueTuple<Cyberware, VehicleMod>> FindVehicleCyberwareAsync([NotNull] this IEnumerable<Vehicle> lstVehicles, [NotNull] Func<Cyberware, bool> funcPredicate, CancellationToken token = default)
         {
             token.ThrowIfCancellationRequested();
             if (lstVehicles == null)
@@ -1035,11 +996,11 @@ namespace Chummer
                 (Cyberware objReturn, VehicleMod objReturnMod) = await objVehicle.FindVehicleCyberwareAsync(funcPredicate, token).ConfigureAwait(false);
                 if (objReturn != null)
                 {
-                    return new Tuple<Cyberware, VehicleMod>(objReturn, objReturnMod);
+                    return new ValueTuple<Cyberware, VehicleMod>(objReturn, objReturnMod);
                 }
             }
 
-            return new Tuple<Cyberware, VehicleMod>(null, null);
+            return new ValueTuple<Cyberware, VehicleMod>(null, null);
         }
 
         /// <summary>
@@ -1102,7 +1063,7 @@ namespace Chummer
         /// <param name="strGuid">InternalId of the Gear to find.</param>
         /// <param name="lstArmors">List of Armors to search.</param>
         /// <param name="token">Cancellation token to listen to.</param>
-        public static async Task<Tuple<Gear, Armor, ArmorMod>> FindArmorGearAsync(this IAsyncEnumerable<Armor> lstArmors, string strGuid, CancellationToken token = default)
+        public static async Task<ValueTuple<Gear, Armor, ArmorMod>> FindArmorGearAsync(this IAsyncEnumerable<Armor> lstArmors, string strGuid, CancellationToken token = default)
         {
             if (lstArmors == null)
                 throw new ArgumentNullException(nameof(lstArmors));
@@ -1138,7 +1099,7 @@ namespace Chummer
                 }, token).ConfigureAwait(false);
             }
 
-            return new Tuple<Gear, Armor, ArmorMod>(objReturn, objReturnArmor, objReturnMod);
+            return new ValueTuple<Gear, Armor, ArmorMod>(objReturn, objReturnArmor, objReturnMod);
         }
 
         /// <summary>
@@ -1229,7 +1190,7 @@ namespace Chummer
         /// <param name="strGuid">InternalId of the Gear to find.</param>
         /// <param name="lstCyberware">List of Cyberware to search.</param>
         /// <param name="token">Cancellation token to listen to.</param>
-        public static async Task<Tuple<Gear, Cyberware>> FindCyberwareGearAsync(this IAsyncEnumerable<Cyberware> lstCyberware, string strGuid, CancellationToken token = default)
+        public static async Task<ValueTuple<Gear, Cyberware>> FindCyberwareGearAsync(this IAsyncEnumerable<Cyberware> lstCyberware, string strGuid, CancellationToken token = default)
         {
             if (lstCyberware == null)
                 throw new ArgumentNullException(nameof(lstCyberware));
@@ -1244,12 +1205,12 @@ namespace Chummer
 
                     if (objReturn != null)
                     {
-                        return new Tuple<Gear, Cyberware>(objReturn, objCyberware);
+                        return new ValueTuple<Gear, Cyberware>(objReturn, objCyberware);
                     }
                 }
             }
 
-            return new Tuple<Gear, Cyberware>(null, null);
+            return new ValueTuple<Gear, Cyberware>(null, null);
         }
 
         /// <summary>
@@ -1364,7 +1325,7 @@ namespace Chummer
         /// <param name="strGuid">InternalId of the Gear to find.</param>
         /// <param name="lstWeapons">List of Weapons to search.</param>
         /// <param name="token">Cancellation token to listen to.</param>
-        public static async Task<Tuple<Gear, WeaponAccessory>> FindWeaponGearAsync(this IAsyncEnumerable<Weapon> lstWeapons, string strGuid, CancellationToken token = default)
+        public static async Task<ValueTuple<Gear, WeaponAccessory>> FindWeaponGearAsync(this IAsyncEnumerable<Weapon> lstWeapons, string strGuid, CancellationToken token = default)
         {
             token.ThrowIfCancellationRequested();
             if (lstWeapons == null)
@@ -1390,11 +1351,11 @@ namespace Chummer
                         return true;
                     }, token).ConfigureAwait(false);
                     if (objReturn != null)
-                        return new Tuple<Gear, WeaponAccessory>(objReturn, objReturnAccessory);
+                        return new ValueTuple<Gear, WeaponAccessory>(objReturn, objReturnAccessory);
                 }
             }
 
-            return new Tuple<Gear, WeaponAccessory>(null, null);
+            return new ValueTuple<Gear, WeaponAccessory>(null, null);
         }
 
         /// <summary>
@@ -2255,7 +2216,7 @@ namespace Chummer
             {
                 if (!blnOpenOptions)
                     return;
-                if (await Program.ShowScrollableMessageBoxAsync(string.Format(await LanguageManager.GetStringAsync("Message_NoLinkedPDF", token: token).ConfigureAwait(false), await LanguageBookLongAsync(strBook, token: token).ConfigureAwait(false)),
+                if (await Program.ShowScrollableMessageBoxAsync(string.Format(GlobalSettings.CultureInfo, await LanguageManager.GetStringAsync("Message_NoLinkedPDF", token: token).ConfigureAwait(false), await LanguageBookLongAsync(strBook, token: token).ConfigureAwait(false)),
                         await LanguageManager.GetStringAsync("MessageTitle_NoLinkedPDF", token: token).ConfigureAwait(false), MessageBoxButtons.YesNo, MessageBoxIcon.Question, token: token).ConfigureAwait(false) != DialogResult.Yes)
                     return;
                 CursorWait objCursorWait = await CursorWait.NewAsync(Program.MainForm, token: token).ConfigureAwait(false);
@@ -2459,7 +2420,7 @@ namespace Chummer
             int intBlockEndIndex = -1;
             int intExtraAllCapsInfo = 0;
             bool blnTitleWithColon = false; // it is either an uppercase title or title in a paragraph with a colon
-            string strReturn = blnSync ? Utils.SafelyRunSynchronously(FetchTexts, token) : await Task.Run(FetchTexts, token).ConfigureAwait(false);
+            string strReturn = blnSync ? Utils.SafelyRunSynchronously(FetchTexts, token) : await FetchTexts().ConfigureAwait(false);
 
             async Task<string> FetchTexts()
             {
@@ -2724,7 +2685,7 @@ namespace Chummer
                     }
 
                     token.ThrowIfCancellationRequested();
-                    strReturn = sbdResultContent.ToString().Trim();
+                    strReturn = sbdResultContent.ToTrimmedString();
                 }
             }
 

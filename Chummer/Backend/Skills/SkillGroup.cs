@@ -57,25 +57,24 @@ namespace Chummer.Backend.Skills
             {
                 if (Interlocked.CompareExchange(ref _intIsDisposed, 1, 0) != 0)
                     return;
-                if (_objCharacter != null)
+                if (_objCharacter?.IsDisposed == false)
                 {
-                    if (!_objCharacter.IsDisposed)
-                    {
-                        try
-                        {
-                            _objCharacter.MultiplePropertiesChangedAsync -= OnCharacterPropertyChanged;
-                        }
-                        catch (ObjectDisposedException)
-                        {
-                            //swallow this
-                        }
-                    }
-
                     try
                     {
-                        CharacterSettings objSettings = _objCharacter.Settings;
-                        if (objSettings?.IsDisposed == false)
-                            objSettings.MultiplePropertiesChangedAsync -= OnCharacterSettingsPropertyChanged;
+                        _objCharacter.MultiplePropertiesChangedAsync -= OnCharacterPropertyChanged;
+                    }
+                    catch (ObjectDisposedException)
+                    {
+                        //swallow this
+                    }
+                }
+
+                CharacterSettings objSettings = Interlocked.Exchange(ref _objCharacterSettings, null);
+                if (objSettings?.IsDisposed == false)
+                {
+                    try
+                    {
+                        objSettings.MultiplePropertiesChangedAsync -= OnCharacterSettingsPropertyChanged;
                     }
                     catch (ObjectDisposedException)
                     {
@@ -104,6 +103,11 @@ namespace Chummer.Backend.Skills
                 _objCachedHasAnyBreakingSkillsLock.Dispose();
                 _objCachedRatingLock.Dispose();
                 _objCachedToolTipLock.Dispose();
+                // to help the GC
+                PropertyChanged = null;
+                MultiplePropertiesChanged = null;
+                _setPropertyChangedAsync.Clear();
+                _setMultiplePropertiesChangedAsync.Clear();
             }
             LockObject.Dispose();
         }
@@ -117,25 +121,24 @@ namespace Chummer.Backend.Skills
             {
                 if (Interlocked.CompareExchange(ref _intIsDisposed, 1, 0) != 0)
                     return;
-                if (_objCharacter != null)
+                if (_objCharacter?.IsDisposed == false)
                 {
-                    if (!_objCharacter.IsDisposed)
-                    {
-                        try
-                        {
-                            _objCharacter.MultiplePropertiesChangedAsync -= OnCharacterPropertyChanged;
-                        }
-                        catch (ObjectDisposedException)
-                        {
-                            //swallow this
-                        }
-                    }
-
                     try
                     {
-                        CharacterSettings objSettings = await _objCharacter.GetSettingsAsync().ConfigureAwait(false);
-                        if (objSettings?.IsDisposed == false)
-                            objSettings.MultiplePropertiesChangedAsync -= OnCharacterSettingsPropertyChanged;
+                        _objCharacter.MultiplePropertiesChangedAsync -= OnCharacterPropertyChanged;
+                    }
+                    catch (ObjectDisposedException)
+                    {
+                        //swallow this
+                    }
+                }
+
+                CharacterSettings objSettings = Interlocked.Exchange(ref _objCharacterSettings, null);
+                if (objSettings?.IsDisposed == false)
+                {
+                    try
+                    {
+                        objSettings.MultiplePropertiesChangedAsync -= OnCharacterSettingsPropertyChanged;
                     }
                     catch (ObjectDisposedException)
                     {
@@ -164,6 +167,11 @@ namespace Chummer.Backend.Skills
                 await _objCachedHasAnyBreakingSkillsLock.DisposeAsync().ConfigureAwait(false);
                 await _objCachedRatingLock.DisposeAsync().ConfigureAwait(false);
                 await _objCachedToolTipLock.DisposeAsync().ConfigureAwait(false);
+                // to help the GC
+                PropertyChanged = null;
+                MultiplePropertiesChanged = null;
+                _setPropertyChangedAsync.Clear();
+                _setMultiplePropertiesChangedAsync.Clear();
             }
             finally
             {
@@ -761,11 +769,11 @@ namespace Chummer.Backend.Skills
                         if (IsDisabled || SkillList.Count == 0 ||
                             !_objCharacter.EffectiveBuildMethodUsesPriorityTables)
                             _intCachedBaseUnbroken = 0;
-                        else if (_objCharacter.Settings.StrictSkillGroupsInCreateMode && !_objCharacter.Created)
+                        else if (_objCharacterSettings.StrictSkillGroupsInCreateMode && !_objCharacter.Created)
                             _intCachedBaseUnbroken =
                                 (SkillList.All(x => x.BasePoints + x.FreeBase <= 0)
                                  && SkillList.All(x => x.KarmaPoints + x.FreeKarma <= 0)).ToInt32();
-                        else if (_objCharacter.Settings.UsePointsOnBrokenGroups)
+                        else if (_objCharacterSettings.UsePointsOnBrokenGroups)
                             _intCachedBaseUnbroken = KarmaUnbroken.ToInt32();
                         else
                             _intCachedBaseUnbroken = SkillList.All(x => x.BasePoints + x.FreeBase <= 0).ToInt32();
@@ -814,9 +822,7 @@ namespace Chummer.Backend.Skills
                         _intCachedBaseUnbroken = 0;
                     else
                     {
-                        CharacterSettings objSettings =
-                            await _objCharacter.GetSettingsAsync(token).ConfigureAwait(false);
-                        if (await objSettings.GetStrictSkillGroupsInCreateModeAsync(token)
+                        if (await _objCharacterSettings.GetStrictSkillGroupsInCreateModeAsync(token)
                                 .ConfigureAwait(false)
                             && !await _objCharacter.GetCreatedAsync(token).ConfigureAwait(false))
                             _intCachedBaseUnbroken =
@@ -829,7 +835,7 @@ namespace Chummer.Backend.Skills
                                      async x => await x.GetKarmaPointsAsync(token).ConfigureAwait(false) +
                                                 await x.GetFreeKarmaAsync(token).ConfigureAwait(false) <=
                                                 0, token: token).ConfigureAwait(false)).ToInt32();
-                        else if (await objSettings.GetUsePointsOnBrokenGroupsAsync(token)
+                        else if (await _objCharacterSettings.GetUsePointsOnBrokenGroupsAsync(token)
                                      .ConfigureAwait(false))
                             _intCachedBaseUnbroken =
                                 (await GetKarmaUnbrokenAsync(token).ConfigureAwait(false)).ToInt32();
@@ -880,7 +886,7 @@ namespace Chummer.Backend.Skills
                     {
                         if (IsDisabled || SkillList.Count == 0)
                             _intCachedKarmaUnbroken = 0;
-                        else if (_objCharacter.Settings.StrictSkillGroupsInCreateMode && !_objCharacter.Created)
+                        else if (_objCharacterSettings.StrictSkillGroupsInCreateMode && !_objCharacter.Created)
                             _intCachedKarmaUnbroken = (SkillList.All(x => x.BasePoints + x.FreeBase <= 0)
                                                        && SkillList.All(x => x.KarmaPoints + x.FreeKarma <= 0))
                                 .ToInt32();
@@ -933,7 +939,7 @@ namespace Chummer.Backend.Skills
                     token.ThrowIfCancellationRequested();
                     if (await GetIsDisabledAsync(token).ConfigureAwait(false) || SkillList.Count == 0)
                         _intCachedKarmaUnbroken = 0;
-                    else if (await (await _objCharacter.GetSettingsAsync(token).ConfigureAwait(false))
+                    else if (await _objCharacterSettings
                                  .GetStrictSkillGroupsInCreateModeAsync(token).ConfigureAwait(false)
                              && !await _objCharacter.GetCreatedAsync(token).ConfigureAwait(false))
                         _intCachedBaseUnbroken =
@@ -1151,7 +1157,7 @@ namespace Chummer.Backend.Skills
         {
             if (!_objCharacter.Created)
                 return;
-            if (!_objCharacter.Settings.AllowSkillRegrouping)
+            if (!_objCharacterSettings.AllowSkillRegrouping)
             {
                 using (LockObject.EnterReadLock())
                 {
@@ -1175,7 +1181,7 @@ namespace Chummer.Backend.Skills
         {
             if (!await _objCharacter.GetCreatedAsync(token).ConfigureAwait(false))
                 return;
-            if (!(await _objCharacter.GetSettingsAsync(token).ConfigureAwait(false)).AllowSkillRegrouping)
+            if (!await _objCharacterSettings.GetAllowSkillRegroupingAsync(token).ConfigureAwait(false))
             {
                 IAsyncDisposable objLocker = await LockObject.EnterReadLockAsync(token).ConfigureAwait(false);
                 try
@@ -1242,7 +1248,7 @@ namespace Chummer.Backend.Skills
                             {
                                 _intCachedHasAnyBreakingSkills = 0;
                             }
-                            else if (_objCharacter.Settings.SpecializationsBreakSkillGroups && SkillList.Any(
+                            else if (_objCharacterSettings.SpecializationsBreakSkillGroups && SkillList.Any(
                                          x =>
                                              x.Specializations.Count != 0
                                              && x.Enabled))
@@ -1308,7 +1314,7 @@ namespace Chummer.Backend.Skills
                         {
                             _intCachedHasAnyBreakingSkills = 0;
                         }
-                        else if (await (await _objCharacter.GetSettingsAsync(token).ConfigureAwait(false))
+                        else if (await _objCharacterSettings
                                      .GetSpecializationsBreakSkillGroupsAsync(token).ConfigureAwait(false)
                                  && await SkillList
                                      .AnyAsync(
@@ -1521,8 +1527,8 @@ namespace Chummer.Backend.Skills
                 using (_objCharacter.LockObject.EnterReadLock())
                 {
                     return _objCharacter.Created || _objCharacter.IgnoreRules
-                        ? _objCharacter.Settings.MaxSkillRating
-                        : _objCharacter.Settings.MaxSkillRatingCreate;
+                        ? _objCharacterSettings.MaxSkillRating
+                        : _objCharacterSettings.MaxSkillRatingCreate;
                 }
             }
         }
@@ -2085,7 +2091,7 @@ namespace Chummer.Backend.Skills
                 new DependencyGraphNode<string, SkillGroup>(nameof(BaseUnbroken),
                     new DependencyGraphNode<string, SkillGroup>(nameof(IsDisabled)),
                     new DependencyGraphNode<string, SkillGroup>(nameof(SkillList)),
-                    new DependencyGraphNode<string, SkillGroup>(nameof(KarmaUnbroken), x => x._objCharacter.Settings.UsePointsOnBrokenGroups, async (x, t) => await (await x._objCharacter.GetSettingsAsync(t).ConfigureAwait(false)).GetUsePointsOnBrokenGroupsAsync(t).ConfigureAwait(false))
+                    new DependencyGraphNode<string, SkillGroup>(nameof(KarmaUnbroken), x => x._objCharacterSettings.UsePointsOnBrokenGroups, async (x, t) => await x._objCharacterSettings.GetUsePointsOnBrokenGroupsAsync(t).ConfigureAwait(false))
                 ),
                 new DependencyGraphNode<string, SkillGroup>(nameof(ToolTip),
                     new DependencyGraphNode<string, SkillGroup>(nameof(SkillList)),
@@ -2110,86 +2116,89 @@ namespace Chummer.Backend.Skills
             CancellationToken token = default)
         {
             token.ThrowIfCancellationRequested();
-            List<string> lstProperties = new List<string>();
-            if (e.PropertyNames.Contains(nameof(Skill.BasePoints)) || e.PropertyNames.Contains(nameof(Skill.FreeBase)))
+            using (new FetchSafelyFromSafeObjectPool<HashSet<string>>(Utils.StringHashSetPool, out HashSet<string> setProperties))
             {
-                if (!await GetIsDisabledAsync(token).ConfigureAwait(false) && SkillList.Count != 0)
+                if (e.PropertyNames.Contains(nameof(Skill.BasePoints)) || e.PropertyNames.Contains(nameof(Skill.FreeBase)))
                 {
-                    if (await _objCharacter.GetEffectiveBuildMethodUsesPriorityTablesAsync(token).ConfigureAwait(false))
+                    if (!await GetIsDisabledAsync(token).ConfigureAwait(false) && SkillList.Count != 0)
                     {
-                        CharacterSettings objSettings = await _objCharacter.GetSettingsAsync(token).ConfigureAwait(false);
-                        if ((await objSettings.GetStrictSkillGroupsInCreateModeAsync(token).ConfigureAwait(false)
-                             && !await _objCharacter.GetCreatedAsync(token).ConfigureAwait(false))
-                            || !await objSettings.GetUsePointsOnBrokenGroupsAsync(token).ConfigureAwait(false))
-                            lstProperties.Add(nameof(BaseUnbroken));
-                    }
-
-                    lstProperties.Add(nameof(KarmaUnbroken));
-                }
-            }
-            else if ((e.PropertyNames.Contains(nameof(Skill.KarmaPoints)) || e.PropertyNames.Contains(nameof(Skill.FreeKarma)))
-                     && !await GetIsDisabledAsync(token).ConfigureAwait(false) && SkillList.Count != 0)
-            {
-                lstProperties.Add(nameof(KarmaUnbroken));
-            }
-
-            if (e.PropertyNames.Contains(nameof(Skill.TotalBaseRating)) || e.PropertyNames.Contains(nameof(Skill.Enabled)))
-            {
-                if (e.PropertyNames.Contains(nameof(Skill.Enabled)))
-                {
-                    lstProperties.Add(nameof(HasAnyBreakingSkills));
-                }
-                else if (SkillList.Count > 1)
-                {
-                    Skill objFirstEnabledSkill = await SkillList.FirstOrDefaultAsync(x => x.GetEnabledAsync(token), token: token).ConfigureAwait(false);
-                    if (objFirstEnabledSkill != null)
-                    {
-                        if (await (await CharacterObject.GetSettingsAsync(token).ConfigureAwait(false)).GetSpecializationsBreakSkillGroupsAsync(token).ConfigureAwait(false))
+                        if (await _objCharacter.GetEffectiveBuildMethodUsesPriorityTablesAsync(token).ConfigureAwait(false))
                         {
-                            if (await (await objFirstEnabledSkill.GetSpecializationsAsync(token).ConfigureAwait(false)).GetCountAsync(token).ConfigureAwait(false) == 0
-                                && await SkillList.AnyAsync(async x => !ReferenceEquals(x, objFirstEnabledSkill) && await x.GetEnabledAsync(token).ConfigureAwait(false)
-                                    && await (await x.GetSpecializationsAsync(token).ConfigureAwait(false)).GetCountAsync(token).ConfigureAwait(false) == 0, token: token).ConfigureAwait(false))
+                            if ((await _objCharacterSettings.GetStrictSkillGroupsInCreateModeAsync(token).ConfigureAwait(false)
+                                 && !await _objCharacter.GetCreatedAsync(token).ConfigureAwait(false))
+                                || !await _objCharacterSettings.GetUsePointsOnBrokenGroupsAsync(token).ConfigureAwait(false))
+                                setProperties.Add(nameof(BaseUnbroken));
+                        }
+
+                        setProperties.Add(nameof(KarmaUnbroken));
+                    }
+                }
+                else if ((e.PropertyNames.Contains(nameof(Skill.KarmaPoints)) || e.PropertyNames.Contains(nameof(Skill.FreeKarma)))
+                         && !await GetIsDisabledAsync(token).ConfigureAwait(false) && SkillList.Count != 0)
+                {
+                    setProperties.Add(nameof(KarmaUnbroken));
+                }
+
+                if (e.PropertyNames.Contains(nameof(Skill.TotalBaseRating)) || e.PropertyNames.Contains(nameof(Skill.Enabled)))
+                {
+                    if (e.PropertyNames.Contains(nameof(Skill.Enabled)))
+                    {
+                        setProperties.Add(nameof(HasAnyBreakingSkills));
+                    }
+                    else if (SkillList.Count > 1)
+                    {
+                        Skill objFirstEnabledSkill = await SkillList.FirstOrDefaultAsync(x => x.GetEnabledAsync(token), token: token).ConfigureAwait(false);
+                        if (objFirstEnabledSkill != null)
+                        {
+                            if (await (await CharacterObject.GetSettingsAsync(token).ConfigureAwait(false)).GetSpecializationsBreakSkillGroupsAsync(token).ConfigureAwait(false))
                             {
-                                lstProperties.Add(nameof(HasAnyBreakingSkills));
+                                if (await (await objFirstEnabledSkill.GetSpecializationsAsync(token).ConfigureAwait(false)).GetCountAsync(token).ConfigureAwait(false) == 0
+                                    && await SkillList.AnyAsync(async x => !ReferenceEquals(x, objFirstEnabledSkill) && await x.GetEnabledAsync(token).ConfigureAwait(false)
+                                        && await (await x.GetSpecializationsAsync(token).ConfigureAwait(false)).GetCountAsync(token).ConfigureAwait(false) == 0, token: token).ConfigureAwait(false))
+                                {
+                                    setProperties.Add(nameof(HasAnyBreakingSkills));
+                                }
+                            }
+                            else if (await SkillList.AnyAsync(async x => !ReferenceEquals(x, objFirstEnabledSkill) && await x.GetEnabledAsync(token).ConfigureAwait(false), token: token).ConfigureAwait(false))
+                            {
+                                setProperties.Add(nameof(HasAnyBreakingSkills));
                             }
                         }
-                        else if (await SkillList.AnyAsync(async x => !ReferenceEquals(x, objFirstEnabledSkill) && await x.GetEnabledAsync(token).ConfigureAwait(false), token: token).ConfigureAwait(false))
-                        {
-                            lstProperties.Add(nameof(HasAnyBreakingSkills));
-                        }
                     }
+                    setProperties.Add(nameof(DisplayRating));
+                    setProperties.Add(nameof(UpgradeToolTip));
+                    setProperties.Add(nameof(CurrentKarmaCost));
+                    setProperties.Add(nameof(UpgradeKarmaCost));
                 }
-                lstProperties.Add(nameof(DisplayRating));
-                lstProperties.Add(nameof(UpgradeToolTip));
-                lstProperties.Add(nameof(CurrentKarmaCost));
-                lstProperties.Add(nameof(UpgradeKarmaCost));
-            }
 
-            if (e.PropertyNames.Contains(nameof(Skill.Specializations)) && !lstProperties.Contains(nameof(HasAnyBreakingSkills)) &&
-                await (await CharacterObject.GetSettingsAsync(token).ConfigureAwait(false)).GetSpecializationsBreakSkillGroupsAsync(token)
-                         .ConfigureAwait(false) && SkillList.Count > 1)
-            {
-                Skill objFirstEnabledSkill = await SkillList
-                    .FirstOrDefaultAsync(x => x.GetEnabledAsync(token), token: token).ConfigureAwait(false);
-                if (objFirstEnabledSkill != null && await SkillList
-                        .AllAsync(
-                            async x => x == objFirstEnabledSkill ||
-                                       !await x.GetEnabledAsync(token).ConfigureAwait(false), token: token)
-                        .ConfigureAwait(false))
-                    lstProperties.Add(nameof(HasAnyBreakingSkills));
-            }
+                if (e.PropertyNames.Contains(nameof(Skill.Specializations)) && !setProperties.Contains(nameof(HasAnyBreakingSkills)) &&
+                    await (await CharacterObject.GetSettingsAsync(token).ConfigureAwait(false)).GetSpecializationsBreakSkillGroupsAsync(token)
+                             .ConfigureAwait(false) && SkillList.Count > 1)
+                {
+                    Skill objFirstEnabledSkill = await SkillList
+                        .FirstOrDefaultAsync(x => x.GetEnabledAsync(token), token: token).ConfigureAwait(false);
+                    if (objFirstEnabledSkill != null && await SkillList
+                            .AllAsync(
+                                async x => x == objFirstEnabledSkill ||
+                                           !await x.GetEnabledAsync(token).ConfigureAwait(false), token: token)
+                            .ConfigureAwait(false))
+                        setProperties.Add(nameof(HasAnyBreakingSkills));
+                }
 
-            if (lstProperties.Count > 0)
-                await OnMultiplePropertiesChangedAsync(lstProperties, token).ConfigureAwait(false);
+                if (setProperties.Count > 0)
+                    await OnMultiplePropertiesChangedAsync(setProperties, token).ConfigureAwait(false);
+            }
         }
 
         private readonly List<Skill> _lstAffectedSkills = new List<Skill>(4);
         private string _strGroupName;
         private readonly Character _objCharacter;
+        private CharacterSettings _objCharacterSettings;
 
         public SkillGroup(Character objCharacter, string strGroupName = "")
         {
             _objCharacter = objCharacter ?? throw new ArgumentNullException(nameof(objCharacter));
+            _objCharacterSettings = objCharacter.Settings;
             LockObject = new AsyncFriendlyReaderWriterLock(); // We need a separate lock so that we can properly disconnect ourselves from the character lock while we are loading data
             _objCachedBaseUnbrokenLock = new AsyncFriendlyReaderWriterLock(LockObject, true);
             _objCachedHasAnyBreakingSkillsLock = new AsyncFriendlyReaderWriterLock(LockObject, true);
@@ -2199,9 +2208,8 @@ namespace Chummer.Backend.Skills
             _objCachedToolTipLock = new AsyncFriendlyReaderWriterLock(LockObject, true);
             _strGroupName = strGroupName;
             objCharacter.MultiplePropertiesChangedAsync += OnCharacterPropertyChanged;
-            CharacterSettings objSettings = objCharacter.Settings;
-            if (objSettings?.IsDisposed == false)
-                objSettings.MultiplePropertiesChangedAsync += OnCharacterSettingsPropertyChanged;
+            if (_objCharacterSettings?.IsDisposed == false)
+                _objCharacterSettings.MultiplePropertiesChangedAsync += OnCharacterSettingsPropertyChanged;
         }
 
         public string Name
@@ -2831,13 +2839,13 @@ namespace Chummer.Backend.Skills
                     {
                         List<PropertyChangedEventArgs> lstArgsList = setNamesOfChangedProperties
                             .Select(x => new PropertyChangedEventArgs(x)).ToList();
-                        List<Tuple<PropertyChangedAsyncEventHandler, PropertyChangedEventArgs>> lstAsyncEventsList
-                            = new List<Tuple<PropertyChangedAsyncEventHandler, PropertyChangedEventArgs>>(lstArgsList.Count * _setPropertyChangedAsync.Count);
+                        List<ValueTuple<PropertyChangedAsyncEventHandler, PropertyChangedEventArgs>> lstAsyncEventsList
+                            = new List<ValueTuple<PropertyChangedAsyncEventHandler, PropertyChangedEventArgs>>(lstArgsList.Count * _setPropertyChangedAsync.Count);
                         foreach (PropertyChangedAsyncEventHandler objEvent in _setPropertyChangedAsync)
                         {
                             foreach (PropertyChangedEventArgs objArg in lstArgsList)
                             {
-                                lstAsyncEventsList.Add(new Tuple<PropertyChangedAsyncEventHandler, PropertyChangedEventArgs>(objEvent, objArg));
+                                lstAsyncEventsList.Add(new ValueTuple<PropertyChangedAsyncEventHandler, PropertyChangedEventArgs>(objEvent, objArg));
                             }
                         }
                         await ParallelExtensions.ForEachAsync(lstAsyncEventsList, tupEvent => tupEvent.Item1.Invoke(this, tupEvent.Item2, token), token).ConfigureAwait(false);
@@ -2886,28 +2894,56 @@ namespace Chummer.Backend.Skills
             }
         }
 
-        private Task OnCharacterPropertyChanged(object sender, MultiplePropertiesChangedEventArgs e, CancellationToken token = default)
+        private async Task OnCharacterPropertyChanged(object sender, MultiplePropertiesChangedEventArgs e, CancellationToken token = default)
         {
-            if (token.IsCancellationRequested)
-                return Task.FromCanceled(token);
+            token.ThrowIfCancellationRequested();
             if (CharacterObject?.IsLoading != false)
-                return Task.CompletedTask;
+                return;
+            if (e.PropertyNames.Contains(nameof(Character.Settings)))
+            {
+                IAsyncDisposable objLocker2 = await LockObject.EnterWriteLockAsync(token).ConfigureAwait(false);
+                try
+                {
+                    token.ThrowIfCancellationRequested();
+                    CharacterSettings objNewSettings = await CharacterObject.GetSettingsAsync(token).ConfigureAwait(false);
+                    CharacterSettings objOldSettings = Interlocked.Exchange(ref _objCharacterSettings, objNewSettings);
+                    if (!ReferenceEquals(objNewSettings, objOldSettings))
+                    {
+                        if (objOldSettings?.IsDisposed == false)
+                            objOldSettings.MultiplePropertiesChangedAsync -= OnCharacterSettingsPropertyChanged;
+                        if (objNewSettings?.IsDisposed == false)
+                        {
+                            objNewSettings.MultiplePropertiesChangedAsync += OnCharacterSettingsPropertyChanged;
+                            if (!await objNewSettings.HasIdenticalSettingsAsync(objOldSettings, token).ConfigureAwait(false))
+                            {
+                                MultiplePropertiesChangedEventArgs e2 = new MultiplePropertiesChangedEventArgs(await objNewSettings.GetDifferingPropertyNamesAsync(objOldSettings, token).ConfigureAwait(false));
+                                await OnCharacterSettingsPropertyChanged(this, e2, token).ConfigureAwait(false);
+                            }
+                        }
+                        else
+                        {
+                            MultiplePropertiesChangedEventArgs e2 = new MultiplePropertiesChangedEventArgs(await objOldSettings.GetDifferingPropertyNamesAsync(objNewSettings, token).ConfigureAwait(false));
+                            await OnCharacterSettingsPropertyChanged(this, e2, token).ConfigureAwait(false);
+                        }
+                    }
+                }
+                finally
+                {
+                    await objLocker2.DisposeAsync().ConfigureAwait(false);
+                }
+            }
             if (e.PropertyNames.Contains(nameof(Character.Karma)))
             {
                 if (e.PropertyNames.Contains(nameof(Character.EffectiveBuildMethodUsesPriorityTables)))
                 {
-                    return Task.Run(async () =>
-                    {
-                        using (TemporaryArray<string> aParams = new TemporaryArray<string>(nameof(CareerCanIncrease), nameof(BaseUnbroken)))
-                            await OnMultiplePropertiesChangedAsync(aParams, token).ConfigureAwait(false);
-                    }, token);
+                    using (TemporaryStringArray aParams = new TemporaryStringArray(nameof(CareerCanIncrease), nameof(BaseUnbroken)))
+                        await OnMultiplePropertiesChangedAsync(aParams, token).ConfigureAwait(false);
                 }
-                return OnPropertyChangedAsync(nameof(CareerCanIncrease), token);
+                else
+                    await OnPropertyChangedAsync(nameof(CareerCanIncrease), token).ConfigureAwait(false);
             }
-
-            return e.PropertyNames.Contains(nameof(Character.EffectiveBuildMethodUsesPriorityTables))
-                ? OnPropertyChangedAsync(nameof(BaseUnbroken), token)
-                : Task.CompletedTask;
+            else if (e.PropertyNames.Contains(nameof(Character.EffectiveBuildMethodUsesPriorityTables)))
+                await OnPropertyChangedAsync(nameof(BaseUnbroken), token).ConfigureAwait(false);
         }
 
         private async Task OnCharacterSettingsPropertyChanged(object sender, MultiplePropertiesChangedEventArgs e,
@@ -2924,161 +2960,163 @@ namespace Chummer.Backend.Skills
                 return;
             }
 
-            List<string> lstProperties = new List<string>();
-            if (CharacterObject != null)
+            using (new FetchSafelyFromSafeObjectPool<HashSet<string>>(Utils.StringHashSetPool, out HashSet<string> setProperties))
             {
-                CharacterSettings objSettings = await CharacterObject.GetSettingsAsync(token).ConfigureAwait(false);
-
-                if (objSettings != null && !await CharacterObject.GetCreatedAsync(token).ConfigureAwait(false))
+                if (CharacterObject != null)
                 {
-                    if (e.PropertyNames.Contains(nameof(CharacterSettings.StrictSkillGroupsInCreateMode)))
-                    {
-                        if (await objSettings.GetStrictSkillGroupsInCreateModeAsync(token).ConfigureAwait(false)
-                            && !await CharacterObject.GetIgnoreRulesAsync(token).ConfigureAwait(false))
-                        {
-                            IAsyncDisposable objLocker =
-                                await LockObject.EnterUpgradeableReadLockAsync(token).ConfigureAwait(false);
-                            try
-                            {
-                                token.ThrowIfCancellationRequested();
-                                if (await GetKarmaAsync(token).ConfigureAwait(false) > 0)
-                                {
-                                    await SkillList.ForEachAsync(async skill =>
-                                    {
-                                        IAsyncDisposable objLocker2 = await skill.LockObject.EnterWriteLockAsync(token)
-                                            .ConfigureAwait(false);
-                                        try
-                                        {
-                                            token.ThrowIfCancellationRequested();
-                                            await skill.SetKarmaPointsAsync(0, token).ConfigureAwait(false);
-                                            await skill.SetBasePointsAsync(0, token).ConfigureAwait(false);
-                                            await skill.Specializations
-                                                .RemoveAllAsync(
-                                                    async x => !await x.GetFreeAsync(token).ConfigureAwait(false),
-                                                    token: token).ConfigureAwait(false);
-                                        }
-                                        finally
-                                        {
-                                            await objLocker2.DisposeAsync().ConfigureAwait(false);
-                                        }
-                                    }, token).ConfigureAwait(false);
-                                }
-                                else
-                                {
-                                    await SkillList.ForEachAsync(async skill =>
-                                    {
-                                        IAsyncDisposable objLocker2 = await skill.LockObject.EnterWriteLockAsync(token)
-                                            .ConfigureAwait(false);
-                                        try
-                                        {
-                                            await skill.SetBasePointsAsync(0, token).ConfigureAwait(false);
-                                        }
-                                        finally
-                                        {
-                                            await objLocker2.DisposeAsync().ConfigureAwait(false);
-                                        }
-                                    }, token).ConfigureAwait(false);
-                                }
-                            }
-                            finally
-                            {
-                                await objLocker.DisposeAsync().ConfigureAwait(false);
-                            }
-                        }
-                        else if (e.PropertyNames.Contains(nameof(CharacterSettings.UsePointsOnBrokenGroups))
-                                 && !await objSettings.GetUsePointsOnBrokenGroupsAsync(token).ConfigureAwait(false))
-                        {
-                            IAsyncDisposable objLocker =
-                                await LockObject.EnterUpgradeableReadLockAsync(token).ConfigureAwait(false);
-                            try
-                            {
-                                token.ThrowIfCancellationRequested();
-                                await SkillList.ForEachAsync(async skill =>
-                                {
-                                    IAsyncDisposable objLocker2 =
-                                        await skill.LockObject.EnterWriteLockAsync(token).ConfigureAwait(false);
-                                    try
-                                    {
-                                        await skill.SetBasePointsAsync(0, token).ConfigureAwait(false);
-                                    }
-                                    finally
-                                    {
-                                        await objLocker2.DisposeAsync().ConfigureAwait(false);
-                                    }
-                                }, token).ConfigureAwait(false);
-                            }
-                            finally
-                            {
-                                await objLocker.DisposeAsync().ConfigureAwait(false);
-                            }
-                        }
+                    CharacterSettings objSettings = await CharacterObject.GetSettingsAsync(token).ConfigureAwait(false);
 
-                        await OnPropertyChangedAsync(nameof(BaseUnbroken), token).ConfigureAwait(false);
+                    if (objSettings != null && !await CharacterObject.GetCreatedAsync(token).ConfigureAwait(false))
+                    {
+                        if (e.PropertyNames.Contains(nameof(CharacterSettings.StrictSkillGroupsInCreateMode)))
+                        {
+                            if (await objSettings.GetStrictSkillGroupsInCreateModeAsync(token).ConfigureAwait(false)
+                                && !await CharacterObject.GetIgnoreRulesAsync(token).ConfigureAwait(false))
+                            {
+                                IAsyncDisposable objLocker =
+                                    await LockObject.EnterUpgradeableReadLockAsync(token).ConfigureAwait(false);
+                                try
+                                {
+                                    token.ThrowIfCancellationRequested();
+                                    if (await GetKarmaAsync(token).ConfigureAwait(false) > 0)
+                                    {
+                                        await SkillList.ForEachAsync(async skill =>
+                                        {
+                                            IAsyncDisposable objLocker2 = await skill.LockObject.EnterWriteLockAsync(token)
+                                                .ConfigureAwait(false);
+                                            try
+                                            {
+                                                token.ThrowIfCancellationRequested();
+                                                await skill.SetKarmaPointsAsync(0, token).ConfigureAwait(false);
+                                                await skill.SetBasePointsAsync(0, token).ConfigureAwait(false);
+                                                await skill.Specializations
+                                                    .RemoveAllAsync(
+                                                        async x => !await x.GetFreeAsync(token).ConfigureAwait(false),
+                                                        token: token).ConfigureAwait(false);
+                                            }
+                                            finally
+                                            {
+                                                await objLocker2.DisposeAsync().ConfigureAwait(false);
+                                            }
+                                        }, token).ConfigureAwait(false);
+                                    }
+                                    else
+                                    {
+                                        await SkillList.ForEachAsync(async skill =>
+                                        {
+                                            IAsyncDisposable objLocker2 = await skill.LockObject.EnterWriteLockAsync(token)
+                                                .ConfigureAwait(false);
+                                            try
+                                            {
+                                                await skill.SetBasePointsAsync(0, token).ConfigureAwait(false);
+                                            }
+                                            finally
+                                            {
+                                                await objLocker2.DisposeAsync().ConfigureAwait(false);
+                                            }
+                                        }, token).ConfigureAwait(false);
+                                    }
+                                }
+                                finally
+                                {
+                                    await objLocker.DisposeAsync().ConfigureAwait(false);
+                                }
+                            }
+                            else if (e.PropertyNames.Contains(nameof(CharacterSettings.UsePointsOnBrokenGroups))
+                                     && !await objSettings.GetUsePointsOnBrokenGroupsAsync(token).ConfigureAwait(false))
+                            {
+                                IAsyncDisposable objLocker =
+                                    await LockObject.EnterUpgradeableReadLockAsync(token).ConfigureAwait(false);
+                                try
+                                {
+                                    token.ThrowIfCancellationRequested();
+                                    await SkillList.ForEachAsync(async skill =>
+                                    {
+                                        IAsyncDisposable objLocker2 =
+                                            await skill.LockObject.EnterWriteLockAsync(token).ConfigureAwait(false);
+                                        try
+                                        {
+                                            await skill.SetBasePointsAsync(0, token).ConfigureAwait(false);
+                                        }
+                                        finally
+                                        {
+                                            await objLocker2.DisposeAsync().ConfigureAwait(false);
+                                        }
+                                    }, token).ConfigureAwait(false);
+                                }
+                                finally
+                                {
+                                    await objLocker.DisposeAsync().ConfigureAwait(false);
+                                }
+                            }
+
+                            await OnPropertyChangedAsync(nameof(BaseUnbroken), token).ConfigureAwait(false);
+                        }
+                        else if (e.PropertyNames.Contains(nameof(CharacterSettings.UsePointsOnBrokenGroups)))
+                        {
+                            if (!await objSettings.GetUsePointsOnBrokenGroupsAsync(token).ConfigureAwait(false))
+                            {
+                                IAsyncDisposable objLocker =
+                                    await LockObject.EnterUpgradeableReadLockAsync(token).ConfigureAwait(false);
+                                try
+                                {
+                                    token.ThrowIfCancellationRequested();
+                                    await SkillList.ForEachAsync(async skill =>
+                                    {
+                                        IAsyncDisposable objLocker2 =
+                                            await skill.LockObject.EnterWriteLockAsync(token).ConfigureAwait(false);
+                                        try
+                                        {
+                                            await skill.SetBasePointsAsync(0, token).ConfigureAwait(false);
+                                        }
+                                        finally
+                                        {
+                                            await objLocker2.DisposeAsync().ConfigureAwait(false);
+                                        }
+                                    }, token).ConfigureAwait(false);
+                                }
+                                finally
+                                {
+                                    await objLocker.DisposeAsync().ConfigureAwait(false);
+                                }
+                            }
+
+                            setProperties.Add(nameof(BaseUnbroken));
+                        }
                     }
-                    else if (e.PropertyNames.Contains(nameof(CharacterSettings.UsePointsOnBrokenGroups)))
-                    {
-                        if (!await objSettings.GetUsePointsOnBrokenGroupsAsync(token).ConfigureAwait(false))
-                        {
-                            IAsyncDisposable objLocker =
-                                await LockObject.EnterUpgradeableReadLockAsync(token).ConfigureAwait(false);
-                            try
-                            {
-                                token.ThrowIfCancellationRequested();
-                                await SkillList.ForEachAsync(async skill =>
-                                {
-                                    IAsyncDisposable objLocker2 =
-                                        await skill.LockObject.EnterWriteLockAsync(token).ConfigureAwait(false);
-                                    try
-                                    {
-                                        await skill.SetBasePointsAsync(0, token).ConfigureAwait(false);
-                                    }
-                                    finally
-                                    {
-                                        await objLocker2.DisposeAsync().ConfigureAwait(false);
-                                    }
-                                }, token).ConfigureAwait(false);
-                            }
-                            finally
-                            {
-                                await objLocker.DisposeAsync().ConfigureAwait(false);
-                            }
-                        }
+                    else if (e.PropertyNames.Contains(nameof(CharacterSettings.StrictSkillGroupsInCreateMode))
+                             || e.PropertyNames.Contains(nameof(CharacterSettings.UsePointsOnBrokenGroups)))
+                        setProperties.Add(nameof(BaseUnbroken));
 
-                        lstProperties.Add(nameof(BaseUnbroken));
+                    if (await CharacterObject.GetCreatedAsync(token).ConfigureAwait(false)
+                        || await CharacterObject.GetIgnoreRulesAsync(token).ConfigureAwait(false))
+                    {
+                        if (e.PropertyNames.Contains(nameof(CharacterSettings.MaxSkillRating)))
+                            setProperties.Add(nameof(RatingMaximum));
+                    }
+                    else if (e.PropertyNames.Contains(nameof(CharacterSettings.MaxSkillRatingCreate)))
+                    {
+                        setProperties.Add(nameof(RatingMaximum));
                     }
                 }
                 else if (e.PropertyNames.Contains(nameof(CharacterSettings.StrictSkillGroupsInCreateMode))
                          || e.PropertyNames.Contains(nameof(CharacterSettings.UsePointsOnBrokenGroups)))
-                    lstProperties.Add(nameof(BaseUnbroken));
+                    setProperties.Add(nameof(BaseUnbroken));
 
-                if (await CharacterObject.GetCreatedAsync(token).ConfigureAwait(false)
-                    || await CharacterObject.GetIgnoreRulesAsync(token).ConfigureAwait(false))
+                if (e.PropertyNames.Contains(nameof(CharacterSettings.KarmaNewSkillGroup))
+                    || e.PropertyNames.Contains(nameof(CharacterSettings.KarmaImproveSkillGroup)))
                 {
-                    if (e.PropertyNames.Contains(nameof(CharacterSettings.MaxSkillRating)))
-                        lstProperties.Add(nameof(RatingMaximum));
+                    setProperties.Add(nameof(CurrentKarmaCost));
                 }
-                else if (e.PropertyNames.Contains(nameof(CharacterSettings.MaxSkillRatingCreate)))
+
+                if (e.PropertyNames.Contains(nameof(CharacterSettings.SpecializationsBreakSkillGroups)))
                 {
-                    lstProperties.Add(nameof(RatingMaximum));
+                    setProperties.Add(nameof(HasAnyBreakingSkills));
                 }
-            }
-            else if (e.PropertyNames.Contains(nameof(CharacterSettings.StrictSkillGroupsInCreateMode))
-                     || e.PropertyNames.Contains(nameof(CharacterSettings.UsePointsOnBrokenGroups)))
-                lstProperties.Add(nameof(BaseUnbroken));
 
-            if (e.PropertyNames.Contains(nameof(CharacterSettings.KarmaNewSkillGroup))
-                || e.PropertyNames.Contains(nameof(CharacterSettings.KarmaImproveSkillGroup)))
-            {
-                lstProperties.Add(nameof(CurrentKarmaCost));
+                if (setProperties.Count > 0)
+                    await OnMultiplePropertiesChangedAsync(setProperties, token).ConfigureAwait(false);
             }
-
-            if (e.PropertyNames.Contains(nameof(CharacterSettings.SpecializationsBreakSkillGroups)))
-            {
-                lstProperties.Add(nameof(HasAnyBreakingSkills));
-            }
-
-            if (lstProperties.Count > 0)
-                await OnMultiplePropertiesChangedAsync(lstProperties, token).ConfigureAwait(false);
             if (e.PropertyNames.Contains(nameof(CharacterSettings.AllowSkillRegrouping)))
             {
                 await UpdateIsBrokenAsync(token).ConfigureAwait(false);
@@ -3258,9 +3296,9 @@ namespace Chummer.Backend.Skills
                     intCost /= 2; //We get square, need triangle
 
                     if (intCost == 1)
-                        intCost *= _objCharacter.Settings.KarmaNewSkillGroup;
+                        intCost *= _objCharacterSettings.KarmaNewSkillGroup;
                     else
-                        intCost *= _objCharacter.Settings.KarmaImproveSkillGroup;
+                        intCost *= _objCharacterSettings.KarmaImproveSkillGroup;
 
                     decimal decMultiplier = 1.0m;
                     decimal decExtra = 0;
@@ -3349,11 +3387,10 @@ namespace Chummer.Backend.Skills
                 intCost -= intLower * (intLower + 1);
                 intCost /= 2; //We get square, need triangle
 
-                CharacterSettings objSettings = await _objCharacter.GetSettingsAsync(token).ConfigureAwait(false);
                 if (intCost == 1)
-                    intCost *= await objSettings.GetKarmaNewSkillGroupAsync(token).ConfigureAwait(false);
+                    intCost *= await _objCharacterSettings.GetKarmaNewSkillGroupAsync(token).ConfigureAwait(false);
                 else
-                    intCost *= await objSettings.GetKarmaImproveSkillGroupAsync(token).ConfigureAwait(false);
+                    intCost *= await _objCharacterSettings.GetKarmaImproveSkillGroupAsync(token).ConfigureAwait(false);
 
                 decimal decMultiplier = 1.0m;
                 decimal decExtra = 0;

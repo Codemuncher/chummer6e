@@ -415,12 +415,12 @@ namespace Chummer.Backend.Equipment
                     foreach (XmlNode objXmlAddWeapon in xmlAddWeaponList)
                     {
                         XmlNode objXmlWeapon = objXmlWeaponDocument.TryGetNodeByNameOrId("/chummer/weapons/weapon",
-                            objXmlAddWeapon.InnerText);
+                            objXmlAddWeapon.InnerTextViaPool());
 
                         if (objXmlWeapon != null)
                         {
                             int intAddWeaponRating = 0;
-                            string strLoopRating = objXmlAddWeapon.Attributes?["rating"]?.InnerText;
+                            string strLoopRating = objXmlAddWeapon.Attributes?["rating"]?.InnerTextViaPool();
                             if (!string.IsNullOrEmpty(strLoopRating))
                             {
                                 strLoopRating = blnSync
@@ -503,11 +503,11 @@ namespace Chummer.Backend.Equipment
                 objWriter.WriteEndElement();
             }
             if (_nodBonus != null)
-                objWriter.WriteRaw(_nodBonus.OuterXml);
+                objWriter.WriteRaw(_nodBonus.OuterXmlViaPool());
             else
                 objWriter.WriteElementString("bonus", string.Empty);
             if (_nodWirelessBonus != null)
-                objWriter.WriteRaw(_nodWirelessBonus.OuterXml);
+                objWriter.WriteRaw(_nodWirelessBonus.OuterXmlViaPool());
             else
                 objWriter.WriteElementString("wirelessbonus", string.Empty);
             objWriter.WriteElementString("wirelesson", _blnWirelessOn.ToString(GlobalSettings.InvariantCultureInfo));
@@ -516,7 +516,7 @@ namespace Chummer.Backend.Equipment
             objWriter.WriteElementString("included", _blnIncludedInArmor.ToString(GlobalSettings.InvariantCultureInfo));
             objWriter.WriteElementString("equipped", _blnEquipped.ToString(GlobalSettings.InvariantCultureInfo));
             objWriter.WriteElementString("extra", _strExtra);
-            objWriter.WriteElementString("emcumbrance", _blnEncumbrance.ToString(GlobalSettings.InvariantCultureInfo));
+            objWriter.WriteElementString("encumbrance", _blnEncumbrance.ToString(GlobalSettings.InvariantCultureInfo));
             objWriter.WriteElementString("stolen", _blnStolen.ToString(GlobalSettings.InvariantCultureInfo));
             if (_guiWeaponID != Guid.Empty)
                 objWriter.WriteElementString("weaponguid", _guiWeaponID.ToString("D", GlobalSettings.InvariantCultureInfo));
@@ -603,7 +603,8 @@ namespace Chummer.Backend.Equipment
             objNode.TryGetStringFieldQuickly("notesColor", ref sNotesColor);
             _colNotes = ColorTranslator.FromHtml(sNotesColor);
 
-            if (!objNode.TryGetBoolFieldQuickly("encumbrance", ref _blnEncumbrance))
+            if (!objNode.TryGetBoolFieldQuickly("encumbrance", ref _blnEncumbrance)
+                && !objNode.TryGetBoolFieldQuickly("emcumbrance", ref _blnEncumbrance))
                 _blnEncumbrance = true;
             objNode.TryGetBoolFieldQuickly("discountedcost", ref _blnDiscountCost);
             objNode.TryGetInt32FieldQuickly("sortorder", ref _intSortOrder);
@@ -1189,16 +1190,16 @@ namespace Chummer.Backend.Equipment
         /// <summary>
         /// Processes a string into an int based on logical processing.
         /// </summary>
-        private Task<Tuple<decimal, bool>> ProcessRatingStringAsDecAsync(string strExpression, int intRating, CancellationToken token = default) => ProcessRatingStringAsDecAsync(strExpression, () => Task.FromResult(intRating), token);
+        private Task<ValueTuple<decimal, bool>> ProcessRatingStringAsDecAsync(string strExpression, int intRating, CancellationToken token = default) => ProcessRatingStringAsDecAsync(strExpression, () => Task.FromResult(intRating), token);
 
         /// <summary>
         /// Processes a string into an int based on logical processing.
         /// </summary>
-        private async Task<Tuple<decimal, bool>> ProcessRatingStringAsDecAsync(string strExpression, Func<Task<int>> funcRating, CancellationToken token = default)
+        private async Task<ValueTuple<decimal, bool>> ProcessRatingStringAsDecAsync(string strExpression, Func<Task<int>> funcRating, CancellationToken token = default)
         {
             token.ThrowIfCancellationRequested();
             if (string.IsNullOrEmpty(strExpression))
-                return new Tuple<decimal, bool>(0, true);
+                return new ValueTuple<decimal, bool>(0, true);
             bool blnIsSuccess = true;
             strExpression = (await strExpression.ProcessFixedValuesStringAsync(funcRating, token).ConfigureAwait(false)).TrimStart('+');
             if (strExpression.DoesNeedXPathProcessingToBeConvertedToNumber(out decimal decValue))
@@ -1269,10 +1270,10 @@ namespace Chummer.Backend.Equipment
                 (blnIsSuccess, objProcess)
                     = await CommonFunctions.EvaluateInvariantXPathAsync(strExpression, token).ConfigureAwait(false);
                 if (blnIsSuccess)
-                    return new Tuple<decimal, bool>(Convert.ToDecimal((double)objProcess), true);
+                    return new ValueTuple<decimal, bool>(Convert.ToDecimal((double)objProcess), true);
             }
 
-            return new Tuple<decimal, bool>(decValue, blnIsSuccess);
+            return new ValueTuple<decimal, bool>(decValue, blnIsSuccess);
         }
 
         public string RatingLabel
@@ -2220,7 +2221,7 @@ namespace Chummer.Backend.Equipment
         /// </summary>
         public void RefreshWirelessBonuses()
         {
-            if (!string.IsNullOrEmpty(WirelessBonus?.InnerText))
+            if (!WirelessBonus.IsNullOrInnerTextIsEmpty())
             {
                 if (WirelessOn && Equipped && Parent.WirelessOn)
                 {
@@ -2268,7 +2269,7 @@ namespace Chummer.Backend.Equipment
         /// </summary>
         public async Task RefreshWirelessBonusesAsync(CancellationToken token = default)
         {
-            if (!string.IsNullOrEmpty(WirelessBonus?.InnerText))
+            if (!WirelessBonus.IsNullOrInnerTextIsEmpty())
             {
                 if (WirelessOn && Equipped && Parent.WirelessOn)
                 {

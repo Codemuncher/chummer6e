@@ -247,7 +247,7 @@ namespace Chummer.Backend.Equipment
                         {
                             foreach (XmlNode objXmlSubsystem in xmlSubsystemList)
                             {
-                                sbdSubsystems.Append(objXmlSubsystem.InnerText).Append(',');
+                                sbdSubsystems.Append(objXmlSubsystem.InnerTextViaPool()).Append(',');
                             }
                         }
                     }
@@ -260,7 +260,7 @@ namespace Chummer.Backend.Equipment
             }
             objXmlMod.TryGetStringFieldQuickly("avail", ref _strAvail);
 
-            _strCost = objXmlMod?["cost"]?.InnerText ?? string.Empty;
+            _strCost = objXmlMod?["cost"]?.InnerTextViaPool() ?? string.Empty;
             // Check for a Variable Cost.
             if (_strCost.StartsWith("Variable(", StringComparison.Ordinal))
             {
@@ -453,9 +453,9 @@ namespace Chummer.Backend.Equipment
                 objWriter.WriteEndElement();
             }
             if (_nodBonus != null)
-                objWriter.WriteRaw(_nodBonus.OuterXml);
+                objWriter.WriteRaw(_nodBonus.OuterXmlViaPool());
             if (_nodWirelessBonus != null)
-                objWriter.WriteRaw(_nodWirelessBonus.OuterXml);
+                objWriter.WriteRaw(_nodWirelessBonus.OuterXmlViaPool());
             objWriter.WriteElementString("notes", _strNotes.CleanOfXmlInvalidUnicodeChars());
             objWriter.WriteElementString("notesColor", ColorTranslator.ToHtml(_colNotes));
             objWriter.WriteElementString("discountedcost", _blnDiscountCost.ToString(GlobalSettings.InvariantCultureInfo));
@@ -946,16 +946,16 @@ namespace Chummer.Backend.Equipment
         /// <summary>
         /// Processes a string into an int based on logical processing.
         /// </summary>
-        public Task<Tuple<decimal, bool>> ProcessRatingStringAsDecAsync(string strExpression, int intRating, CancellationToken token = default) => ProcessRatingStringAsDecAsync(strExpression, () => Task.FromResult(intRating), token);
+        public Task<ValueTuple<decimal, bool>> ProcessRatingStringAsDecAsync(string strExpression, int intRating, CancellationToken token = default) => ProcessRatingStringAsDecAsync(strExpression, () => Task.FromResult(intRating), token);
 
         /// <summary>
         /// Processes a string into an int based on logical processing.
         /// </summary>
-        public async Task<Tuple<decimal, bool>> ProcessRatingStringAsDecAsync(string strExpression, Func<Task<int>> funcRating, CancellationToken token = default)
+        public async Task<ValueTuple<decimal, bool>> ProcessRatingStringAsDecAsync(string strExpression, Func<Task<int>> funcRating, CancellationToken token = default)
         {
             token.ThrowIfCancellationRequested();
             if (string.IsNullOrEmpty(strExpression))
-                return new Tuple<decimal, bool>(0, true);
+                return new ValueTuple<decimal, bool>(0, true);
             bool blnIsSuccess = true;
             strExpression = (await strExpression.ProcessFixedValuesStringAsync(funcRating, token).ConfigureAwait(false)).TrimStart('+');
             if (strExpression.DoesNeedXPathProcessingToBeConvertedToNumber(out decimal decValue))
@@ -1006,10 +1006,10 @@ namespace Chummer.Backend.Equipment
                 (blnIsSuccess, objProcess)
                     = await CommonFunctions.EvaluateInvariantXPathAsync(strExpression, token).ConfigureAwait(false);
                 if (blnIsSuccess)
-                    return new Tuple<decimal, bool>(Convert.ToDecimal((double)objProcess), true);
+                    return new ValueTuple<decimal, bool>(Convert.ToDecimal((double)objProcess), true);
             }
 
-            return new Tuple<decimal, bool>(decValue, blnIsSuccess);
+            return new ValueTuple<decimal, bool>(decValue, blnIsSuccess);
         }
 
         /// <summary>
@@ -2477,7 +2477,7 @@ namespace Chummer.Backend.Equipment
                 if (WeaponMountParent != null)
                     WeaponMountParent.Mods.Remove(this);
                 else
-                    Parent.Mods.Remove(this);
+                    Parent?.Mods.Remove(this);
             }
 
             decimal decReturn = Weapons.AsEnumerableWithSideEffects().Sum(x => x.DeleteWeapon(false))
@@ -2495,7 +2495,7 @@ namespace Chummer.Backend.Equipment
             {
                 if (WeaponMountParent != null)
                     await WeaponMountParent.Mods.RemoveAsync(this, token).ConfigureAwait(false);
-                else
+                else if (Parent != null)
                     await Parent.Mods.RemoveAsync(this, token).ConfigureAwait(false);
             }
 

@@ -59,6 +59,7 @@ namespace Chummer
             InitializeComponent();
             this.UpdateLightDarkMode();
             this.TranslateWinForm();
+            this.UpdateParentForToolTipControls();
             _objXmlDocument = _objCharacter.LoadDataXPath("skills.xml");
         }
 
@@ -236,7 +237,7 @@ namespace Chummer
                         }
 
                         lstSkills.Add(new ListItem(
-                                          new Tuple<string, bool>(strXmlSkillName, objXmlSkill.SelectSingleNodeAndCacheExpression("exotic")?.Value == bool.TrueString),
+                                          new ValueTuple<string, bool>(strXmlSkillName, objXmlSkill.SelectSingleNodeAndCacheExpression("exotic")?.Value == bool.TrueString),
                                           objXmlSkill.SelectSingleNodeAndCacheExpression("translate")?.Value
                                           ?? strXmlSkillName));
                     }
@@ -310,7 +311,7 @@ namespace Chummer
                                 return;
                             }
 
-                            lstSkills.Add(new ListItem(new Tuple<string, bool>(strLoopName, true),
+                            lstSkills.Add(new ListItem(new ValueTuple<string, bool>(strLoopName, true),
                                                        await objExoticSkill.GetCurrentDisplayNameAsync()
                                                                            .ConfigureAwait(false)));
                             setAddedExotics.Add(strLoopName);
@@ -343,10 +344,10 @@ namespace Chummer
 
             if (await cboSkill.DoThreadSafeFuncAsync(x => x.Items.Count).ConfigureAwait(false) == 1)
             {
-                Tuple<string, bool> tupSelected
+                ValueTuple<string, bool> tupSelected
                     = blnForcedExotic
-                        ? new Tuple<string, bool>(strForcedExoticSkillName, true)
-                        : (Tuple<string, bool>) await cboSkill.DoThreadSafeFuncAsync(x => x.SelectedValue)
+                        ? new ValueTuple<string, bool>(strForcedExoticSkillName, true)
+                        : (ValueTuple<string, bool>) await cboSkill.DoThreadSafeFuncAsync(x => x.SelectedValue)
                                                               .ConfigureAwait(false);
                 if (!tupSelected.Item2)
                 {
@@ -407,7 +408,7 @@ namespace Chummer
 
         private void cmdOK_Click(object sender, EventArgs e)
         {
-            Tuple<string, bool> tupSelected = (Tuple<string, bool>)cboSkill.SelectedValue;
+            ValueTuple<string, bool> tupSelected = (ValueTuple<string, bool>)cboSkill.SelectedValue;
             if (tupSelected.Item2)
                 _strReturnValue = tupSelected.Item1 + " (" + cboExtra.SelectedValue + ')';
             else
@@ -449,7 +450,7 @@ namespace Chummer
                     {
                         foreach (XmlNode objNode in xmlCategoryList)
                         {
-                            sbdLimitToCategories.Append("category = ").Append(objNode.InnerText.CleanXPath())
+                            sbdLimitToCategories.Append("category = ").Append(objNode.InnerTextViaPool().CleanXPath())
                                                 .Append(" or ");
                         }
 
@@ -543,7 +544,7 @@ namespace Chummer
 
         private async void cboSkill_SelectedIndexChanged(object sender, EventArgs e)
         {
-            Tuple<string, bool> tupSelected = (Tuple<string, bool>)await cboSkill.DoThreadSafeFuncAsync(x => x.SelectedValue).ConfigureAwait(false);
+            ValueTuple<string, bool> tupSelected = (ValueTuple<string, bool>)await cboSkill.DoThreadSafeFuncAsync(x => x.SelectedValue).ConfigureAwait(false);
             if (tupSelected.Item2)
             {
                 await BuildExtraList(tupSelected.Item1).ConfigureAwait(false);

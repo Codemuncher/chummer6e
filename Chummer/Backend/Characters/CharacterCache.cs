@@ -63,7 +63,7 @@ namespace Chummer
         private SafeAsyncEventHandler _onMyDoubleClick;
         private SafeAsyncEventHandler _onMyContextMenuDeleteClick;
         private SafeAsyncEventHandler<TreeViewEventArgs> _onMyAfterSelect;
-        private SafeAsyncEventHandler<Tuple<KeyEventArgs, TreeNode>> _onMyKeyDown;
+        private SafeAsyncEventHandler<ValueTuple<KeyEventArgs, TreeNode>> _onMyKeyDown;
 
         public AsyncFriendlyReaderWriterLock LockObject { get; } = new AsyncFriendlyReaderWriterLock();
 
@@ -687,7 +687,7 @@ namespace Chummer
         [JsonIgnore]
         [XmlIgnore]
         [IgnoreDataMember]
-        public SafeAsyncEventHandler<Tuple<KeyEventArgs, TreeNode>> OnMyKeyDown
+        public SafeAsyncEventHandler<ValueTuple<KeyEventArgs, TreeNode>> OnMyKeyDown
         {
             get
             {
@@ -793,7 +793,7 @@ namespace Chummer
                     {
                         XPathDocument xmlDoc = blnSync
                             ? LoadXPathDocument()
-                            : await Task.Run(LoadXPathDocumentAsync, token).ConfigureAwait(false);
+                            : await LoadXPathDocumentAsync().ConfigureAwait(false);
 
                         XPathDocument LoadXPathDocument()
                         {
@@ -1107,10 +1107,10 @@ namespace Chummer
             return strReturn;
         }
 
-        public async Task OnDefaultKeyDown(object sender, Tuple<KeyEventArgs, TreeNode> args, CancellationToken token = default)
+        public async Task OnDefaultKeyDown(object sender, ValueTuple<KeyEventArgs, TreeNode> args, CancellationToken token = default)
         {
             token.ThrowIfCancellationRequested();
-            if (args?.Item1.KeyCode == Keys.Delete)
+            if (args.Item1.KeyCode == Keys.Delete)
             {
                 switch (args.Item2.Parent.Tag.ToString())
                 {

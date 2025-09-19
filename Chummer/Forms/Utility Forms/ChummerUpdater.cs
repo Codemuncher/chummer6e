@@ -64,18 +64,12 @@ namespace Chummer
             InitializeComponent();
             this.UpdateLightDarkMode();
             this.TranslateWinForm();
+            this.UpdateParentForToolTipControls();
             CurrentVersion = Utils.CurrentChummerVersion.ToString(3);
             _blnPreferNightly = GlobalSettings.PreferNightlyBuilds;
             _strTempLatestVersionChangelogPath = Path.Combine(Utils.GetTempPath(), "changelog.txt");
             _clientChangelogDownloader = new WebClient { Proxy = WebRequest.DefaultWebProxy, Encoding = Encoding.UTF8, Credentials = CredentialCache.DefaultNetworkCredentials };
             _clientDownloader = new WebClient { Proxy = WebRequest.DefaultWebProxy, Encoding = Encoding.UTF8, Credentials = CredentialCache.DefaultNetworkCredentials };
-            Disposed += (sender, args) =>
-            {
-                _objGenericFormClosingCancellationTokenSource.Dispose();
-                _clientChangelogDownloader.Dispose();
-                _clientDownloader.Dispose();
-                _objConnectionLoaderCancellationTokenSource?.Dispose();
-            };
             _clientDownloader.DownloadFileCompleted += wc_DownloadCompleted;
             _clientDownloader.DownloadProgressChanged += wc_DownloadProgressChanged;
         }
@@ -146,7 +140,7 @@ namespace Chummer
                 tskConnectionLoader.IsFaulted)))
             {
                 CancellationToken objToken = objNewChangelogSource.Token;
-                Task tskNew = Task.Run(() => DownloadChangelog(objToken), objToken);
+                Task tskNew = DownloadChangelog(objToken);
                 if (Interlocked.CompareExchange(ref _tskChangelogDownloader, tskNew, null) != null)
                 {
                     Interlocked.CompareExchange(ref _objChangelogDownloaderCancellationTokenSource, null,
@@ -306,11 +300,12 @@ namespace Chummer
                 objNewSource.Dispose();
                 throw;
             }
-            Task tskNew = Task.Run(async () =>
+            Task tskNew = DownloadAndPopulationChangelog(objToken);
+            async Task DownloadAndPopulationChangelog(CancellationToken innerToken)
             {
-                await LoadConnection(objToken).ConfigureAwait(false);
-                await PopulateChangelog(objToken).ConfigureAwait(false);
-            }, objToken);
+                await LoadConnection(innerToken).ConfigureAwait(false);
+                await PopulateChangelog(innerToken).ConfigureAwait(false);
+            }
             if (Interlocked.CompareExchange(ref _tskConnectionLoader, tskNew, null) != null)
             {
                 Interlocked.CompareExchange(ref _objConnectionLoaderCancellationTokenSource, null, objNewSource);
@@ -620,7 +615,7 @@ namespace Chummer
                             objNewSource.Dispose();
                             return;
                         }
-                        Task tskNew = Task.Run(() => DownloadChangelog(objToken), objToken);
+                        Task tskNew = DownloadChangelog(objToken);
                         if (Interlocked.CompareExchange(ref _tskChangelogDownloader, tskNew, null) != null)
                         {
                             Interlocked.CompareExchange(ref _objChangelogDownloaderCancellationTokenSource, null,
@@ -791,7 +786,7 @@ namespace Chummer
                 {
                     CancellationToken objToken = objNewChangelogSource.Token;
                     await cmdUpdate.DoThreadSafeAsync(x => x.Enabled = false, objToken).ConfigureAwait(false);
-                    Task tskNew = Task.Run(() => DownloadChangelog(objToken), objToken);
+                    Task tskNew = DownloadChangelog(objToken);
                     if (Interlocked.CompareExchange(ref _tskChangelogDownloader, tskNew, null) != null)
                     {
                         Interlocked.CompareExchange(ref _objChangelogDownloaderCancellationTokenSource, null,
@@ -1348,7 +1343,7 @@ namespace Chummer
                 token.ThrowIfCancellationRequested();
                 try
                 {
-                    using (token.Register(() => _clientDownloader.CancelAsync()))
+                    using (token.RegisterWithoutEC(x => ((WebClient)x).CancelAsync(), _clientDownloader))
                         await _clientDownloader.DownloadFileTaskAsync(uriDownloadFileAddress, _strTempLatestVersionZipPath).ConfigureAwait(false);
                 }
                 catch (WebException ex)

@@ -32,12 +32,12 @@ namespace Chummer.UI.Table
         {
             _objMyToken = objMyToken;
             InitializeComponent();
-            Disposed += (sender, args) => _objUpdateSemaphore.Dispose();
             ContentField = _checkBox;
             _checkBox.Text = text;
             _checkBox.Tag = tag;
             this.UpdateLightDarkMode(objMyToken);
             this.TranslateWinForm(token: objMyToken);
+            this.UpdateParentForToolTipControls();
             Size = _checkBox.Size;
         }
 
@@ -153,14 +153,16 @@ namespace Chummer.UI.Table
         /// </summary>
         public Func<T, CancellationToken, Task<bool>> EnabledExtractor { get; set; }
 
-        public Func<T, CancellationToken, Task<bool>> EnabledGetter { get; set; }
+        /// <summary>
+        /// The extractor for getting the visible state from the
+        /// value.
+        /// </summary>
+        public Func<T, CancellationToken, Task<bool>> VisibleExtractor { get; set; }
 
         /// <summary>
         /// The extractor for getting the checked state from the
         /// value.
         /// </summary>
-        public Func<T, CancellationToken, Task<bool>> VisibleExtractor { get; set; }
-
         public Func<T, CancellationToken, Task<bool>> ValueGetter { get; set; }
 
         /// <summary>

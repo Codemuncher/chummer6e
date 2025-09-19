@@ -326,7 +326,7 @@ namespace Chummer
         {
             string strReturn = strInput;
             // Boolean in tuple is set to true if substring is a macro in need of processing, otherwise it's set to false
-            List<Tuple<string, bool>> lstSubstrings = new List<Tuple<string, bool>>(1);
+            List<ValueTuple<string, bool>> lstSubstrings = new List<ValueTuple<string, bool>>(1);
             IAsyncDisposable objLocker = await LockObject.EnterReadLockAsync(token).ConfigureAwait(false);
             try
             {
@@ -336,7 +336,7 @@ namespace Chummer
                     int intOpeningBracketIndex = strReturn.IndexOf('{');
                     if (intOpeningBracketIndex == -1)
                     {
-                        lstSubstrings.Add(new Tuple<string, bool>(strReturn, false));
+                        lstSubstrings.Add(new ValueTuple<string, bool>(strReturn, false));
                         strReturn = string.Empty;
                     }
                     else
@@ -365,8 +365,8 @@ namespace Chummer
                             if (intClosingBracketIndex != -1)
                             {
                                 lstSubstrings.Add(
-                                    new Tuple<string, bool>(strReturn.Substring(0, intOpeningBracketIndex), false));
-                                lstSubstrings.Add(new Tuple<string, bool>(
+                                    new ValueTuple<string, bool>(strReturn.Substring(0, intOpeningBracketIndex), false));
+                                lstSubstrings.Add(new ValueTuple<string, bool>(
                                                       strReturn.Substring(
                                                           intOpeningBracketIndex + 1,
                                                           intClosingBracketIndex - intOpeningBracketIndex - 1), true));
@@ -383,7 +383,7 @@ namespace Chummer
                         else
                         {
                             lstSubstrings.Add(
-                                new Tuple<string, bool>(strReturn.Substring(0, strReturn.Length - 1), false));
+                                new ValueTuple<string, bool>(strReturn.Substring(0, strReturn.Length - 1), false));
                             strReturn = string.Empty;
                         }
                     }
@@ -422,7 +422,7 @@ namespace Chummer
                         }
                     }
 
-                    return string.Concat(astrOutputStrings);
+                    return string.Join(string.Empty, astrOutputStrings, 0, lstSubstrings.Count);
                 }
                 finally
                 {
@@ -434,6 +434,10 @@ namespace Chummer
                 await objLocker.DisposeAsync().ConfigureAwait(false);
             }
         }
+
+        // Treat as ReadOnlyCollection please, it's only not that because key string methods cannot use a ReadOnlyCollection as their argument
+        private static readonly char[] s_achrAlwaysTrimForXmlNameFriendly = new[]
+            {' ', '$', '/', '?', ',', '\'', '\"', ';', ':', '(', ')', '[', ']', '|', '\\', '+', '=', '`', '~', '!', '@', '#', '%', '^', '&', '*', '¥'};
 
         public async Task<string> ProcessSingleMacro(string strInput, CultureInfo objCulture, string strLanguage, bool blnGeneratePersistents, CancellationToken token = default)
         {
@@ -460,13 +464,14 @@ namespace Chummer
                     }
                     case "$XmlNameFriendly":
                     {
-                        return strArguments
-                               .FastEscape(' ', '$', '/', '?', ',', '\'', '\"', ';', ':', '(', ')', '[', ']', '|', '\\',
-                                           '+', '=', '`', '~', '!', '@', '#', '%', '^', '&', '*')
-                               .FastEscape((await LanguageManager
-                                                  .GetStringAsync("String_NuyenSymbol", strLanguage, token: token)
-                                                  .ConfigureAwait(false))
-                                           .ToCharArray()).ToLower(objCulture);
+                        string strReturn = strArguments
+                               .FastEscape(s_achrAlwaysTrimForXmlNameFriendly);
+                        string strNuyenSymbol = await LanguageManager
+                                            .GetStringAsync("String_NuyenSymbol", strLanguage, token: token)
+                                            .ConfigureAwait(false);
+                        if (strNuyenSymbol.Any(x => !s_achrAlwaysTrimForXmlNameFriendly.Contains(x)))
+                            strReturn = strReturn.FastEscape(strNuyenSymbol.ToCharArray()); // Cannot use Pooled version because the padded values can have characters we don't want escaped
+                        return strReturn.ToLower(objCulture);
                     }
                     case "$CharacterName":
                     {

@@ -442,10 +442,10 @@ namespace Chummer.Backend.Equipment
                 objWriter.WriteElementString("source", _strSource);
                 objWriter.WriteElementString("page", _strPage);
                 objWriter.WriteElementString("allowed", _setAllowedFreeLifestyles.Count > 0
-                                                 ? string.Join(",", _setAllowedFreeLifestyles)
+                                                 ? StringExtensions.JoinFast(",", _setAllowedFreeLifestyles)
                                                  : string.Empty);
-                if (Bonus != null)
-                    objWriter.WriteRaw("<bonus>" + Bonus.InnerXml + "</bonus>");
+                if (!Bonus.IsNullOrInnerTextIsEmpty())
+                    objWriter.WriteRaw("<bonus>" + Bonus.InnerXmlViaPool() + "</bonus>");
                 else
                     objWriter.WriteElementString("bonus", string.Empty);
                 objWriter.WriteElementString("notes", _strNotes.CleanOfXmlInvalidUnicodeChars());
@@ -530,9 +530,9 @@ namespace Chummer.Backend.Equipment
                     (blnSync ? objMyNode.Value : await objMyNodeAsync.GetValueAsync(token).ConfigureAwait(false))?.TryGetInt32FieldQuickly("comfortsmaximum", ref _intComfortsMaximum);
                 objNode.TryGetBoolFieldQuickly("print", ref _blnPrint);
                 if (objNode["lifestylequalitytype"] != null)
-                    _eType = ConvertToLifestyleQualityType(objNode["lifestylequalitytype"].InnerText);
+                    _eType = ConvertToLifestyleQualityType(objNode["lifestylequalitytype"].InnerTextViaPool());
                 if (objNode["lifestylequalitysource"] != null)
-                    OriginSource = ConvertToLifestyleQualitySource(objNode["lifestylequalitysource"].InnerText);
+                    OriginSource = ConvertToLifestyleQualitySource(objNode["lifestylequalitysource"].InnerTextViaPool());
                 if (!objNode.TryGetStringFieldQuickly("category", ref _strCategory)
                     && (blnSync ? objMyNode.Value : await objMyNodeAsync.GetValueAsync(token).ConfigureAwait(false))?.TryGetStringFieldQuickly("category", ref _strCategory) != true)
                     _strCategory = string.Empty;
@@ -2629,7 +2629,14 @@ namespace Chummer.Backend.Equipment
             if (Interlocked.CompareExchange(ref _intIsDisposed, 1, 0) > 0)
                 return;
             using (LockObject.EnterWriteLock())
+            {
                 Utils.StringHashSetPool.Return(ref _setAllowedFreeLifestyles);
+                // to help the GC
+                PropertyChanged = null;
+                MultiplePropertiesChanged = null;
+                _setPropertyChangedAsync.Clear();
+                _setMultiplePropertiesChangedAsync.Clear();
+            }
         }
 
         /// <inheritdoc />
@@ -2641,6 +2648,11 @@ namespace Chummer.Backend.Equipment
             try
             {
                 Utils.StringHashSetPool.Return(ref _setAllowedFreeLifestyles);
+                // to help the GC
+                PropertyChanged = null;
+                MultiplePropertiesChanged = null;
+                _setPropertyChangedAsync.Clear();
+                _setMultiplePropertiesChangedAsync.Clear();
             }
             finally
             {
@@ -3040,13 +3052,13 @@ namespace Chummer.Backend.Equipment
                     {
                         List<PropertyChangedEventArgs> lstArgsList = setNamesOfChangedProperties
                             .Select(x => new PropertyChangedEventArgs(x)).ToList();
-                        List<Tuple<PropertyChangedAsyncEventHandler, PropertyChangedEventArgs>> lstAsyncEventsList
-                            = new List<Tuple<PropertyChangedAsyncEventHandler, PropertyChangedEventArgs>>(lstArgsList.Count * _setPropertyChangedAsync.Count);
+                        List<ValueTuple<PropertyChangedAsyncEventHandler, PropertyChangedEventArgs>> lstAsyncEventsList
+                            = new List<ValueTuple<PropertyChangedAsyncEventHandler, PropertyChangedEventArgs>>(lstArgsList.Count * _setPropertyChangedAsync.Count);
                         foreach (PropertyChangedAsyncEventHandler objEvent in _setPropertyChangedAsync)
                         {
                             foreach (PropertyChangedEventArgs objArg in lstArgsList)
                             {
-                                lstAsyncEventsList.Add(new Tuple<PropertyChangedAsyncEventHandler, PropertyChangedEventArgs>(objEvent, objArg));
+                                lstAsyncEventsList.Add(new ValueTuple<PropertyChangedAsyncEventHandler, PropertyChangedEventArgs>(objEvent, objArg));
                             }
                         }
                         await ParallelExtensions.ForEachAsync(lstAsyncEventsList, tupEvent => tupEvent.Item1.Invoke(this, tupEvent.Item2, token), token).ConfigureAwait(false);

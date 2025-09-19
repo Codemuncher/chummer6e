@@ -64,6 +64,7 @@ namespace Chummer.UI.Skills
                 lblGroupKarma.Margin.Bottom);
             this.UpdateLightDarkMode(token: objMyToken);
             this.TranslateWinForm(token: objMyToken);
+            this.UpdateParentForToolTipControls();
 
             MyToken = objMyToken;
         }
@@ -213,7 +214,6 @@ namespace Chummer.UI.Skills
                                 {
                                     Dock = DockStyle.Fill
                                 };
-                            Disposed += (sender, args) => _lstActiveSkills.Dispose();
 
                             Control MakeActiveSkill(Skill arg)
                             {
@@ -235,7 +235,6 @@ namespace Chummer.UI.Skills
                             {
                                 Dock = DockStyle.Fill
                             };
-                            Disposed += (sender, args) => _lstKnowledgeSkills.Dispose();
 
                             parts.TaskEnd("_lstKnowledgeSkills");
 
@@ -252,7 +251,6 @@ namespace Chummer.UI.Skills
                                 {
                                     Dock = DockStyle.Fill
                                 };
-                                Disposed += (sender, args) => _lstSkillGroups.Dispose();
                                 _lstSkillGroups.Filter(
                                     z => z.SkillList.Any(y =>
                                         _objCharacter.SkillsSection.HasActiveSkill(y.DictionaryKey)),
@@ -667,6 +665,7 @@ namespace Chummer.UI.Skills
 
         private async void UnbindSkillsTabUserControlAsync(object sender, EventArgs e)
         {
+            MakeDirtyWithCharacterUpdate = null;
             Character objCharacter = _objCharacter; // for thread safety
             if (objCharacter?.IsDisposed == false)
             {
@@ -699,6 +698,7 @@ namespace Chummer.UI.Skills
             }
         }
 
+        // Has to be Tuple and not ValueTuple to play nice with ComboBox.DisplayMember and ComboBox.ValueMember
         private static async Task<List<Tuple<string, IComparer<Skill>, IAsyncComparer<Skill>>>> GenerateSortList(CancellationToken token = default)
         {
             token.ThrowIfCancellationRequested();
@@ -960,6 +960,7 @@ namespace Chummer.UI.Skills
             return ret;
         }
 
+        // Has to be Tuple and not ValueTuple to play nice with ComboBox.DisplayMember and ComboBox.ValueMember
         private static async Task<List<Tuple<string, Predicate<Skill>, Func<Skill, CancellationToken, Task<bool>>>>> GenerateDropdownFilter(Character objCharacter, CancellationToken token = default)
         {
             token.ThrowIfCancellationRequested();
@@ -1031,6 +1032,7 @@ namespace Chummer.UI.Skills
             return ret;
         }
 
+        // Has to be Tuple and not ValueTuple to play nice with ComboBox.DisplayMember and ComboBox.ValueMember
         private static async Task<List<Tuple<string, IComparer<KnowledgeSkill>, IAsyncComparer<KnowledgeSkill>>>> GenerateKnowledgeSortList(CancellationToken token = default)
         {
             token.ThrowIfCancellationRequested();
@@ -1147,6 +1149,7 @@ namespace Chummer.UI.Skills
             return ret;
         }
 
+        // Has to be Tuple and not ValueTuple to play nice with ComboBox.DisplayMember and ComboBox.ValueMember
         private static async Task<List<Tuple<string, Predicate<KnowledgeSkill>, Func<KnowledgeSkill, CancellationToken, Task<bool>>>>> GenerateKnowledgeDropdownFilter(Character objCharacter, CancellationToken token = default)
         {
             token.ThrowIfCancellationRequested();

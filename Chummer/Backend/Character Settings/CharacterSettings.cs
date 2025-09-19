@@ -18,6 +18,7 @@
  */
 
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
@@ -503,13 +504,13 @@ namespace Chummer
                     {
                         List<PropertyChangedEventArgs> lstArgsList = setNamesOfChangedProperties
                             .Select(x => new PropertyChangedEventArgs(x)).ToList();
-                        List<Tuple<PropertyChangedAsyncEventHandler, PropertyChangedEventArgs>> lstAsyncEventsList
-                            = new List<Tuple<PropertyChangedAsyncEventHandler, PropertyChangedEventArgs>>(lstArgsList.Count * _setPropertyChangedAsync.Count);
+                        List<ValueTuple<PropertyChangedAsyncEventHandler, PropertyChangedEventArgs>> lstAsyncEventsList
+                            = new List<ValueTuple<PropertyChangedAsyncEventHandler, PropertyChangedEventArgs>>(lstArgsList.Count * _setPropertyChangedAsync.Count);
                         foreach (PropertyChangedAsyncEventHandler objEvent in _setPropertyChangedAsync)
                         {
                             foreach (PropertyChangedEventArgs objArg in lstArgsList)
                             {
-                                lstAsyncEventsList.Add(new Tuple<PropertyChangedAsyncEventHandler, PropertyChangedEventArgs>(objEvent, objArg));
+                                lstAsyncEventsList.Add(new ValueTuple<PropertyChangedAsyncEventHandler, PropertyChangedEventArgs>(objEvent, objArg));
                             }
                         }
                         await ParallelExtensions.ForEachAsync(lstAsyncEventsList, tupEvent => tupEvent.Item1.Invoke(this, tupEvent.Item2, token), token).ConfigureAwait(false);
@@ -2299,7 +2300,7 @@ namespace Chummer
 
                     token.ThrowIfCancellationRequested();
 
-                    string strCustomDataRootPath = Path.Combine(Utils.GetStartupPath, "customdata");
+                    string strCustomDataRootPath = Utils.GetCustomDataFolderPath;
 
                     // <customdatadirectorynames>
                     objWriter.WriteStartElement("customdatadirectorynames");
@@ -3227,7 +3228,7 @@ namespace Chummer
 
                     await objWriter.WriteEndElementAsync().ConfigureAwait(false);
 
-                    string strCustomDataRootPath = Path.Combine(Utils.GetStartupPath, "customdata");
+                    string strCustomDataRootPath = Utils.GetCustomDataFolderPath;
 
                     // <customdatadirectorynames>
                     await objWriter.WriteStartElementAsync("customdatadirectorynames", token: token)
@@ -3593,11 +3594,9 @@ namespace Chummer
                 // Format in which nuyen values are displayed
                 objXmlNode.TryGetStringFieldQuickly("nuyenformat", ref _strNuyenFormat);
                 // Format in which weight values are displayed
-                if (objXmlNode.TryGetStringFieldQuickly("weightformat", ref _strWeightFormat))
+                if (objXmlNode.TryGetStringFieldQuickly("weightformat", ref _strWeightFormat) && _strWeightFormat.IndexOf('.') == -1)
                 {
-                    int intDecimalPlaces = _strWeightFormat.IndexOf('.');
-                    if (intDecimalPlaces == -1)
-                        _strWeightFormat += ".###";
+                    _strWeightFormat += ".###";
                 }
 
                 // Format in which essence values should be displayed (and to which they should be rounded)
@@ -3608,23 +3607,31 @@ namespace Chummer
                     objXmlNode.TryGetInt32FieldQuickly("essencedecimals", ref intTemp);
                     EssenceDecimals = intTemp;
                 }
+                else if (string.IsNullOrWhiteSpace(_strEssenceFormat))
+                    _strEssenceFormat = "0.00";
                 else
                 {
-                    int intDecimalPlaces = _strEssenceFormat.IndexOf('.');
-                    if (intDecimalPlaces < 2)
+                    // Guarantee at least two decimal places for a string that might not have enough integer places
+                    int intIndex = _strEssenceFormat.IndexOf('.');
+                    if (intIndex == -1)
                     {
-                        if (intDecimalPlaces == -1)
-                            _strEssenceFormat += ".00";
-                        else
-                        {
-                            using (new FetchSafelyFromObjectPool<StringBuilder>(Utils.StringBuilderPool,
-                                                                          out StringBuilder sbdZeros))
-                            {
-                                for (int i = _strEssenceFormat.Length - 1 - intDecimalPlaces; i < intDecimalPlaces; ++i)
-                                    sbdZeros.Append('0');
-                                _strEssenceFormat += sbdZeros.ToString();
-                            }
-                        }
+                        intIndex = _strEssenceFormat.Length;
+                        _strEssenceFormat += ".00";
+                    }
+                    if (intIndex == 0)
+                    {
+                        ++intIndex;
+                        _strEssenceFormat = '0' + _strEssenceFormat;
+                    }
+
+                    switch (_strEssenceFormat.Length - 1 - intIndex)
+                    {
+                        case 0:
+                            _strEssenceFormat += "00";
+                            break;
+                        case 1:
+                            _strEssenceFormat = _strEssenceFormat.Insert(_strEssenceFormat.Length - 2, "0");
+                            break;
                     }
                 }
 
@@ -3867,8 +3874,8 @@ namespace Chummer
                 // Load Custom Data Directory names.
                 int intTopMostOrder = 0;
                 int intBottomMostOrder = 0;
-                Dictionary<int, Tuple<string, bool>> dicLoadingCustomDataDirectories =
-                    new Dictionary<int, Tuple<string, bool>>(GlobalSettings.CustomDataDirectoryInfos.Count);
+                Dictionary<int, ValueTuple<string, bool>> dicLoadingCustomDataDirectories =
+                    new Dictionary<int, ValueTuple<string, bool>>(GlobalSettings.CustomDataDirectoryInfos.Count);
                 bool blnNeedToProcessInfosWithoutLoadOrder = false;
                 foreach (XPathNavigator objXmlDirectoryName in objXmlNode.SelectAndCacheExpression(
                              "customdatadirectorynames/customdatadirectoryname", token))
@@ -3897,7 +3904,7 @@ namespace Chummer
                             intTopMostOrder = Math.Max(intOrder, intTopMostOrder);
                             intBottomMostOrder = Math.Min(intOrder, intBottomMostOrder);
                             dicLoadingCustomDataDirectories.Add(intOrder,
-                                                                new Tuple<string, bool>(
+                                                                new ValueTuple<string, bool>(
                                                                     strDirectoryKey, blnLoopEnabled));
                         }
                         else
@@ -3910,7 +3917,7 @@ namespace Chummer
                     _dicCustomDataDirectoryKeys.Clear();
                     for (int i = intBottomMostOrder; i <= intTopMostOrder; ++i)
                     {
-                        if (!dicLoadingCustomDataDirectories.TryGetValue(i, out Tuple<string, bool> tupLoop))
+                        if (!dicLoadingCustomDataDirectories.TryGetValue(i, out ValueTuple<string, bool> tupLoop))
                             continue;
                         string strDirectoryKey = tupLoop.Item1;
                         string strLoopId = CustomDataDirectoryInfo.GetIdFromCharacterSettingsSaveKey(strDirectoryKey);
@@ -4359,11 +4366,9 @@ namespace Chummer
                 // Format in which nuyen values are displayed
                 objXmlNode.TryGetStringFieldQuickly("nuyenformat", ref _strNuyenFormat);
                 // Format in which weight values are displayed
-                if (objXmlNode.TryGetStringFieldQuickly("weightformat", ref _strWeightFormat))
+                if (objXmlNode.TryGetStringFieldQuickly("weightformat", ref _strWeightFormat) && _strWeightFormat.IndexOf('.') == -1)
                 {
-                    int intDecimalPlaces = _strWeightFormat.IndexOf('.');
-                    if (intDecimalPlaces == -1)
-                        _strWeightFormat += ".###";
+                    _strWeightFormat += ".###";
                 }
 
                 // Format in which essence values should be displayed (and to which they should be rounded)
@@ -4374,23 +4379,31 @@ namespace Chummer
                     objXmlNode.TryGetInt32FieldQuickly("essencedecimals", ref intTemp);
                     await SetEssenceDecimalsAsync(intTemp, token).ConfigureAwait(false);
                 }
+                else if (string.IsNullOrWhiteSpace(_strEssenceFormat))
+                    _strEssenceFormat = "0.00";
                 else
                 {
-                    int intDecimalPlaces = _strEssenceFormat.IndexOf('.');
-                    if (intDecimalPlaces < 2)
+                    // Guarantee at least two decimal places for a string that might not have enough integer places
+                    int intIndex = _strEssenceFormat.IndexOf('.');
+                    if (intIndex == -1)
                     {
-                        if (intDecimalPlaces == -1)
-                            _strEssenceFormat += ".00";
-                        else
-                        {
-                            using (new FetchSafelyFromObjectPool<StringBuilder>(Utils.StringBuilderPool,
-                                                                          out StringBuilder sbdZeros))
-                            {
-                                for (int i = _strEssenceFormat.Length - 1 - intDecimalPlaces; i < intDecimalPlaces; ++i)
-                                    sbdZeros.Append('0');
-                                _strEssenceFormat += sbdZeros.ToString();
-                            }
-                        }
+                        intIndex = _strEssenceFormat.Length;
+                        _strEssenceFormat += ".00";
+                    }
+                    if (intIndex == 0)
+                    {
+                        ++intIndex;
+                        _strEssenceFormat = '0' + _strEssenceFormat;
+                    }
+
+                    switch (_strEssenceFormat.Length - 1 - intIndex)
+                    {
+                        case 0:
+                            _strEssenceFormat += "00";
+                            break;
+                        case 1:
+                            _strEssenceFormat = _strEssenceFormat.Insert(_strEssenceFormat.Length - 2, "0");
+                            break;
                     }
                 }
 
@@ -4635,8 +4648,8 @@ namespace Chummer
                 // Load Custom Data Directory names.
                 int intTopMostOrder = 0;
                 int intBottomMostOrder = 0;
-                Dictionary<int, Tuple<string, bool>> dicLoadingCustomDataDirectories =
-                    new Dictionary<int, Tuple<string, bool>>(GlobalSettings.CustomDataDirectoryInfos.Count);
+                Dictionary<int, ValueTuple<string, bool>> dicLoadingCustomDataDirectories =
+                    new Dictionary<int, ValueTuple<string, bool>>(GlobalSettings.CustomDataDirectoryInfos.Count);
                 bool blnNeedToProcessInfosWithoutLoadOrder = false;
                 foreach (XPathNavigator objXmlDirectoryName in objXmlNode.SelectAndCacheExpression(
                              "customdatadirectorynames/customdatadirectoryname", token))
@@ -4665,7 +4678,7 @@ namespace Chummer
                             intTopMostOrder = Math.Max(intOrder, intTopMostOrder);
                             intBottomMostOrder = Math.Min(intOrder, intBottomMostOrder);
                             dicLoadingCustomDataDirectories.Add(intOrder,
-                                                                new Tuple<string, bool>(
+                                                                new ValueTuple<string, bool>(
                                                                     strDirectoryKey, blnLoopEnabled));
                         }
                         else
@@ -4681,7 +4694,7 @@ namespace Chummer
                     await _dicCustomDataDirectoryKeys.ClearAsync(token).ConfigureAwait(false);
                     for (int i = intBottomMostOrder; i <= intTopMostOrder; ++i)
                     {
-                        if (!dicLoadingCustomDataDirectories.TryGetValue(i, out Tuple<string, bool> tupLoop))
+                        if (!dicLoadingCustomDataDirectories.TryGetValue(i, out ValueTuple<string, bool> tupLoop))
                             continue;
                         string strDirectoryKey = tupLoop.Item1;
                         string strLoopId = CustomDataDirectoryInfo.GetIdFromCharacterSettingsSaveKey(strDirectoryKey);
@@ -10407,14 +10420,8 @@ namespace Chummer
                         {
                             sbdNuyenFormat.Append(string.IsNullOrEmpty(NuyenFormat) ? "#,0" : NuyenFormat);
                             if (intCurrentNuyenDecimals == 0)
-                            {
                                 sbdNuyenFormat.Append('.');
-                            }
-
-                            for (int i = intCurrentNuyenDecimals; i < intNewNuyenDecimals; ++i)
-                            {
-                                sbdNuyenFormat.Append('#');
-                            }
+                            sbdNuyenFormat.Append('#', intNewNuyenDecimals - intCurrentNuyenDecimals);
                             NuyenFormat = sbdNuyenFormat.ToString();
                         }
                     }
@@ -10480,15 +10487,8 @@ namespace Chummer
                         string strNuyenFormat = await GetNuyenFormatAsync(token).ConfigureAwait(false);
                         sbdNuyenFormat.Append(string.IsNullOrEmpty(strNuyenFormat) ? "#,0" : strNuyenFormat);
                         if (intCurrentNuyenDecimals == 0)
-                        {
                             sbdNuyenFormat.Append('.');
-                        }
-
-                        for (int i = intCurrentNuyenDecimals; i < intNewNuyenDecimals; ++i)
-                        {
-                            sbdNuyenFormat.Append('#');
-                        }
-
+                        sbdNuyenFormat.Append('#', intNewNuyenDecimals - intCurrentNuyenDecimals);
                         await SetNuyenFormatAsync(sbdNuyenFormat.ToString(), token).ConfigureAwait(false);
                     }
                 }
@@ -10545,17 +10545,31 @@ namespace Chummer
                     int intCurrentNuyenDecimals = MinNuyenDecimals;
                     if (intNewNuyenDecimals < intCurrentNuyenDecimals)
                     {
-                        char[] achrNuyenFormat = NuyenFormat.ToCharArray();
-                        for (int i = intDecimalPlaces + 1 + intNewNuyenDecimals; i < achrNuyenFormat.Length; ++i)
-                            achrNuyenFormat[i] = '0';
-                        NuyenFormat = new string(achrNuyenFormat);
+                        char[] achrNuyenFormat = NuyenFormat.ToPooledCharArray(out int intLength);
+                        try
+                        {
+                            for (int i = intDecimalPlaces + 1 + intNewNuyenDecimals; i < intLength; ++i)
+                                achrNuyenFormat[i] = '0';
+                            NuyenFormat = new string(achrNuyenFormat, 0, intLength);
+                        }
+                        finally
+                        {
+                            ArrayPool<char>.Shared.Return(achrNuyenFormat);
+                        }
                     }
                     else if (intNewNuyenDecimals > intCurrentNuyenDecimals)
                     {
-                        char[] achrNuyenFormat = NuyenFormat.ToCharArray();
-                        for (int i = 1; i < intNewNuyenDecimals; ++i)
-                            achrNuyenFormat[intDecimalPlaces + i] = '0';
-                        NuyenFormat = new string(achrNuyenFormat);
+                        char[] achrNuyenFormat = NuyenFormat.ToPooledCharArray(out int intLength);
+                        try
+                        {
+                            for (int i = 1; i < intNewNuyenDecimals; ++i)
+                                achrNuyenFormat[intDecimalPlaces + i] = '0';
+                            NuyenFormat = new string(achrNuyenFormat, 0, intLength);
+                        }
+                        finally
+                        {
+                            ArrayPool<char>.Shared.Return(achrNuyenFormat);
+                        }
                     }
                 }
             }
@@ -10618,17 +10632,31 @@ namespace Chummer
                 int intCurrentNuyenDecimals = await GetMinNuyenDecimalsAsync(token).ConfigureAwait(false);
                 if (intNewNuyenDecimals < intCurrentNuyenDecimals)
                 {
-                    char[] achrNuyenFormat = strNuyenFormat.ToCharArray();
-                    for (int i = intDecimalPlaces + 1 + intNewNuyenDecimals; i < achrNuyenFormat.Length; ++i)
-                        achrNuyenFormat[i] = '0';
-                    await SetNuyenFormatAsync(new string(achrNuyenFormat), token).ConfigureAwait(false);
+                    char[] achrNuyenFormat = strNuyenFormat.ToPooledCharArray(out int intLength);
+                    try
+                    {
+                        for (int i = intDecimalPlaces + 1 + intNewNuyenDecimals; i < intLength; ++i)
+                            achrNuyenFormat[i] = '0';
+                        await SetNuyenFormatAsync(new string(achrNuyenFormat, 0, intLength), token).ConfigureAwait(false);
+                    }
+                    finally
+                    {
+                        ArrayPool<char>.Shared.Return(achrNuyenFormat);
+                    }
                 }
                 else if (intNewNuyenDecimals > intCurrentNuyenDecimals)
                 {
-                    char[] achrNuyenFormat = strNuyenFormat.ToCharArray();
-                    for (int i = 1; i < intNewNuyenDecimals; ++i)
-                        achrNuyenFormat[intDecimalPlaces + i] = '0';
-                    await SetNuyenFormatAsync(new string(achrNuyenFormat), token).ConfigureAwait(false);
+                    char[] achrNuyenFormat = NuyenFormat.ToPooledCharArray(out int intLength);
+                    try
+                    {
+                        for (int i = 1; i < intNewNuyenDecimals; ++i)
+                            achrNuyenFormat[intDecimalPlaces + i] = '0';
+                        await SetNuyenFormatAsync(new string(achrNuyenFormat, 0, intLength), token).ConfigureAwait(false);
+                    }
+                    finally
+                    {
+                        ArrayPool<char>.Shared.Return(achrNuyenFormat);
+                    }
                 }
             }
             finally
@@ -10790,7 +10818,10 @@ namespace Chummer
                         return _intCachedWeightDecimals;
                     string strWeightFormat = WeightFormat;
                     int intDecimalPlaces = strWeightFormat.IndexOf('.');
-                    intDecimalPlaces = strWeightFormat.Length - intDecimalPlaces - 1;
+                    if (intDecimalPlaces == -1)
+                        intDecimalPlaces = 0;
+                    else
+                        intDecimalPlaces = strWeightFormat.Length - intDecimalPlaces - 1;
                     Interlocked.CompareExchange(ref _intCachedWeightDecimals, intDecimalPlaces, int.MinValue);
                     return _intCachedWeightDecimals;
                 }
@@ -10816,15 +10847,8 @@ namespace Chummer
                         {
                             sbdWeightFormat.Append(string.IsNullOrEmpty(WeightFormat) ? "#,0" : WeightFormat);
                             if (intCurrentWeightDecimals == 0)
-                            {
                                 sbdWeightFormat.Append('.');
-                            }
-
-                            for (int i = intCurrentWeightDecimals; i < intNewWeightDecimals; ++i)
-                            {
-                                sbdWeightFormat.Append('#');
-                            }
-
+                            sbdWeightFormat.Append('#', intNewWeightDecimals - intCurrentWeightDecimals);
                             WeightFormat = sbdWeightFormat.ToString();
                         }
                     }
@@ -10846,7 +10870,10 @@ namespace Chummer
                     return _intCachedWeightDecimals;
                 string strWeightFormat = await GetWeightFormatAsync(token).ConfigureAwait(false);
                 int intDecimalPlaces = strWeightFormat.IndexOf('.');
-                intDecimalPlaces = strWeightFormat.Length - intDecimalPlaces - 1;
+                if (intDecimalPlaces == -1)
+                    intDecimalPlaces = 0;
+                else
+                    intDecimalPlaces = strWeightFormat.Length - intDecimalPlaces - 1;
                 Interlocked.CompareExchange(ref _intCachedWeightDecimals, intDecimalPlaces, int.MinValue);
                 return _intCachedWeightDecimals;
             }
@@ -10884,15 +10911,8 @@ namespace Chummer
                         string strWeightFormat = await GetWeightFormatAsync(token).ConfigureAwait(false);
                         sbdWeightFormat.Append(string.IsNullOrEmpty(strWeightFormat) ? "#,0" : strWeightFormat);
                         if (intCurrentWeightDecimals == 0)
-                        {
                             sbdWeightFormat.Append('.');
-                        }
-
-                        for (int i = intCurrentWeightDecimals; i < intNewWeightDecimals; ++i)
-                        {
-                            sbdWeightFormat.Append('#');
-                        }
-
+                        sbdWeightFormat.Append('#', intNewWeightDecimals - intCurrentWeightDecimals);
                         await SetWeightFormatAsync(sbdWeightFormat.ToString(), token).ConfigureAwait(false);
                     }
                 }
@@ -11868,7 +11888,10 @@ namespace Chummer
                         return _intCachedEssenceDecimals;
                     string strEssenceFormat = EssenceFormat;
                     int intDecimalPlaces = strEssenceFormat.IndexOf('.');
-                    intDecimalPlaces = strEssenceFormat.Length - intDecimalPlaces - 1;
+                    if (intDecimalPlaces == -1)
+                        intDecimalPlaces = 0;
+                    else
+                        intDecimalPlaces = strEssenceFormat.Length - intDecimalPlaces - 1;
                     Interlocked.CompareExchange(ref _intCachedEssenceDecimals, intDecimalPlaces, int.MinValue);
                     return _intCachedEssenceDecimals;
                 }
@@ -11894,15 +11917,8 @@ namespace Chummer
                         {
                             sbdEssenceFormat.Append(string.IsNullOrEmpty(EssenceFormat) ? "#,0" : EssenceFormat);
                             if (intCurrentEssenceDecimals == 0)
-                            {
                                 sbdEssenceFormat.Append('.');
-                            }
-
-                            for (int i = intCurrentEssenceDecimals; i < intNewEssenceDecimals; ++i)
-                            {
-                                sbdEssenceFormat.Append('0');
-                            }
-
+                            sbdEssenceFormat.Append('0', intNewEssenceDecimals - intCurrentEssenceDecimals);
                             EssenceFormat = sbdEssenceFormat.ToString();
                         }
                     }
@@ -11924,7 +11940,10 @@ namespace Chummer
                     return _intCachedEssenceDecimals;
                 string strEssenceFormat = await GetEssenceFormatAsync(token).ConfigureAwait(false);
                 int intDecimalPlaces = strEssenceFormat.IndexOf('.');
-                intDecimalPlaces = strEssenceFormat.Length - intDecimalPlaces - 1;
+                if (intDecimalPlaces == -1)
+                    intDecimalPlaces = 0;
+                else
+                    intDecimalPlaces = strEssenceFormat.Length - intDecimalPlaces - 1;
                 Interlocked.CompareExchange(ref _intCachedEssenceDecimals, intDecimalPlaces, int.MinValue);
                 return _intCachedEssenceDecimals;
             }
@@ -11962,15 +11981,8 @@ namespace Chummer
                         string strEssenceFormat = await GetEssenceFormatAsync(token).ConfigureAwait(false);
                         sbdEssenceFormat.Append(string.IsNullOrEmpty(strEssenceFormat) ? "#,0" : strEssenceFormat);
                         if (intCurrentEssenceDecimals == 0)
-                        {
                             sbdEssenceFormat.Append('.');
-                        }
-
-                        for (int i = intCurrentEssenceDecimals; i < intNewEssenceDecimals; ++i)
-                        {
-                            sbdEssenceFormat.Append('0');
-                        }
-
+                        sbdEssenceFormat.Append('0', intNewEssenceDecimals - intCurrentEssenceDecimals);
                         await SetEssenceFormatAsync(sbdEssenceFormat.ToString(), token).ConfigureAwait(false);
                     }
                 }
@@ -11993,21 +12005,31 @@ namespace Chummer
             }
             set
             {
-                int intDecimalPlaces = value.IndexOf('.');
-                if (intDecimalPlaces < 2)
+                if (string.IsNullOrWhiteSpace(value))
+                    value = "0.00";
+                else
                 {
-                    if (intDecimalPlaces == -1)
-                        value += ".00";
-                    else
+                    // Guarantee at least two decimal places for a string that might not have enough integer places
+                    int intIndex = value.IndexOf('.');
+                    if (intIndex == -1)
                     {
-                        using (new FetchSafelyFromObjectPool<StringBuilder>(Utils.StringBuilderPool,
-                                                                      out StringBuilder sbdZeros))
-                        {
-                            sbdZeros.Append(value);
-                            for (int i = value.Length - 1 - intDecimalPlaces; i < intDecimalPlaces; ++i)
-                                sbdZeros.Append('0');
-                            value = sbdZeros.ToString();
-                        }
+                        intIndex = value.Length;
+                        value += ".00";
+                    }
+                    if (intIndex == 0)
+                    {
+                        ++intIndex;
+                        value = '0' + value;
+                    }
+
+                    switch (value.Length - 1 - intIndex)
+                    {
+                        case 0:
+                            value += "00";
+                            break;
+                        case 1:
+                            value = value.Insert(value.Length - 2, "0");
+                            break;
                     }
                 }
 
@@ -18607,6 +18629,11 @@ namespace Chummer
                 Utils.StringHashSetPool.Return(ref _setBannedWareGrades);
                 Utils.StringHashSetPool.Return(ref _setRedlinerExcludes);
                 _dicCustomDataDirectoryKeys.Dispose();
+                // to help the GC
+                PropertyChanged = null;
+                MultiplePropertiesChanged = null;
+                _setPropertyChangedAsync.Clear();
+                _setMultiplePropertiesChangedAsync.Clear();
             }
 
             LockObject.Dispose();
@@ -18627,6 +18654,11 @@ namespace Chummer
                 Utils.StringHashSetPool.Return(ref _setBannedWareGrades);
                 Utils.StringHashSetPool.Return(ref _setRedlinerExcludes);
                 await _dicCustomDataDirectoryKeys.DisposeAsync().ConfigureAwait(false);
+                // to help the GC
+                PropertyChanged = null;
+                MultiplePropertiesChanged = null;
+                _setPropertyChangedAsync.Clear();
+                _setMultiplePropertiesChangedAsync.Clear();
             }
             finally
             {

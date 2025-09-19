@@ -38,7 +38,7 @@ namespace Chummer.UI.Skills
     {
         private readonly bool _blnLoading = true;
         private int _intUpdatingSpec = 1;
-        private readonly Skill _objSkill;
+        private Skill _objSkill;
         private readonly Timer _tmrSpecChangeTimer;
         private readonly Font _fntNormal;
         private readonly Font _fntItalic;
@@ -82,7 +82,6 @@ namespace Chummer.UI.Skills
             _objSkill = objSkill;
             _objAttributeActive = objSkill.AttributeObject;
             InitializeComponent();
-            Disposed += (sender, args) => UnbindSkillControl();
             SuspendLayout();
             pnlAttributes.SuspendLayout();
             tlpMain.SuspendLayout();
@@ -94,11 +93,6 @@ namespace Chummer.UI.Skills
                 _fntItalicName = new Font(_fntNormalName, FontStyle.Italic);
                 _fntNormal = btnAttribute.Font;
                 _fntItalic = new Font(_fntNormal, FontStyle.Italic);
-                Disposed += (sender, args) =>
-                {
-                    _fntItalicName.Dispose();
-                    _fntItalic.Dispose();
-                };
 
                 if (!_objSkill.Default)
                     lblName.Font = _fntItalicName;
@@ -176,7 +170,6 @@ namespace Chummer.UI.Skills
                     };
                     _fntNormalSpec = lblCareerSpec.Font;
                     _fntStrikethroughSpec = new Font(_fntNormalSpec, FontStyle.Strikeout);
-                    Disposed += (sender, args) => _fntStrikethroughSpec.Dispose();
 
                     tlpRight.Controls.Add(lblCareerSpec, 0, 0);
                     tlpRight.Controls.Add(btnAddSpec, 1, 0);
@@ -261,6 +254,7 @@ namespace Chummer.UI.Skills
 
                 this.UpdateLightDarkMode(token: objMyToken);
                 this.TranslateWinForm(blnDoResumeLayout: false, token: objMyToken);
+                this.UpdateParentForToolTipControls();
 
                 foreach (ToolStripItem tssItem in cmsSkillLabel.Items)
                 {
@@ -340,11 +334,6 @@ namespace Chummer.UI.Skills
                                                                    .GetCanAffordSpecializationAsync(
                                                                        _objMyToken)
                                                                    ,
-                                                              _objMyToken);
-                    btnAddSpec.RegisterOneWayAsyncDataBinding((x, y) => x.Visible = y, _objSkill,
-                                                              nameof(Skill.CanHaveSpecs),
-                                                              x => x.GetCanHaveSpecsAsync(_objMyToken)
-                                                                    ,
                                                               _objMyToken);
                     btnAddSpec.RegisterOneWayAsyncDataBinding((x, y) => x.ToolTipText = y, _objSkill,
                                                               nameof(Skill.AddSpecToolTip),
@@ -437,23 +426,22 @@ namespace Chummer.UI.Skills
                             x => x.GetEffectiveBuildMethodUsesPriorityTablesAsync(
                                 _objMyToken),
                             _objMyToken);
-                        chkKarma.RegisterOneWayAsyncDataBinding((x, y) => x.Enabled = y, _objSkill,
-                                                                nameof(Skill.CanHaveSpecs),
-                                                                x => x.GetCanHaveSpecsAsync(_objMyToken)
-                                                                      ,
-                                                                _objMyToken);
-
-                        cboSpec.RegisterOneWayAsyncDataBinding((x, y) => x.Enabled = y, _objSkill,
-                                                               nameof(Skill.CanHaveSpecs),
-                                                               x => x.GetCanHaveSpecsAsync(_objMyToken)
-                                                                     ,
-                                                               _objMyToken);
                         string strDisplaySpec = _objSkill.CurrentDisplaySpecialization;
                         Interlocked.Increment(ref _intUpdatingSpec);
                         try
                         {
                             cboSpec.PopulateWithListItems(_objSkill.CGLSpecializations, token: _objMyToken);
-                            cboSpec.DoThreadSafe((x, y) => x.Text = strDisplaySpec, token: _objMyToken);
+                            cboSpec.DoThreadSafe(x =>
+                            {
+                                if (string.IsNullOrEmpty(strDisplaySpec))
+                                    x.SelectedIndex = -1;
+                                else
+                                {
+                                    x.SelectedValue = strDisplaySpec;
+                                    if (x.SelectedIndex == -1)
+                                        x.Text = strDisplaySpec;
+                                }
+                            }, _objMyToken);
                         }
                         finally
                         {
@@ -556,10 +544,6 @@ namespace Chummer.UI.Skills
                                                                      .GetCanAffordSpecializationAsync(
                                                                          _objMyToken)
                                                                      , token).ConfigureAwait(false);
-                await btnAddSpec.RegisterOneWayAsyncDataBindingAsync((x, y) => x.Visible = y, _objSkill,
-                                                                nameof(Skill.CanHaveSpecs),
-                                                                x => x.GetCanHaveSpecsAsync(_objMyToken)
-                                                                      , token).ConfigureAwait(false);
                 await btnAddSpec.RegisterOneWayAsyncDataBindingAsync((x, y) => x.ToolTipText = y, _objSkill,
                                                                 nameof(Skill.AddSpecToolTip),
                                                                 x => x.GetAddSpecToolTipAsync(_objMyToken)
@@ -655,17 +639,6 @@ namespace Chummer.UI.Skills
                         x => x.GetEffectiveBuildMethodUsesPriorityTablesAsync(
                             _objMyToken),
                         token).ConfigureAwait(false);
-                    await chkKarma.RegisterOneWayAsyncDataBindingAsync((x, y) => x.Enabled = y, _objSkill,
-                                                                  nameof(Skill.CanHaveSpecs),
-                                                                  x => x.GetCanHaveSpecsAsync(_objMyToken)
-                                                                      , token)
-                                  .ConfigureAwait(false);
-
-                    await cboSpec.RegisterOneWayAsyncDataBindingAsync((x, y) => x.Enabled = y, _objSkill,
-                                                                      nameof(Skill.CanHaveSpecs),
-                                                                      x => x.GetCanHaveSpecsAsync(_objMyToken)
-                                                                          , token)
-                                 .ConfigureAwait(false);
                     string strDisplaySpec = await _objSkill.GetCurrentDisplaySpecializationAsync(_objMyToken)
                                                            .ConfigureAwait(false);
                     Interlocked.Increment(ref _intUpdatingSpec);
@@ -675,8 +648,17 @@ namespace Chummer.UI.Skills
                                          await _objSkill.GetCGLSpecializationsAsync(_objMyToken)
                                                         .ConfigureAwait(false), token: token)
                                      .ConfigureAwait(false);
-                        await cboSpec.DoThreadSafeAsync(x => x.Text = strDisplaySpec, token: token)
-                                     .ConfigureAwait(false);
+                        await cboSpec.DoThreadSafeAsync(x =>
+                        {
+                            if (string.IsNullOrEmpty(strDisplaySpec))
+                                x.SelectedIndex = -1;
+                            else
+                            {
+                                x.SelectedValue = strDisplaySpec;
+                                if (x.SelectedIndex == -1)
+                                    x.Text = strDisplaySpec;
+                            }
+                        }, token: token).ConfigureAwait(false);
                     }
                     finally
                     {
@@ -793,12 +775,26 @@ namespace Chummer.UI.Skills
                     }
                 }
 
-                if ((blnAll || e.PropertyNames.Contains(nameof(Skill.CanHaveSpecs))) && _fntNormalSpec != null)
+                // Has to be here instead of done through data bindings because of weird potential memory leak via ComboBox subscription
+                if ((blnAll || e.PropertyNames.Contains(nameof(Skill.CanHaveSpecs))))
                 {
                     bool blnCanHaveSpecs = await _objSkill.GetCanHaveSpecsAsync(token).ConfigureAwait(false);
-                    await lblCareerSpec
-                        .DoThreadSafeAsync(x => x.Font = blnCanHaveSpecs ? _fntNormalSpec : _fntStrikethroughSpec,
-                            token).ConfigureAwait(false);
+                    if (await _objSkill.CharacterObject.GetCreatedAsync(token).ConfigureAwait(false))
+                    {
+                        await this.DoThreadSafeAsync(x =>
+                        {
+                            x.btnAddSpec.Visible = blnCanHaveSpecs;
+                            x.lblCareerSpec.Font = blnCanHaveSpecs ? _fntNormalSpec : _fntStrikethroughSpec;
+                        }, token).ConfigureAwait(false);
+                    }
+                    else if (!_objSkill.IsExoticSkill)
+                    {
+                        await this.DoThreadSafeAsync(x =>
+                        {
+                            x.cboSpec.Enabled = blnCanHaveSpecs;
+                            x.chkKarma.Enabled = blnCanHaveSpecs;
+                        }, token).ConfigureAwait(false);
+                    }
                 }
                 if (cboSpec != null && await cboSpec.DoThreadSafeFuncAsync(x => x.Visible, token: token)
                         .ConfigureAwait(false))
@@ -808,12 +804,6 @@ namespace Chummer.UI.Skills
                     {
                         IReadOnlyList<ListItem> lstSpecializations
                             = await _objSkill.GetCGLSpecializationsAsync(token).ConfigureAwait(false);
-                        string strOldSpec = lstSpecializations.Count != 0
-                            ? await cboSpec
-                                .DoThreadSafeFuncAsync(x => x.SelectedItem?.ToString(), token: token)
-                                .ConfigureAwait(false)
-                            : await cboSpec.DoThreadSafeFuncAsync(x => x.Text, token: token)
-                                .ConfigureAwait(false);
                         int intOldUpdating = Interlocked.Increment(ref _intUpdatingSpec);
                         try
                         {
@@ -826,20 +816,24 @@ namespace Chummer.UI.Skills
                                     .ConfigureAwait(false);
                                 await cboSpec.DoThreadSafeAsync(x =>
                                 {
-                                    if (string.IsNullOrEmpty(strOldSpec))
+                                    if (string.IsNullOrEmpty(strDisplaySpec))
                                         x.SelectedIndex = -1;
                                     else
                                     {
-                                        x.SelectedValue = strOldSpec;
+                                        x.SelectedValue = strDisplaySpec;
                                         if (x.SelectedIndex == -1)
-                                            x.Text = strOldSpec;
+                                            x.Text = strDisplaySpec;
                                     }
-
-                                    x.Text = strDisplaySpec;
                                 }, token: token).ConfigureAwait(false);
                             }
                             else
                             {
+                                string strOldSpec = lstSpecializations.Count != 0
+                                    ? await cboSpec
+                                        .DoThreadSafeFuncAsync(x => x.SelectedItem?.ToString(), token: token)
+                                        .ConfigureAwait(false)
+                                    : await cboSpec.DoThreadSafeFuncAsync(x => x.Text, token: token)
+                                        .ConfigureAwait(false);
                                 await cboSpec.PopulateWithListItemsAsync(lstSpecializations, token: token)
                                     .ConfigureAwait(false);
                                 await cboSpec.DoThreadSafeAsync(x =>
@@ -905,8 +899,17 @@ namespace Chummer.UI.Skills
                                     string strDisplaySpec = await _objSkill
                                         .GetTopMostDisplaySpecializationAsync(token)
                                         .ConfigureAwait(false);
-                                    await cboSpec.DoThreadSafeAsync(x => x.Text = strDisplaySpec, token: token)
-                                        .ConfigureAwait(false);
+                                    await cboSpec.DoThreadSafeAsync(x =>
+                                    {
+                                        if (string.IsNullOrEmpty(strDisplaySpec))
+                                            x.SelectedIndex = -1;
+                                        else
+                                        {
+                                            x.SelectedValue = strDisplaySpec;
+                                            if (x.SelectedIndex == -1)
+                                                x.Text = strDisplaySpec;
+                                        }
+                                    }, token: token).ConfigureAwait(false);
                                 }
                             }
                             finally
@@ -1258,19 +1261,21 @@ namespace Chummer.UI.Skills
 
         private void UnbindSkillControl()
         {
+            CustomAttributeChanged = null;
             _tmrSpecChangeTimer?.Dispose();
-            if (_objSkill?.IsDisposed == false)
+            Skill objSkill = Interlocked.Exchange(ref _objSkill, null); // for thread safety
+            if (objSkill?.IsDisposed == false)
             {
                 try
                 {
-                    _objSkill.MultiplePropertiesChangedAsync -= Skill_PropertyChanged;
+                    objSkill.MultiplePropertiesChangedAsync -= Skill_PropertyChanged;
                 }
                 catch (ObjectDisposedException)
                 {
                     //swallow this
                 }
             }
-            CharacterAttrib objAttribute = AttributeActive; // for thread safety
+            CharacterAttrib objAttribute = Interlocked.Exchange(ref _objAttributeActive, null); // for thread safety
             if (objAttribute?.IsDisposed == false)
             {
                 try
@@ -1283,8 +1288,12 @@ namespace Chummer.UI.Skills
                 }
             }
 
+            ButtonWithToolTip objOld = Interlocked.Exchange(ref _activeButton, null);
+            if (!objOld.IsNullOrDisposed())
+                objOld.Dispose();
+
             foreach (Control objControl in Controls)
-                objControl.DataBindings.Clear();
+                objControl.ResetBindings();
         }
 
         /// <summary>

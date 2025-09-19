@@ -49,7 +49,7 @@ namespace Chummer
         /// <summary>
         /// object creator
         /// </summary>
-        public NumericUpDownEx()
+        public NumericUpDownEx() : base()
         {
             // get a reference to the underlying UpDownButtons field
             // Underlying private type is System.Windows.Forms.UpDownBase+UpDownButtons
@@ -72,12 +72,6 @@ namespace Chummer
             _textbox.KeyDown += txt_KeyDown;
             _upDownButtons.MouseEnter += _mouseEnterLeave;
             _upDownButtons.MouseLeave += _mouseEnterLeave;
-            base.MouseEnter += _mouseEnterLeave;
-            base.MouseLeave += _mouseEnterLeave;
-            // DPI handler for margins (WinForms is buggy with handling scaling of margins on numeric up-downs)
-            ParentChanged += OnMarginChanged;
-            MarginChanged += OnMarginChanged;
-            DpiChangedAfterParent += OnMarginChanged;
         }
 
         private int _intSkipOnMarginChanged;
@@ -85,6 +79,35 @@ namespace Chummer
         private float _fltMyDpiY = 96.0f;
         private Padding _objSavedMargins;
         private bool _blnMarginsSaved;
+
+        protected override void OnMouseEnter(EventArgs e)
+        {
+            base.OnMouseEnter(e);
+            _mouseEnterLeave(this, e);
+        }
+
+        protected override void OnMouseLeave(EventArgs e)
+        {
+            base.OnMouseEnter(e);
+            _mouseEnterLeave(this, e);
+        }
+
+        // DPI handler for margins (WinForms is buggy with handling scaling of margins on numeric up-downs)
+        protected override void OnParentChanged(EventArgs e)
+        {
+            base.OnParentChanged(e);
+            OnMarginChanged(this, e);
+        }
+        protected override void OnMarginChanged(EventArgs e)
+        {
+            base.OnMarginChanged(e);
+            OnMarginChanged(this, e);
+        }
+        protected override void OnDpiChangedAfterParent(EventArgs e)
+        {
+            base.OnDpiChangedAfterParent(e);
+            OnMarginChanged(this, e);
+        }
 
         private void OnMarginChanged(object sender, EventArgs e)
         {
@@ -129,16 +152,6 @@ namespace Chummer
                 _blnMarginsSaved = true;
                 Interlocked.Decrement(ref _intSkipOnMarginChanged);
             }
-        }
-
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                _textbox?.Dispose();
-                _upDownButtons?.Dispose();
-            }
-            base.Dispose(disposing);
         }
 
         protected override void OnPaint(PaintEventArgs e)

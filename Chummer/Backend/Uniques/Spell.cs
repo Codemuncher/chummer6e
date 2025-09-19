@@ -156,7 +156,7 @@ namespace Chummer
                 {
                     _blnCustomExtended = !HashDescriptors.Any(x =>
                                                                   string.Equals(
-                                                                      x.Trim(), "Extended Area",
+                                                                      x, "Extended Area",
                                                                       StringComparison.OrdinalIgnoreCase));
                 }
 
@@ -251,7 +251,7 @@ namespace Chummer
                 {
                     _blnCustomExtended = !HashDescriptors.Any(x =>
                         string.Equals(
-                            x.Trim(), "Extended Area",
+                            x, "Extended Area",
                             StringComparison.OrdinalIgnoreCase));
                 }
 
@@ -416,7 +416,7 @@ namespace Chummer
                 if (objNode["improvementsource"] != null)
                 {
                     _eImprovementSource
-                        = Improvement.ConvertToImprovementSource(objNode["improvementsource"].InnerText);
+                        = Improvement.ConvertToImprovementSource(objNode["improvementsource"].InnerTextViaPool());
                 }
 
                 objNode.TryGetInt32FieldQuickly("grade", ref _intGrade);
@@ -436,7 +436,7 @@ namespace Chummer
                     {
                         _blnCustomExtended = !HashDescriptors.Any(x =>
                                                                       string.Equals(
-                                                                          x.Trim(), "Extended Area",
+                                                                          x, "Extended Area",
                                                                           StringComparison.OrdinalIgnoreCase));
                     }
                 }
@@ -702,7 +702,7 @@ namespace Chummer
                         {
                             _blnCustomExtended = !HashDescriptors.Any(x =>
                                                                           string.Equals(
-                                                                              x.Trim(), "Extended Area",
+                                                                              x, "Extended Area",
                                                                               StringComparison.OrdinalIgnoreCase));
                         }
                     }
@@ -716,7 +716,7 @@ namespace Chummer
             {
                 HashDescriptors.Clear();
                 foreach (string strDescriptor in Descriptors.SplitNoAlloc(',', StringSplitOptions.RemoveEmptyEntries))
-                    HashDescriptors.Add(strDescriptor);
+                    HashDescriptors.Add(strDescriptor.Trim());
             }
         }
 
@@ -729,7 +729,7 @@ namespace Chummer
                 token.ThrowIfCancellationRequested();
                 HashDescriptors.Clear();
                 foreach (string strDescriptor in Descriptors.SplitNoAlloc(',', StringSplitOptions.RemoveEmptyEntries))
-                    HashDescriptors.Add(strDescriptor);
+                    HashDescriptors.Add(strDescriptor.Trim());
             }
             finally
             {
@@ -763,7 +763,7 @@ namespace Chummer
                     {
                         foreach (string strDescriptor in HashDescriptors)
                         {
-                            switch (strDescriptor.Trim())
+                            switch (strDescriptor)
                             {
                                 case "Alchemical Preparation":
                                     sbdReturn.Append(
@@ -791,7 +791,7 @@ namespace Chummer
                                     break;
 
                                 default:
-                                    sbdReturn.Append(LanguageManager.GetString("String_Desc" + strDescriptor.Trim(),
+                                    sbdReturn.Append(LanguageManager.GetString("String_Desc" + strDescriptor,
                                                                                strLanguage));
                                     break;
                             }
@@ -834,7 +834,7 @@ namespace Chummer
                     {
                         foreach (string strDescriptor in HashDescriptors)
                         {
-                            switch (strDescriptor.Trim())
+                            switch (strDescriptor)
                             {
                                 case "Alchemical Preparation":
                                     sbdReturn.Append(
@@ -880,7 +880,7 @@ namespace Chummer
 
                                 default:
                                     sbdReturn.Append(await LanguageManager.GetStringAsync(
-                                                         "String_Desc" + strDescriptor.Trim(),
+                                                         "String_Desc" + strDescriptor,
                                                          strLanguage, token: token).ConfigureAwait(false));
                                     break;
                             }
@@ -1843,7 +1843,7 @@ namespace Chummer
                     {
                         bool blnNewCustomExtended = !HashDescriptors.Any(x =>
                             string.Equals(
-                                x.Trim(), "Extended Area",
+                                x, "Extended Area",
                                 StringComparison.OrdinalIgnoreCase));
                         using (LockObject.EnterWriteLock())
                         {
@@ -2657,7 +2657,7 @@ namespace Chummer
             try
             {
                 token.ThrowIfCancellationRequested();
-                List<Improvement> lstReturn = new List<Improvement>();
+                List<Improvement> lstReturn = new List<Improvement>(await _objCharacter.Improvements.GetCountAsync(token).ConfigureAwait(false));
                 await _objCharacter.Improvements.ForEachWithBreakAsync(async objImprovement =>
                 {
                     if (!objImprovement.Enabled || funcWherePredicate?.Invoke(objImprovement) != true)

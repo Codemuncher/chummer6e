@@ -48,27 +48,10 @@ namespace Chummer
         public DataExporter()
         {
             _objGenericToken = _objGenericCancellationTokenSource.Token;
-            Disposed += (sender, args) =>
-            {
-                CancellationTokenSource objOldCancellationTokenSource = Interlocked.Exchange(ref _objProcessCharacterSettingIndexChangedCancellationTokenSource, null);
-                if (objOldCancellationTokenSource?.IsCancellationRequested == false)
-                {
-                    objOldCancellationTokenSource.Cancel(false);
-                    objOldCancellationTokenSource.Dispose();
-                }
-                objOldCancellationTokenSource = Interlocked.Exchange(ref _objRepopulateCharacterSettingsCancellationTokenSource, null);
-                if (objOldCancellationTokenSource?.IsCancellationRequested == false)
-                {
-                    objOldCancellationTokenSource.Cancel(false);
-                    objOldCancellationTokenSource.Dispose();
-                }
-                _objGenericCancellationTokenSource.Dispose();
-                dlgSaveFile?.Dispose();
-                _objExportSemaphore?.Dispose();
-            };
             InitializeComponent();
             this.UpdateLightDarkMode();
             this.TranslateWinForm();
+            this.UpdateParentForToolTipControls();
         }
 
         private async void cmdOK_Click(object sender, EventArgs e)
@@ -468,7 +451,7 @@ namespace Chummer
                                     using (Stream objStream = objSettingsEntry.Open())
                                     {
                                         token.ThrowIfCancellationRequested();
-                                        await Task.Run(() => objSettings.SaveAsync(objStream, token: token), token).ConfigureAwait(false);
+                                        await objSettings.SaveAsync(objStream, token: token).ConfigureAwait(false);
                                     }
                                     await pgbExportProgress.DoThreadSafeAsync(x => ++x.Value, _objGenericToken).ConfigureAwait(false);
                                     foreach (string strFileName in Utils.BasicDataFileNames)
@@ -480,7 +463,7 @@ namespace Chummer
                                         using (Stream objStream = objEntry.Open())
                                         {
                                             token.ThrowIfCancellationRequested();
-                                            await Task.Run(() => xmlDocument.Save(objStream), token).ConfigureAwait(false);
+                                            await TaskExtensions.RunWithoutEC(() => xmlDocument.Save(objStream), token).ConfigureAwait(false);
                                         }
                                         await pgbExportProgress.DoThreadSafeAsync(x => ++x.Value, _objGenericToken).ConfigureAwait(false);
                                     }

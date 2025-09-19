@@ -90,7 +90,7 @@ namespace Chummer
                     objTaskCompletionSource,
                     intTimeout,
                     true);
-                objTokenRegistration = token.Register(
+                objTokenRegistration = token.RegisterWithoutEC(
                     objState => ((TaskCompletionSource<bool>)objState).TrySetCanceled(token),
                     objTaskCompletionSource);
                 return await objTaskCompletionSource.Task.ConfigureAwait(false);

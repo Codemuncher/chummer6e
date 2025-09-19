@@ -48,26 +48,11 @@ namespace Chummer
         {
             _objCharacter = objCharacter ?? throw new ArgumentNullException(nameof(objCharacter));
             _objGenericToken = _objGenericCancellationTokenSource.Token;
-            Disposed += (sender, args) =>
-            {
-                CancellationTokenSource objOldCancellationTokenSource = Interlocked.Exchange(ref _objProcessCharacterSettingIndexChangedCancellationTokenSource, null);
-                if (objOldCancellationTokenSource?.IsCancellationRequested == false)
-                {
-                    objOldCancellationTokenSource.Cancel(false);
-                    objOldCancellationTokenSource.Dispose();
-                }
-                objOldCancellationTokenSource = Interlocked.Exchange(ref _objRepopulateCharacterSettingsCancellationTokenSource, null);
-                if (objOldCancellationTokenSource?.IsCancellationRequested == false)
-                {
-                    objOldCancellationTokenSource.Cancel(false);
-                    objOldCancellationTokenSource.Dispose();
-                }
-                _objGenericCancellationTokenSource.Dispose();
-            };
             _blnForExistingCharacter = blnUseCurrentValues;
             InitializeComponent();
             this.UpdateLightDarkMode();
             this.TranslateWinForm();
+            this.UpdateParentForToolTipControls();
         }
 
         private async void cmdOK_Click(object sender, EventArgs e)
@@ -215,7 +200,7 @@ namespace Chummer
                         }
 
                         await RepopulateCharacterSettings(objSelectSettings, _objGenericToken).ConfigureAwait(false);
-                        await chkIgnoreRules.SetToolTipAsync(
+                        await chkIgnoreRules.SetToolTipTextAsync(
                                                 await LanguageManager.GetStringAsync("Tip_SelectKarma_IgnoreRules", token: _objGenericToken)
                                                                      .ConfigureAwait(false), _objGenericToken)
                                             .ConfigureAwait(false);
@@ -430,7 +415,7 @@ namespace Chummer
                     string strQualityKarma = (await objSelectedGameplayOption.GetQualityKarmaLimitAsync(token).ConfigureAwait(false)).ToString(GlobalSettings.CultureInfo);
                     await lblQualityKarma.DoThreadSafeAsync(x => x.Text = strQualityKarma, token).ConfigureAwait(false);
 
-                    string strBookList = await objSelectedGameplayOption.TranslatedBookListAsync(string.Join(";",
+                    string strBookList = await objSelectedGameplayOption.TranslatedBookListAsync(StringExtensions.JoinFast(";",
                         await objSelectedGameplayOption.GetBooksAsync(token).ConfigureAwait(false)), token: token).ConfigureAwait(false);
                     if (string.IsNullOrEmpty(strBookList))
                         strBookList = strNone;

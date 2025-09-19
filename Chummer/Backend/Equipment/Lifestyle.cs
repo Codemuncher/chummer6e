@@ -236,7 +236,7 @@ namespace Chummer.Backend.Equipment
                         {
                             XmlNode xmlQuality
                                 = xmlLifestyleDocument.TryGetNodeByNameOrId(
-                                    "/chummer/qualities/quality", xmlNode.InnerText);
+                                    "/chummer/qualities/quality", xmlNode.InnerTextViaPool());
                             string strPush = xmlNode.SelectSingleNodeAndCacheExpressionAsNavigator("@select")?.Value;
                             if (!string.IsNullOrWhiteSpace(strPush))
                             {
@@ -355,7 +355,7 @@ namespace Chummer.Backend.Equipment
                         {
                             XmlNode xmlQuality
                                 = xmlLifestyleDocument.TryGetNodeByNameOrId(
-                                    "/chummer/qualities/quality", xmlNode.InnerText);
+                                    "/chummer/qualities/quality", xmlNode.InnerTextViaPool());
                             string strPush = xmlNode.SelectSingleNodeAndCacheExpressionAsNavigator("@select", token)
                                 ?.Value;
                             if (!string.IsNullOrWhiteSpace(strPush))
@@ -4111,8 +4111,8 @@ namespace Chummer.Backend.Equipment
                             && (string.IsNullOrEmpty(x.ImprovedName) || x.ImprovedName == strBaseLifestyle));
                     if (lstOnceOffImprovements.Count > 0)
                     {
-                        Dictionary<string, List<Improvement>> dicGenericOnceOffImprovementsByUnique = new Dictionary<string, List<Improvement>>();
-                        Dictionary<string, List<Improvement>> dicSpecificOnceOffImprovementsByUnique = new Dictionary<string, List<Improvement>>();
+                        Dictionary<string, List<Improvement>> dicGenericOnceOffImprovementsByUnique = new Dictionary<string, List<Improvement>>(lstOnceOffImprovements.Count);
+                        Dictionary<string, List<Improvement>> dicSpecificOnceOffImprovementsByUnique = new Dictionary<string, List<Improvement>>(lstOnceOffImprovements.Count);
                         foreach (Improvement objImprovement in lstOnceOffImprovements)
                         {
                             string strUnique = objImprovement.UniqueName;
@@ -4123,7 +4123,7 @@ namespace Chummer.Backend.Equipment
                                 lstLoop.Add(objImprovement);
                             else
                             {
-                                lstLoop = new List<Improvement>
+                                lstLoop = new List<Improvement>(lstOnceOffImprovements.Count)
                                     {
                                         objImprovement
                                     };
@@ -4297,7 +4297,7 @@ namespace Chummer.Backend.Equipment
                 }
                 if (blnIncorporateOnceOffAdjustments)
                 {
-                    List<Improvement> lstOnceOffImprovements = new List<Improvement>();
+                    List<Improvement> lstOnceOffImprovements = new List<Improvement>(await _objCharacter.Improvements.GetCountAsync(token).ConfigureAwait(false));
                     if (StyleType == LifestyleType.Standard)
                     {
                         await _objCharacter.Improvements.ForEachAsync(x =>
@@ -4320,8 +4320,8 @@ namespace Chummer.Backend.Equipment
                     }
                     if (lstOnceOffImprovements.Count > 0)
                     {
-                        Dictionary<string, List<Improvement>> dicGenericOnceOffImprovementsByUnique = new Dictionary<string, List<Improvement>>();
-                        Dictionary<string, List<Improvement>> dicSpecificOnceOffImprovementsByUnique = new Dictionary<string, List<Improvement>>();
+                        Dictionary<string, List<Improvement>> dicGenericOnceOffImprovementsByUnique = new Dictionary<string, List<Improvement>>(lstOnceOffImprovements.Count);
+                        Dictionary<string, List<Improvement>> dicSpecificOnceOffImprovementsByUnique = new Dictionary<string, List<Improvement>>(lstOnceOffImprovements.Count);
                         foreach (Improvement objImprovement in lstOnceOffImprovements)
                         {
                             string strUnique = objImprovement.UniqueName;
@@ -4332,7 +4332,7 @@ namespace Chummer.Backend.Equipment
                                 lstLoop.Add(objImprovement);
                             else
                             {
-                                lstLoop = new List<Improvement>
+                                lstLoop = new List<Improvement>(lstOnceOffImprovements.Count)
                                     {
                                         objImprovement
                                     };
@@ -5009,13 +5009,13 @@ namespace Chummer.Backend.Equipment
                     {
                         List<PropertyChangedEventArgs> lstArgsList = setNamesOfChangedProperties
                             .Select(x => new PropertyChangedEventArgs(x)).ToList();
-                        List<Tuple<PropertyChangedAsyncEventHandler, PropertyChangedEventArgs>> lstAsyncEventsList
-                            = new List<Tuple<PropertyChangedAsyncEventHandler, PropertyChangedEventArgs>>(lstArgsList.Count * _setPropertyChangedAsync.Count);
+                        List<ValueTuple<PropertyChangedAsyncEventHandler, PropertyChangedEventArgs>> lstAsyncEventsList
+                            = new List<ValueTuple<PropertyChangedAsyncEventHandler, PropertyChangedEventArgs>>(lstArgsList.Count * _setPropertyChangedAsync.Count);
                         foreach (PropertyChangedAsyncEventHandler objEvent in _setPropertyChangedAsync)
                         {
                             foreach (PropertyChangedEventArgs objArg in lstArgsList)
                             {
-                                lstAsyncEventsList.Add(new Tuple<PropertyChangedAsyncEventHandler, PropertyChangedEventArgs>(objEvent, objArg));
+                                lstAsyncEventsList.Add(new ValueTuple<PropertyChangedAsyncEventHandler, PropertyChangedEventArgs>(objEvent, objArg));
                             }
                         }
                         await ParallelExtensions.ForEachAsync(lstAsyncEventsList, tupEvent => tupEvent.Item1.Invoke(this, tupEvent.Item2, token), token).ConfigureAwait(false);
@@ -5162,6 +5162,11 @@ namespace Chummer.Backend.Equipment
                 _lstLifestyleQualities.CollectionChangedAsync -= LifestyleQualitiesCollectionChanged;
                 _lstLifestyleQualities.BeforeClearCollectionChangedAsync -= LifestyleQualitiesOnBeforeClearCollectionChanged;
                 _lstLifestyleQualities.Dispose();
+                // to help the GC
+                PropertyChanged = null;
+                MultiplePropertiesChanged = null;
+                _setPropertyChangedAsync.Clear();
+                _setMultiplePropertiesChangedAsync.Clear();
             }
         }
 
@@ -5175,6 +5180,11 @@ namespace Chummer.Backend.Equipment
                 _lstLifestyleQualities.CollectionChangedAsync -= LifestyleQualitiesCollectionChanged;
                 _lstLifestyleQualities.BeforeClearCollectionChangedAsync -= LifestyleQualitiesOnBeforeClearCollectionChanged;
                 await _lstLifestyleQualities.DisposeAsync().ConfigureAwait(false);
+                // to help the GC
+                PropertyChanged = null;
+                MultiplePropertiesChanged = null;
+                _setPropertyChangedAsync.Clear();
+                _setMultiplePropertiesChangedAsync.Clear();
             }
             finally
             {

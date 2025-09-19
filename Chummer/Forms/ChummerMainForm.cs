@@ -57,34 +57,29 @@ namespace Chummer
             = new ThreadSafeObservableCollection<CharacterSheetViewer>();
         private ThreadSafeObservableCollection<ExportCharacter> _lstOpenCharacterExportForms
             = new ThreadSafeObservableCollection<ExportCharacter>();
+        private PrintMultipleCharacters _frmOpenPrintMultipleCharacters;
         private ConcurrentStringHashSet _setCharactersToOpen;
         private readonly Timer _tmrCharactersToOpenCheck = new Timer();
+        private readonly Timer _tmrPerformLayoutCheck = new Timer();
         private readonly string _strCurrentVersion;
         private Chummy _mascotChummy;
         private readonly CancellationTokenSource _objGenericCancellationTokenSource = new CancellationTokenSource();
         private readonly CancellationToken _objGenericToken;
         private readonly DebuggableSemaphoreSlim _objFormOpeningSemaphore = new DebuggableSemaphoreSlim();
 
-        public string MainTitle
+        public ToolStrip MainToolStrip => toolStrip;
+
+        public async Task<string> GetMainTitleAsync(CancellationToken token = default)
         {
-            get
-            {
-                try
-                {
-                    string strSpace = LanguageManager.GetString("String_Space", token: _objGenericToken);
-                    string strTitle = Application.ProductName + strSpace + '-' + strSpace
-                                      + LanguageManager.GetString("String_Version", token: _objGenericToken) + strSpace
-                                      + _strCurrentVersion;
+            token.ThrowIfCancellationRequested();
+            string strSpace = await LanguageManager.GetStringAsync("String_Space", token: token).ConfigureAwait(false);
+            return Application.ProductName + strSpace + '-' + strSpace
+                + await LanguageManager.GetStringAsync("String_Version", token: token).ConfigureAwait(false) + strSpace
 #if DEBUG
-                    strTitle += " DEBUG BUILD";
+                + _strCurrentVersion + " DEBUG BUILD";
+#else
+                + _strCurrentVersion;
 #endif
-                    return strTitle;
-                }
-                catch (OperationCanceledException)
-                {
-                    return string.Empty;
-                }
-            }
         }
 
         public bool IsClosing => _intFormClosing > 0;
@@ -112,19 +107,9 @@ namespace Chummer
             tabForms.MouseWheel += CommonFunctions.ShiftTabsOnMouseScroll;
             this.UpdateLightDarkMode();
             this.TranslateWinForm();
-            _strCurrentVersion = Utils.CurrentChummerVersion.ToString(3);
+            this.UpdateParentForToolTipControls();
 
-            Disposed += (sender, args) =>
-            {
-#if !DEBUG
-                _objVersionUpdaterCancellationTokenSource?.Dispose();
-#endif
-                _tmrCharactersToOpenCheck.Dispose();
-                _objGenericCancellationTokenSource.Dispose();
-                _objFormOpeningSemaphore.Dispose();
-                dlgOpenFile?.Dispose();
-                DisposeOpenForms();
-            };
+            _strCurrentVersion = Utils.CurrentChummerVersion.ToString(3);
 
             _lstOpenCharacterEditorForms.BeforeClearCollectionChangedAsync += OpenCharacterEditorFormsOnBeforeClearCollectionChanged;
             _lstOpenCharacterEditorForms.CollectionChangedAsync += OpenCharacterEditorFormsOnCollectionChanged;
@@ -134,6 +119,8 @@ namespace Chummer
             _lstOpenCharacterExportForms.CollectionChangedAsync += OpenCharacterExportFormsOnCollectionChanged;
             _tmrCharactersToOpenCheck.Interval = 1000;
             _tmrCharactersToOpenCheck.Tick += CharactersToOpenCheckOnTick;
+            _tmrPerformLayoutCheck.Interval = 1000;
+            _tmrPerformLayoutCheck.Tick += PerformLayoutCheckOnTick;
 
             //lets write that in separate lines to see where the exception is thrown
             if (!GlobalSettings.HideMasterIndex || blnIsUnitTest)
@@ -167,6 +154,29 @@ namespace Chummer
             try
             {
                 await ProcessQueuedCharactersToOpen(_objGenericToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                //swallow this
+            }
+        }
+
+        private async void PerformLayoutCheckOnTick(object sender, EventArgs e)
+        {
+            if (Utils.IsUnitTest || _intFormClosing > 0)
+                return;
+            try
+            {
+                // Need this as a workaround for known WinForms memory leak caused by cachedLayoutEventArgs in order to flush it. See here:
+                // https://stackoverflow.com/a/25188923, https://github.com/dotnet/winforms/issues/165
+                await this.DoThreadSafeAsync(x =>
+                {
+                    x.PerformLayout();
+                    x.menuStrip.PerformLayout();
+                    x.toolStrip.PerformLayout();
+                    x.exitToolStripMenuItem.Owner.PerformLayout();
+                    x._tmrPerformLayoutCheck.Stop();
+                }, _objGenericToken).ConfigureAwait(false);
             }
             catch (OperationCanceledException)
             {
@@ -705,7 +715,8 @@ namespace Chummer
                                     "The error " + intErrorCode + " occurred while attempting to unblock WM_COPYDATA.");
                             }
 
-                            await this.DoThreadSafeAsync(x => x.Text = MainTitle, token: _objGenericToken)
+                            string strMainTitle = await GetMainTitleAsync(_objGenericToken).ConfigureAwait(false);
+                            await this.DoThreadSafeAsync(x => x.Text = strMainTitle, token: _objGenericToken)
                                       .ConfigureAwait(false);
                             dlgOpenFile.Filter
                                 = await LanguageManager.GetStringAsync("DialogFilter_Chummer", token: _objGenericToken)
@@ -770,13 +781,11 @@ namespace Chummer
                                             foreach (string strAutosave in Directory
                                                          .EnumerateFiles(
                                                              Utils.GetAutosavesFolderPath,
-                                                             "*.chum5",
-                                                             SearchOption.AllDirectories)
-                                                         .Concat(Directory.EnumerateFiles(
-                                                             Utils.GetAutosavesFolderPath,
-                                                             "*.chum5lz",
-                                                             SearchOption.AllDirectories)))
+                                                             "*.chum5*",
+                                                             SearchOption.AllDirectories))
                                             {
+                                                if (!strAutosave.EndsWith(".chum5") && !strAutosave.EndsWith(".chum5lz"))
+                                                    continue;
                                                 FileInfo objAutosave;
                                                 try
                                                 {
@@ -868,7 +877,7 @@ namespace Chummer
                                                 setNewCharactersToOpen = setCharactersToOpen;
                                             foreach (string strFile in setFilesToLoad)
                                                 setNewCharactersToOpen.TryAdd(strFile);
-                                            _tmrCharactersToOpenCheck.Start();
+                                            await this.DoThreadSafeAsync(() => _tmrCharactersToOpenCheck.Start(), _objGenericToken).ConfigureAwait(false);
                                         }
                                     }
                                 }
@@ -903,17 +912,7 @@ namespace Chummer
                                         await LanguageManager.GetStringAsync(
                                             "String_Chummy", token: _objGenericToken).ConfigureAwait(false),
                                         token: _objGenericToken).ConfigureAwait(false);
-                                    _mascotChummy = await this.DoThreadSafeFuncAsync(x =>
-                                    {
-                                        Chummy objReturn = new Chummy(null);
-                                        x.Disposed += (o, args) =>
-                                        {
-                                            if (Interlocked.CompareExchange(ref _mascotChummy, null, objReturn)
-                                                == objReturn)
-                                                objReturn.Dispose();
-                                        };
-                                        return objReturn;
-                                    }, token: _objGenericToken).ConfigureAwait(false);
+                                    _mascotChummy = await this.DoThreadSafeFuncAsync(() => new Chummy(null), token: _objGenericToken).ConfigureAwait(false);
                                     await _mascotChummy.DoThreadSafeAsync(
                                         x => x.Show(), token: _objGenericToken).ConfigureAwait(false);
                                 }
@@ -957,22 +956,24 @@ namespace Chummer
                                     toolsMenu, opFrmChummerMain, _objGenericToken).ConfigureAwait(false);
 
                                 // Set the Tag for each ToolStrip item so it can be translated.
-                                await menuStrip.DoThreadSafeAsync(x =>
+                                int intNumItems = await menuStrip.DoThreadSafeFuncAsync(x =>
                                 {
                                     foreach (ToolStripMenuItem tssItem in x.Items.OfType<ToolStripMenuItem>())
                                     {
                                         tssItem.UpdateLightDarkMode(token: _objGenericToken);
                                     }
+                                    return x.Items.Count;
                                 }, token: _objGenericToken).ConfigureAwait(false);
-                                await mnuProcessFile.DoThreadSafeAsync(x =>
+                                intNumItems = Math.Max(intNumItems, await mnuProcessFile.DoThreadSafeFuncAsync(x =>
                                 {
                                     foreach (ToolStripMenuItem tssItem in x.Items.OfType<ToolStripMenuItem>())
                                     {
                                         tssItem.UpdateLightDarkMode(token: _objGenericToken);
                                     }
-                                }, token: _objGenericToken).ConfigureAwait(false);
-                                List<Tuple<ToolStripItem, string>> lstToTranslate
-                                    = new List<Tuple<ToolStripItem, string>>();
+                                    return x.Items.Count;
+                                }, token: _objGenericToken).ConfigureAwait(false));
+                                List<ValueTuple<ToolStripItem, string>> lstToTranslate
+                                    = new List<ValueTuple<ToolStripItem, string>>(intNumItems);
                                 foreach (ToolStripItem tssItem in await menuStrip
                                                                         .DoThreadSafeFuncAsync(
                                                                             (x, y) => x.Items, _objGenericToken)
@@ -1440,7 +1441,6 @@ namespace Chummer
                                 ChummerUpdater frmUpdater = await this.DoThreadSafeFuncAsync(() => new ChummerUpdater(), objNewToken);
                                 if (Interlocked.CompareExchange(ref _frmUpdate, frmUpdater, null) == null)
                                 {
-                                    Disposed += (sender, args) => frmUpdater.Dispose();
                                     await frmUpdater.DoThreadSafeAsync(x =>
                                     {
                                         x.FormClosed += (o, args) => ResetChummerUpdater(x);
@@ -1606,7 +1606,6 @@ namespace Chummer
                     ChummerUpdater objOldUpdater = Interlocked.CompareExchange(ref _frmUpdate, frmUpdater, null);
                     if (objOldUpdater == null)
                     {
-                        Disposed += (o, args) => frmUpdater.Dispose();
                         await frmUpdater.DoThreadSafeAsync(x =>
                         {
                             x.FormClosed += (o, args) => ResetChummerUpdater(x);
@@ -1867,19 +1866,42 @@ namespace Chummer
             Process.Start(new ProcessStartInfo("https://github.com/chummer5a/chummer5a/issues/new/choose") { UseShellExecute = true });
         }
 
-        public PrintMultipleCharacters PrintMultipleCharactersForm { get; private set; }
+        public PrintMultipleCharacters PrintMultipleCharactersForm => _frmOpenPrintMultipleCharacters;
 
         private async void mnuFilePrintMultiple_Click(object sender, EventArgs e)
         {
             try
             {
-                if (PrintMultipleCharactersForm.IsNullOrDisposed())
+                PrintMultipleCharacters frmOpenPrintMultipleCharacters = _frmOpenPrintMultipleCharacters;
+                if (frmOpenPrintMultipleCharacters.IsNullOrDisposed())
                 {
-                    PrintMultipleCharactersForm = await this.DoThreadSafeFuncAsync(() => new PrintMultipleCharacters(), token: _objGenericToken).ConfigureAwait(false);
-                    await PrintMultipleCharactersForm.DoThreadSafeAsync(x => x.Show(), token: _objGenericToken).ConfigureAwait(false);
+                    frmOpenPrintMultipleCharacters = await this.DoThreadSafeFuncAsync(() => new PrintMultipleCharacters(), token: _objGenericToken).ConfigureAwait(false);
+                    PrintMultipleCharacters frmOld = Interlocked.Exchange(ref _frmOpenPrintMultipleCharacters, frmOpenPrintMultipleCharacters);
+                    if (!frmOld.IsNullOrDisposed())
+                    {
+                        List<Character> lstFormCharacters = frmOld.CharacterObjects.ToList();
+                        await frmOld.DoThreadSafeAsync(x =>
+                        {
+                            try
+                            {
+                                x.Close();
+                            }
+                            catch (ObjectDisposedException)
+                            {
+                                // swallow this
+                            }
+                            catch (ArgumentException)
+                            {
+                                // swallow this
+                            }
+                        }, CancellationToken.None).ConfigureAwait(false);
+                        foreach (Character objFormCharacter in lstFormCharacters)
+                            await objFormCharacter.DisposeAsync().ConfigureAwait(false);
+                    }
+                    await frmOpenPrintMultipleCharacters.DoThreadSafeAsync(x => x.Show(), token: _objGenericToken).ConfigureAwait(false);
                 }
                 else
-                    await PrintMultipleCharactersForm.DoThreadSafeAsync(x => x.Activate(), token: _objGenericToken).ConfigureAwait(false);
+                    await frmOpenPrintMultipleCharacters.DoThreadSafeAsync(x => x.Activate(), token: _objGenericToken).ConfigureAwait(false);
             }
             catch (OperationCanceledException)
             {
@@ -2059,6 +2081,7 @@ namespace Chummer
                                 string strSheet = await LanguageManager.GetStringAsync("String_Sheet_Blank", token: _objGenericToken).ConfigureAwait(false);
                                 await objTabPage.DoThreadSafeAsync(
                                     x => x.Text = string.Format(
+                                        GlobalSettings.CultureInfo,
                                         strSheet,
                                         string.Join(',' + strSpace,
                                                     frmSheetViewer.CharacterObjects.Select(y => y.CharacterName.Trim()))), token: _objGenericToken).ConfigureAwait(false);
@@ -2074,6 +2097,7 @@ namespace Chummer
                                 string strExport = await LanguageManager.GetStringAsync("String_Export_Blank", token: _objGenericToken).ConfigureAwait(false);
                                 await objTabPage.DoThreadSafeAsync(
                                     x => x.Text = string.Format(
+                                        GlobalSettings.CultureInfo,
                                         strExport,
                                         frmExportCharacter.CharacterObject.CharacterName.Trim()), token: _objGenericToken).ConfigureAwait(false);
                                 if (GlobalSettings.AllowEasterEggs && _mascotChummy != null)
@@ -2179,6 +2203,8 @@ namespace Chummer
                         x.Visible = false;
                 }, token: _objGenericToken).ConfigureAwait(false);
 
+                await this.DoThreadSafeAsync(() => _tmrPerformLayoutCheck.Start(), _objGenericToken).ConfigureAwait(false);
+
                 await DoReopenCharacters(_objGenericToken).ConfigureAwait(false);
             }
             catch (OperationCanceledException)
@@ -2187,9 +2213,9 @@ namespace Chummer
             }
         }
 
-        private void tabForms_SelectedIndexChanged(object sender, EventArgs e)
+        private static void tabForms_SelectedIndexChanged(object sender, EventArgs e)
         {
-            (tabForms.SelectedTab?.Tag as Form)?.Select();
+            ((sender as TabControl)?.SelectedTab?.Tag as Form)?.Select();
         }
 
         private async Task DoReopenCharacters(CancellationToken token = default)
@@ -2308,22 +2334,37 @@ namespace Chummer
                         = await lstToProcess.FirstOrDefaultAsync(
                             x => x.CharacterObjects.Contains(objCharacter), token).ConfigureAwait(false);
                     if (objCharacterForm == null)
-                        return false;
-                    await objCharacterForm.DoThreadSafeAsync(x =>
                     {
-                        foreach (TabPage objTabPage in tabForms.TabPages)
+                        PrintMultipleCharacters frmToProcess = _frmOpenPrintMultipleCharacters;
+                        if (frmToProcess.IsNullOrDisposed())
+                            return false;
+
+                        await frmToProcess.DoThreadSafeAsync(x =>
                         {
-                            if (objTabPage.Tag != x)
-                                continue;
-                            tabForms.SelectTab(objTabPage);
                             if (_mascotChummy != null)
                                 _mascotChummy.CharacterObject = objCharacter;
-                            return;
-                        }
+                            x.BringToFront();
+                        }, token).ConfigureAwait(false);
+                        return true;
+                    }
+                    else
+                    {
+                        await objCharacterForm.DoThreadSafeAsync(x =>
+                        {
+                            foreach (TabPage objTabPage in tabForms.TabPages)
+                            {
+                                if (objTabPage.Tag != x)
+                                    continue;
+                                tabForms.SelectTab(objTabPage);
+                                if (_mascotChummy != null)
+                                    _mascotChummy.CharacterObject = objCharacter;
+                                return;
+                            }
 
-                        x.BringToFront();
-                    }, token).ConfigureAwait(false);
-                    return true;
+                            x.BringToFront();
+                        }, token).ConfigureAwait(false);
+                        return true;
+                    }
                 }
                 finally
                 {
@@ -2436,13 +2477,14 @@ namespace Chummer
                                 when frmCharacterSheetViewer.CharacterObjects.Contains(objCharacter):
                                 objTabPage.Text
                                     = string.Format(
+                                        GlobalSettings.CultureInfo,
                                         strSheet,
                                         string.Join(',' + strSpace,
                                                     frmCharacterSheetViewer.CharacterObjects.Select(
                                                         y => y.CharacterName.Trim())));
                                 break;
                             case ExportCharacter frmExport when frmExport.CharacterObject == objCharacter:
-                                objTabPage.Text = string.Format(strExport, strCharacterName);
+                                objTabPage.Text = string.Format(GlobalSettings.CultureInfo, strExport, strCharacterName);
                                 break;
                         }
                     }
@@ -2480,13 +2522,14 @@ namespace Chummer
                             case CharacterSheetViewer frmCharacterSheetViewer:
                                 objTabPage.Text
                                     = string.Format(
+                                        GlobalSettings.CultureInfo,
                                         strSheet,
                                         string.Join(',' + strSpace,
                                                     frmCharacterSheetViewer.CharacterObjects.Select(
                                                         y => y.CharacterName.Trim())));
                                 break;
                             case ExportCharacter frmExport:
-                                objTabPage.Text = string.Format(strExport, frmExport.CharacterObject.CharacterName);
+                                objTabPage.Text = string.Format(GlobalSettings.CultureInfo, strExport, frmExport.CharacterObject.CharacterName);
                                 break;
                             case Form frmOther:
                                 objTabPage.Text = frmOther.Text;
@@ -2527,13 +2570,14 @@ namespace Chummer
                             case CharacterSheetViewer frmCharacterSheetViewer:
                                 objTabPage.Text
                                     = string.Format(
+                                        GlobalSettings.CultureInfo,
                                         strSheet,
                                         string.Join(',' + strSpace,
                                                     frmCharacterSheetViewer.CharacterObjects.Select(
                                                         y => y.CharacterName.Trim())));
                                 break;
                             case ExportCharacter frmExport:
-                                objTabPage.Text = string.Format(strExport, frmExport.CharacterObject.CharacterName);
+                                objTabPage.Text = string.Format(GlobalSettings.CultureInfo, strExport, frmExport.CharacterObject.CharacterName);
                                 break;
                             case Form frmOther:
                                 objTabPage.Text = frmOther.Text;
@@ -2580,15 +2624,16 @@ namespace Chummer
             try
             {
                 // Translate the items in the menu by finding their Tags in the translation file.
-                await menuStrip.DoThreadSafeAsync(x =>
+                int intNumItems = await menuStrip.DoThreadSafeFuncAsync(x =>
                 {
                     foreach (ToolStripMenuItem tssItem in x.Items.OfType<ToolStripMenuItem>())
                     {
                         tssItem.UpdateLightDarkMode(token: _objGenericToken);
                     }
+                    return x.Items.Count;
                 }, token: _objGenericToken).ConfigureAwait(false);
-                List<Tuple<ToolStripItem, string>> lstToTranslate
-                    = new List<Tuple<ToolStripItem, string>>();
+                List<ValueTuple<ToolStripItem, string>> lstToTranslate
+                    = new List<ValueTuple<ToolStripItem, string>>(intNumItems);
                 foreach (ToolStripItem tssItem in await menuStrip
                                                         .DoThreadSafeFuncAsync(
                                                             (x, y) => x.Items, _objGenericToken)
@@ -2615,15 +2660,16 @@ namespace Chummer
                 // ToolStrip Items.
                 foreach (ToolStrip objToolStrip in await this.DoThreadSafeFuncAsync((x, y) => x.Controls.OfType<ToolStrip>(), _objGenericToken).ConfigureAwait(false))
                 {
-                    await objToolStrip.DoThreadSafeAsync(x =>
+                    int intNumItems = await objToolStrip.DoThreadSafeFuncAsync(x =>
                     {
                         foreach (ToolStripMenuItem tssItem in x.Items.OfType<ToolStripMenuItem>())
                         {
                             tssItem.UpdateLightDarkMode(token: _objGenericToken);
                         }
+                        return x.Items.Count;
                     }, token: _objGenericToken).ConfigureAwait(false);
-                    List<Tuple<ToolStripItem, string>> lstToTranslate
-                        = new List<Tuple<ToolStripItem, string>>();
+                    List<ValueTuple<ToolStripItem, string>> lstToTranslate
+                        = new List<ValueTuple<ToolStripItem, string>>(intNumItems);
                     foreach (ToolStripItem tssItem in await objToolStrip
                                                             .DoThreadSafeFuncAsync(
                                                                 (x, y) => x.Items, _objGenericToken)
@@ -2666,19 +2712,14 @@ namespace Chummer
                            = await Program.CreateAndShowProgressBarAsync(string.Empty,
                                                                          Character.NumLoadingSections * s.Length, _objGenericToken).ConfigureAwait(false))
                     {
-                        Task<Character>[] tskCharacterLoads = new Task<Character>[s.Length];
                         // Array instead of concurrent bag because we want to preserve order
-                        for (int i = 0; i < s.Length; ++i)
+                        await ParallelExtensions.ForAsync(0, s.Length, async i =>
                         {
-                            string strFile = s[i];
                             // ReSharper disable once AccessToDisposedClosure
-                            tskCharacterLoads[i]
-                                = Task.Run(() => Program.LoadCharacterAsync(strFile, frmLoadingBar: frmLoadingBar.MyForm, token: _objGenericToken), _objGenericToken);
-                        }
-
-                        await Task.WhenAll(tskCharacterLoads).ConfigureAwait(false);
-                        for (int i = 0; i < lstCharacters.Length; ++i)
-                            lstCharacters[i] = await tskCharacterLoads[i].ConfigureAwait(false);
+                            lstCharacters[i]
+                                = await Program.LoadCharacterAsync(s[i], frmLoadingBar: frmLoadingBar.MyForm, token: _objGenericToken)
+                                    .ConfigureAwait(false);
+                        }, _objGenericToken).ConfigureAwait(false);
                     }
 
                     await OpenCharacterList(lstCharacters, token: _objGenericToken).ConfigureAwait(false);
@@ -2771,8 +2812,8 @@ namespace Chummer
                 Properties.Settings.Default.WindowState = eWindowState;
                 if (eWindowState == FormWindowState.Normal)
                 {
-                    Tuple<Point, Size> tupBounds = await this
-                        .DoThreadSafeFuncAsync(x => new Tuple<Point, Size>(x.Location, x.Size), CancellationToken.None)
+                    ValueTuple<Point, Size> tupBounds = await this
+                        .DoThreadSafeFuncAsync(x => new ValueTuple<Point, Size>(x.Location, x.Size), CancellationToken.None)
                         .ConfigureAwait(false);
                     Properties.Settings.Default.Location = tupBounds.Item1;
                     Properties.Settings.Default.Size = tupBounds.Item2;
@@ -2924,6 +2965,28 @@ namespace Chummer
                 lstToClose3.Dispose();
             }
 
+            PrintMultipleCharacters frmToProcess = Interlocked.Exchange(ref _frmOpenPrintMultipleCharacters, null);
+            if (frmToProcess != null)
+            {
+                List<Character> lstFormCharacters = frmToProcess.CharacterObjects.ToList();
+                frmToProcess.DoThreadSafe(x =>
+                {
+                    try
+                    {
+                        x.Close();
+                    }
+                    catch (ObjectDisposedException)
+                    {
+                        // swallow this
+                    }
+                    catch (ArgumentException)
+                    {
+                        // swallow this
+                    }
+                }, CancellationToken.None);
+                foreach (Character objFormCharacter in lstFormCharacters)
+                    objFormCharacter.Dispose();
+            }
             Interlocked.Exchange(ref _frmMasterIndex, null)?.DoThreadSafe(x =>
             {
                 try
@@ -2984,6 +3047,21 @@ namespace Chummer
                     // swallow this
                 }
             }, CancellationToken.None);
+            Interlocked.Exchange(ref _mascotChummy, null)?.DoThreadSafe(x =>
+            {
+                try
+                {
+                    x.Close();
+                }
+                catch (ObjectDisposedException)
+                {
+                    // swallow this
+                }
+                catch (ArgumentException)
+                {
+                    // swallow this
+                }
+            }, CancellationToken.None);
         }
 
         private async void mnuHeroLabImporter_Click(object sender, EventArgs e)
@@ -3019,13 +3097,13 @@ namespace Chummer
 
         private void tabForms_MouseClick(object sender, MouseEventArgs e)
         {
-            if (e.Button == MouseButtons.Right)
+            if (e.Button == MouseButtons.Right && sender is TabControl objTabControl)
             {
-                for (int i = 0; i < tabForms.TabCount; ++i)
+                for (int i = 0; i < objTabControl.TabCount; ++i)
                 {
-                    if (!tabForms.GetTabRect(i).Contains(e.Location))
+                    if (!objTabControl.GetTabRect(i).Contains(e.Location))
                         continue;
-                    if (tabForms.SelectedTab.Tag is CharacterShared && tabForms.SelectedIndex == i)
+                    if (objTabControl.SelectedTab.Tag is CharacterShared && objTabControl.SelectedIndex == i)
                     {
                         mnuProcessFile.Show(this, e.Location);
                         break;
@@ -3262,20 +3340,13 @@ namespace Chummer
                                    lstFilesToOpen.Select(Path.GetFileName)),
                                lstFilesToOpen.Count * Character.NumLoadingSections, _objGenericToken).ConfigureAwait(false))
                     {
-                        Task<Character>[] tskCharacterLoads = new Task<Character>[lstFilesToOpen.Count];
-                        for (int i = 0; i < lstFilesToOpen.Count; ++i)
+                        await ParallelExtensions.ForAsync(0, lstFilesToOpen.Count, async i =>
                         {
-                            string strFile = lstFilesToOpen[i];
                             // ReSharper disable once AccessToDisposedClosure
-                            tskCharacterLoads[i]
-                                = Task.Run(
-                                    () => Program.LoadCharacterAsync(strFile, frmLoadingBar: frmLoadingBar.MyForm,
-                                                                     token: _objGenericToken), _objGenericToken);
-                        }
-
-                        await Task.WhenAll(tskCharacterLoads).ConfigureAwait(false);
-                        for (int i = 0; i < lstCharacters.Length; ++i)
-                            lstCharacters[i] = await tskCharacterLoads[i].ConfigureAwait(false);
+                            lstCharacters[i]
+                                = await Program.LoadCharacterAsync(lstFilesToOpen[i], frmLoadingBar: frmLoadingBar.MyForm, token: _objGenericToken)
+                                    .ConfigureAwait(false);
+                        }, _objGenericToken).ConfigureAwait(false);
                     }
 
                     await OpenCharacterList(lstCharacters, token: _objGenericToken).ConfigureAwait(false);
@@ -3297,11 +3368,11 @@ namespace Chummer
         /// <summary>
         /// Opens the correct window for a single character.
         /// </summary>
-        public async Task OpenCharacter(Character objCharacter, bool blnIncludeInMru = true, CancellationToken token = default)
+        public Task OpenCharacter(Character objCharacter, bool blnIncludeInMru = true, CancellationToken token = default)
         {
-            token.ThrowIfCancellationRequested();
-            using (TemporaryArray<Character> objYielded = objCharacter.YieldAsPooled())
-                await OpenCharacterList(objYielded, blnIncludeInMru, token).ConfigureAwait(false);
+            if (token.IsCancellationRequested)
+                return Task.FromCanceled(token);
+            return OpenCharacterList(objCharacter.Yield(), blnIncludeInMru, token);
         }
 
         /// <summary>
@@ -3368,9 +3439,9 @@ namespace Chummer
                                 if (lstToProcess != null && await lstToProcess.AnyAsync(
                                         x => x.CharacterObject == objCharacter, token).ConfigureAwait(false))
                                     continue;
-                                if (Program.MyProcess.HandleCount >= (objCharacter.Created ? 8000 : 7500)
+                                if (Program.MyProcess.HandleCount >= (objCharacter.Created ? 7500 : 7000)
                                     && await Program.ShowScrollableMessageBoxAsync(
-                                        string.Format(strTooManyHandles, objCharacter.CharacterName),
+                                        string.Format(GlobalSettings.CultureInfo, strTooManyHandles, objCharacter.CharacterName),
                                         strTooManyHandlesTitle,
                                         MessageBoxButtons.YesNo, MessageBoxIcon.Warning, token: token).ConfigureAwait(false) != DialogResult.Yes)
                                 {
@@ -3485,20 +3556,13 @@ namespace Chummer
                                    lstFilesToOpen.Select(Path.GetFileName)),
                                lstFilesToOpen.Count * Character.NumLoadingSections, _objGenericToken).ConfigureAwait(false))
                     {
-                        Task<Character>[] tskCharacterLoads = new Task<Character>[lstFilesToOpen.Count];
-                        for (int i = 0; i < lstFilesToOpen.Count; ++i)
+                        await ParallelExtensions.ForAsync(0, lstFilesToOpen.Count, async i =>
                         {
-                            string strFile = lstFilesToOpen[i];
                             // ReSharper disable once AccessToDisposedClosure
-                            tskCharacterLoads[i]
-                                = Task.Run(
-                                    () => Program.LoadCharacterAsync(strFile, frmLoadingBar: frmLoadingBar.MyForm,
-                                                                     token: _objGenericToken), _objGenericToken);
-                        }
-
-                        await Task.WhenAll(tskCharacterLoads).ConfigureAwait(false);
-                        for (int i = 0; i < lstCharacters.Length; ++i)
-                            lstCharacters[i] = await tskCharacterLoads[i].ConfigureAwait(false);
+                            lstCharacters[i]
+                                = await Program.LoadCharacterAsync(lstFilesToOpen[i], frmLoadingBar: frmLoadingBar.MyForm, token: _objGenericToken)
+                                    .ConfigureAwait(false);
+                        }, _objGenericToken).ConfigureAwait(false);
                     }
 
                     await OpenCharacterListForPrinting(lstCharacters, token: _objGenericToken).ConfigureAwait(false);
@@ -3517,11 +3581,11 @@ namespace Chummer
         /// <summary>
         /// Open a character's print form up without necessarily opening them up fully for editing.
         /// </summary>
-        public async Task OpenCharacterForPrinting(Character objCharacter, bool blnIncludeInMru = false, CancellationToken token = default)
+        public Task OpenCharacterForPrinting(Character objCharacter, bool blnIncludeInMru = false, CancellationToken token = default)
         {
-            token.ThrowIfCancellationRequested();
-            using (TemporaryArray<Character> objYielded = objCharacter.YieldAsPooled())
-                await OpenCharacterListForPrinting(objYielded, blnIncludeInMru, token).ConfigureAwait(false);
+            if (token.IsCancellationRequested)
+                return Task.FromCanceled(token);
+            return OpenCharacterListForPrinting(objCharacter.Yield(), blnIncludeInMru, token);
         }
 
         /// <summary>
@@ -3558,8 +3622,8 @@ namespace Chummer
                                                                         y => y.WindowState
                                                                              == FormWindowState.Maximized),
                                                                token).ConfigureAwait(false);
-                        List<Tuple<CharacterSheetViewer, Character>> lstNewFormsToProcess
-                            = new List<Tuple<CharacterSheetViewer, Character>>(lstNewCharacters.Count);
+                        List<ValueTuple<CharacterSheetViewer, Character>> lstNewFormsToProcess
+                            = new List<ValueTuple<CharacterSheetViewer, Character>>(lstNewCharacters.Count);
                         string strUI = await LanguageManager.GetStringAsync("String_UI", token: token)
                                                             .ConfigureAwait(false);
                         string strSpace = await LanguageManager.GetStringAsync("String_Space", token: token)
@@ -3593,7 +3657,7 @@ namespace Chummer
 
                                 if (Program.MyProcess.HandleCount >= 9500
                                     && await Program.ShowScrollableMessageBoxAsync(
-                                        string.Format(strTooManyHandles, objCharacter.CharacterName),
+                                        string.Format(GlobalSettings.CultureInfo, strTooManyHandles, objCharacter.CharacterName),
                                         strTooManyHandlesTitle,
                                         MessageBoxButtons.YesNo, MessageBoxIcon.Warning, token: token).ConfigureAwait(false) != DialogResult.Yes)
                                 {
@@ -3615,7 +3679,7 @@ namespace Chummer
                                         MdiParent = y
                                     };
                                     lstNewFormsToProcess.Add(
-                                        new Tuple<CharacterSheetViewer, Character>(frmViewer, objCharacter));
+                                        new ValueTuple<CharacterSheetViewer, Character>(frmViewer, objCharacter));
                                 }, token: token).ConfigureAwait(false);
 
                                 if (blnIncludeInMru && !string.IsNullOrEmpty(objCharacter.FileName)
@@ -3732,20 +3796,13 @@ namespace Chummer
                                    lstFilesToOpen.Select(Path.GetFileName)),
                                lstFilesToOpen.Count * Character.NumLoadingSections, _objGenericToken).ConfigureAwait(false))
                     {
-                        Task<Character>[] tskCharacterLoads = new Task<Character>[lstFilesToOpen.Count];
-                        for (int i = 0; i < lstFilesToOpen.Count; ++i)
+                        await ParallelExtensions.ForAsync(0, lstFilesToOpen.Count, async i =>
                         {
-                            string strFile = lstFilesToOpen[i];
                             // ReSharper disable once AccessToDisposedClosure
-                            tskCharacterLoads[i]
-                                = Task.Run(
-                                    () => Program.LoadCharacterAsync(strFile, frmLoadingBar: frmLoadingBar.MyForm,
-                                                                     token: _objGenericToken), _objGenericToken);
-                        }
-
-                        await Task.WhenAll(tskCharacterLoads).ConfigureAwait(false);
-                        for (int i = 0; i < lstCharacters.Length; ++i)
-                            lstCharacters[i] = await tskCharacterLoads[i].ConfigureAwait(false);
+                            lstCharacters[i]
+                                = await Program.LoadCharacterAsync(lstFilesToOpen[i], frmLoadingBar: frmLoadingBar.MyForm, token: _objGenericToken)
+                                    .ConfigureAwait(false);
+                        }, _objGenericToken).ConfigureAwait(false);
                     }
 
                     await OpenCharacterListForExport(lstCharacters, token: _objGenericToken).ConfigureAwait(false);
@@ -3764,11 +3821,11 @@ namespace Chummer
         /// <summary>
         /// Open a character's export form up without necessarily opening them up fully for editing.
         /// </summary>
-        public async Task OpenCharacterForExport(Character objCharacter, bool blnIncludeInMru = false, CancellationToken token = default)
+        public Task OpenCharacterForExport(Character objCharacter, bool blnIncludeInMru = false, CancellationToken token = default)
         {
-            token.ThrowIfCancellationRequested();
-            using (TemporaryArray<Character> objYielded = objCharacter.YieldAsPooled())
-                await OpenCharacterListForExport(objYielded, blnIncludeInMru, token).ConfigureAwait(false);
+            if (token.IsCancellationRequested)
+                return Task.FromCanceled(token);
+            return OpenCharacterListForExport(objCharacter.Yield(), blnIncludeInMru, token);
         }
 
         /// <summary>
@@ -3835,7 +3892,7 @@ namespace Chummer
                                     continue;
                                 if (Program.MyProcess.HandleCount >= 9500
                                     && await Program.ShowScrollableMessageBoxAsync(
-                                        string.Format(strTooManyHandles, objCharacter.CharacterName),
+                                        string.Format(GlobalSettings.CultureInfo, strTooManyHandles, objCharacter.CharacterName),
                                         strTooManyHandlesTitle,
                                         MessageBoxButtons.YesNo, MessageBoxIcon.Warning, token: token).ConfigureAwait(false) != DialogResult.Yes)
                                 {
@@ -4307,12 +4364,11 @@ namespace Chummer
                                     FileInfo objMostRecentAutosave = null;
                                     foreach (string strAutosave in Directory.EnumerateFiles(
                                                  Utils.GetAutosavesFolderPath,
-                                                 "*.chum5", SearchOption.AllDirectories).Concat(
-                                                 Directory.EnumerateFiles(
-                                                     Utils.GetAutosavesFolderPath,
-                                                     "*.chum5lz", SearchOption.AllDirectories)))
+                                                 "*.chum5*", SearchOption.AllDirectories))
                                     {
                                         _objGenericToken.ThrowIfCancellationRequested();
+                                        if (!strAutosave.EndsWith(".chum5") && !strAutosave.EndsWith(".chum5lz"))
+                                            continue;
                                         FileInfo objAutosave;
                                         try
                                         {
@@ -4553,6 +4609,12 @@ namespace Chummer
                 {
                     foreach (ExportCharacter frmLoop in _lstOpenCharacterExportForms)
                         yield return frmLoop;
+                }
+
+                PrintMultipleCharacters frmToProcess = _frmOpenPrintMultipleCharacters;
+                if (frmToProcess != null)
+                {
+                    yield return frmToProcess;
                 }
             }
         }
