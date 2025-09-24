@@ -160,7 +160,7 @@ namespace Chummer
 
             if (_blnDirty)
             {
-                await Utils.RestartApplication(_strSelectedLanguage, "Message_Options_CloseForms")
+                await Utils.RestartApplication(_objSelectedCultureInfo, _strSelectedLanguage, "Message_Options_CloseForms")
                            .ConfigureAwait(false);
             }
 
@@ -219,7 +219,7 @@ namespace Chummer
             catch (ArgumentOutOfRangeException ex)
             {
                 ex = ex.Demystify();
-                Log.Error(ex, "How the hell? Give me the callstack! " + ex);
+                Log.Error(ex, "How the hell? Give me the callstack! " + ex.ToString());
                 Utils.BreakIfDebug();
             }
         }
@@ -384,7 +384,7 @@ namespace Chummer
                         .GetStringAsync(
                             "MessageTitle_Options_ConfirmTelemetry",
                             _strSelectedLanguage).ConfigureAwait(false),
-                    MessageBoxButtons.YesNo).ConfigureAwait(false) != DialogResult.Yes)
+                    MessageBoxButtons.YesNo, MessageBoxIcon.Question).ConfigureAwait(false) != DialogResult.Yes)
             {
                 int intLoading = Interlocked.Increment(ref _intLoading);
                 try
@@ -427,7 +427,7 @@ namespace Chummer
                         .ConfigureAwait(false)).WordWrap(),
                     await LanguageManager
                         .GetStringAsync("MessageTitle_Options_ConfirmDetailedTelemetry", _strSelectedLanguage)
-                        .ConfigureAwait(false), MessageBoxButtons.YesNo).ConfigureAwait(false) != DialogResult.Yes)
+                        .ConfigureAwait(false), MessageBoxButtons.YesNo, MessageBoxIcon.Warning).ConfigureAwait(false) != DialogResult.Yes)
             {
                 int intLoading = Interlocked.Increment(ref _intLoading);
                 try
@@ -1160,7 +1160,7 @@ namespace Chummer
             {
                 string strNewFileName = string.Empty;
                 string strFilter
-                    = await LanguageManager.GetStringAsync("DialogFilter_Pdf", token: token).ConfigureAwait(false) + '|'
+                    = await LanguageManager.GetStringAsync("DialogFilter_Pdf", token: token).ConfigureAwait(false) + "|"
                     +
                     await LanguageManager.GetStringAsync("DialogFilter_All", token: token).ConfigureAwait(false);
                 DialogResult eResult = await this.DoThreadSafeFuncAsync(x =>
@@ -1229,7 +1229,7 @@ namespace Chummer
             {
                 string strFileName = string.Empty;
                 string strFilter
-                    = await LanguageManager.GetStringAsync("DialogFilter_Exe", token: token).ConfigureAwait(false) + '|'
+                    = await LanguageManager.GetStringAsync("DialogFilter_Exe", token: token).ConfigureAwait(false) + "|"
                     +
                     await LanguageManager.GetStringAsync("DialogFilter_All", token: token).ConfigureAwait(false);
                 DialogResult eResult = await this.DoThreadSafeFuncAsync(x =>
@@ -2069,7 +2069,7 @@ namespace Chummer
         private async Task SetToolTips(CancellationToken token = default)
         {
             token.ThrowIfCancellationRequested();
-            await cboUseLoggingApplicationInsights.SetToolTipAsync(this, string.Format(_objSelectedCultureInfo,
+            await chkUseLogging.SetToolTipTextAsync(string.Format(_objSelectedCultureInfo,
                                                                              await LanguageManager.GetStringAsync(
                                                                                      "Tip_Options_TelemetryId",
                                                                                      _strSelectedLanguage, token: token)
@@ -2389,7 +2389,7 @@ namespace Chummer
                     foreach (XPathNavigator objBook in objBooks
                                  .SelectAndCacheExpression(
                                      "/chummer/books/book[matches/match/language = "
-                                     + _strSelectedLanguage.CleanXPath() + ']'))
+                                     + _strSelectedLanguage.CleanXPath() + "]"))
                     {
                         string strCode
                             = objBook.SelectSingleNodeAndCacheExpression("code")
@@ -2398,7 +2398,7 @@ namespace Chummer
                             continue;
                         XPathNavigator objMatch
                             = objBook.SelectSingleNodeAndCacheExpression(
-                                    "matches/match[language = " + _strSelectedLanguage.CleanXPath() + ']');
+                                    "matches/match[language = " + _strSelectedLanguage.CleanXPath() + "]");
                         if (objMatch == null)
                             continue;
                         string strMatchText
@@ -2427,7 +2427,7 @@ namespace Chummer
                         if (_strSelectedLanguage != GlobalSettings.DefaultLanguage)
                         {
                             objMatch = objBook.SelectSingleNodeAndCacheExpression(
-                                    "matches/match[language = " + GlobalSettings.DefaultLanguage.CleanXPath() + ']');
+                                    "matches/match[language = " + GlobalSettings.DefaultLanguage.CleanXPath() + "]");
                         }
                         if (objMatch == null)
                         {

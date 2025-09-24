@@ -202,21 +202,21 @@ namespace Chummer.Backend.Equipment
                 XPathNavigator xmlLifestyleXPathDocument = _objCharacter.LoadDataXPath("lifestyles.xml");
                 XPathNavigator xmlLifestyleNode =
                     xmlLifestyleXPathDocument.SelectSingleNode(
-                        "/chummer/comforts/comfort[name = " + BaseLifestyle.CleanXPath() + ']');
+                        "/chummer/comforts/comfort[name = " + BaseLifestyle.CleanXPath() + "]");
                 xmlLifestyleNode.TryGetInt32FieldQuickly("minimum", ref _intBaseComforts);
                 xmlLifestyleNode.TryGetInt32FieldQuickly("limit", ref _intComfortsMaximum);
 
                 // Area.
                 xmlLifestyleNode =
                     xmlLifestyleXPathDocument.SelectSingleNode(
-                        "/chummer/neighborhoods/neighborhood[name = " + BaseLifestyle.CleanXPath() + ']');
+                        "/chummer/neighborhoods/neighborhood[name = " + BaseLifestyle.CleanXPath() + "]");
                 xmlLifestyleNode.TryGetInt32FieldQuickly("minimum", ref _intBaseArea);
                 xmlLifestyleNode.TryGetInt32FieldQuickly("limit", ref _intAreaMaximum);
 
                 // Security.
                 xmlLifestyleNode =
                     xmlLifestyleXPathDocument.SelectSingleNode(
-                        "/chummer/securities/security[name = " + BaseLifestyle.CleanXPath() + ']');
+                        "/chummer/securities/security[name = " + BaseLifestyle.CleanXPath() + "]");
                 xmlLifestyleNode.TryGetInt32FieldQuickly("minimum", ref _intBaseSecurity);
                 xmlLifestyleNode.TryGetInt32FieldQuickly("limit", ref _intSecurityMaximum);
                 if (_objCharacter.Settings.BookEnabled("HT") || _objCharacter.Settings.AllowFreeGrids)
@@ -318,21 +318,21 @@ namespace Chummer.Backend.Equipment
                     await _objCharacter.LoadDataXPathAsync("lifestyles.xml", token: token).ConfigureAwait(false);
                 XPathNavigator xmlLifestyleNode =
                     xmlLifestyleXPathDocument.SelectSingleNode(
-                        "/chummer/comforts/comfort[name = " + _strBaseLifestyle.CleanXPath() + ']');
+                        "/chummer/comforts/comfort[name = " + _strBaseLifestyle.CleanXPath() + "]");
                 xmlLifestyleNode.TryGetInt32FieldQuickly("minimum", ref _intBaseComforts);
                 xmlLifestyleNode.TryGetInt32FieldQuickly("limit", ref _intComfortsMaximum);
 
                 // Area.
                 xmlLifestyleNode =
                     xmlLifestyleXPathDocument.SelectSingleNode(
-                        "/chummer/neighborhoods/neighborhood[name = " + _strBaseLifestyle.CleanXPath() + ']');
+                        "/chummer/neighborhoods/neighborhood[name = " + _strBaseLifestyle.CleanXPath() + "]");
                 xmlLifestyleNode.TryGetInt32FieldQuickly("minimum", ref _intBaseArea);
                 xmlLifestyleNode.TryGetInt32FieldQuickly("limit", ref _intAreaMaximum);
 
                 // Security.
                 xmlLifestyleNode =
                     xmlLifestyleXPathDocument.SelectSingleNode(
-                        "/chummer/securities/security[name = " + _strBaseLifestyle.CleanXPath() + ']');
+                        "/chummer/securities/security[name = " + _strBaseLifestyle.CleanXPath() + "]");
                 xmlLifestyleNode.TryGetInt32FieldQuickly("minimum", ref _intBaseSecurity);
                 xmlLifestyleNode.TryGetInt32FieldQuickly("limit", ref _intSecurityMaximum);
                 CharacterSettings objSettings = await _objCharacter.GetSettingsAsync(token).ConfigureAwait(false);
@@ -355,7 +355,7 @@ namespace Chummer.Backend.Equipment
                         {
                             XmlNode xmlQuality
                                 = xmlLifestyleDocument.TryGetNodeByNameOrId(
-                                    "/chummer/qualities/quality", xmlNode.InnerTextViaPool());
+                                    "/chummer/qualities/quality", xmlNode.InnerTextViaPool(token));
                             string strPush = xmlNode.SelectSingleNodeAndCacheExpressionAsNavigator("@select", token)
                                 ?.Value;
                             if (!string.IsNullOrWhiteSpace(strPush))
@@ -677,7 +677,7 @@ namespace Chummer.Backend.Equipment
                 if (!objNode.TryGetBoolFieldQuickly("allowbonuslp", ref _blnAllowBonusLP))
                     (blnSync ? objMyNode.Value : await objMyNodeAsync.GetValueAsync(token).ConfigureAwait(false))?.TryGetBoolFieldQuickly("allowbonuslp", ref _blnAllowBonusLP);
                 if (!objNode.TryGetInt32FieldQuickly("bonuslp", ref _intBonusLP) && _strBaseLifestyle == "Traveler")
-                    _intBonusLP = blnSync ? GlobalSettings.RandomGenerator.NextD6ModuloBiasRemoved() : await GlobalSettings.RandomGenerator.NextD6ModuloBiasRemovedAsync(token).ConfigureAwait(false);
+                    _intBonusLP = blnSync ? Utils.GlobalRandom.NextD6ModuloBiasRemoved() : await Utils.GlobalRandom.NextD6ModuloBiasRemovedAsync(token).ConfigureAwait(false);
 
                 if (!objNode.TryGetInt32FieldQuickly("lp", ref _intLP))
                 {
@@ -4571,7 +4571,7 @@ namespace Chummer.Backend.Equipment
                     token.ThrowIfCancellationRequested();
                     ExpenseLogEntry objExpense = new ExpenseLogEntry(_objCharacter);
                     objExpense.Create(decAmount * -1,
-                        await LanguageManager.GetStringAsync("String_ExpenseLifestyle", token: token).ConfigureAwait(false) + ' ' +
+                        await LanguageManager.GetStringAsync("String_ExpenseLifestyle", token: token).ConfigureAwait(false) + " " +
                         await GetCurrentDisplayNameShortAsync(token).ConfigureAwait(false),
                         ExpenseType.Nuyen, DateTime.Now);
                     await (await _objCharacter.GetExpenseEntriesAsync(token).ConfigureAwait(false))

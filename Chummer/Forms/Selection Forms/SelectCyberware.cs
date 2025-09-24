@@ -194,6 +194,22 @@ namespace Chummer
                         await chkPrototypeTranshuman.DoThreadSafeAsync(x => x.Visible = false, token: _objGenericToken).ConfigureAwait(false);
                 }
 
+                await nudMaxEssence.RegisterOneWayAsyncDataBindingAsync(
+                    (x, y) => x.Maximum = y, await _objCharacter.GetAttributeAsync("ESS", token: _objGenericToken).ConfigureAwait(false),
+                    nameof(CharacterAttrib.MetatypeMaximum),
+                    x => x.GetMetatypeMaximumAsync(_objGenericToken), _objGenericToken).ConfigureAwait(false);
+                await nudMaxEssence.RegisterOneWayAsyncDataBindingAsync(
+                    (x, y) =>
+                    {
+                        x.DecimalPlaces = y;
+                        x.Increment = 10.0m.Pow(-y);
+                    }, await _objCharacter.GetSettingsAsync(_objGenericToken).ConfigureAwait(false),
+                    nameof(CharacterSettings.EssenceDecimals),
+                    x => x.GetEssenceDecimalsAsync(_objGenericToken), _objGenericToken).ConfigureAwait(false);
+                // We set current value here instead of in constructor so that it remains compatible with character settings on essence decimal places.
+                decimal decCurrentEssence = await _objCharacter.EssenceAsync(token: _objGenericToken).ConfigureAwait(false);
+                await nudMaxEssence.DoThreadSafeAsync(x => x.Value = decCurrentEssence, _objGenericToken).ConfigureAwait(false);
+
                 if (!string.IsNullOrEmpty(DefaultSearchText))
                 {
                     await txtSearch.DoThreadSafeAsync(x =>
@@ -687,6 +703,30 @@ namespace Chummer
             }
         }
 
+        private async void chkHideOverEssenceLimit_CheckedChanged(object sender, EventArgs e)
+        {
+            if (_intLoading > 0)
+                return;
+            try
+            {
+                if (await chkHideOverEssenceLimit.DoThreadSafeFuncAsync(x => x.Checked, _objGenericToken).ConfigureAwait(false))
+                {
+                    await lblMaxEssenceLabel.DoThreadSafeAsync(x => x.Enabled = true, _objGenericToken).ConfigureAwait(false);
+                    await nudMaxEssence.DoThreadSafeAsync(x => x.Enabled = true, _objGenericToken).ConfigureAwait(false);
+                }
+                else
+                {
+                    await lblMaxEssenceLabel.DoThreadSafeAsync(x => x.Enabled = false, _objGenericToken).ConfigureAwait(false);
+                    await nudMaxEssence.DoThreadSafeAsync(x => x.Enabled = false, _objGenericToken).ConfigureAwait(false);
+                }
+                await RefreshList(_strSelectedCategory, _objGenericToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                //swallow this
+            }
+        }
+
         private async void nudMarkup_ValueChanged(object sender, EventArgs e)
         {
             if (_intLoading > 0)
@@ -1109,7 +1149,7 @@ namespace Chummer
                                         ? decMin.ToString(strNuyenFormat,
                                                           GlobalSettings.CultureInfo)
                                           + await LanguageManager.GetStringAsync("String_NuyenSymbol", token: token)
-                                                                 .ConfigureAwait(false) + '+'
+                                                                 .ConfigureAwait(false) + "+"
                                         : decMin.ToString(strNuyenFormat,
                                                           GlobalSettings.CultureInfo)
                                           + " - " + decMax.ToString(strNuyenFormat,
@@ -1244,7 +1284,7 @@ namespace Chummer
                             await lblEssence.DoThreadSafeAsync(x =>
                             {
                                 if (blnAddToParentESS)
-                                    x.Text = '+' + decESS.ToString(strEssenceFormat, GlobalSettings.CultureInfo);
+                                    x.Text = "+" + decESS.ToString(strEssenceFormat, GlobalSettings.CultureInfo);
                                 else
                                     x.Text = decESS.ToString(strEssenceFormat, GlobalSettings.CultureInfo);
                             }, token: token).ConfigureAwait(false);
@@ -1300,7 +1340,7 @@ namespace Chummer
                                         strText = decValue.ToString("#,0.##", GlobalSettings.CultureInfo);
                                     }
                                     if (blnSquareBrackets)
-                                        strText = '[' + strText + ']';
+                                        strText = "[" + strText + "]";
                                     await lblCapacity.DoThreadSafeAsync(x => x.Text = strText, token: token).ConfigureAwait(false);
 
                                     strSecondHalf = strSecondHalf.Trim('[', ']');
@@ -1308,12 +1348,12 @@ namespace Chummer
                                     {
                                         bool blnIsSuccess;
                                         (decValue, blnIsSuccess) = await ProcessInvariantXPathExpression(objXmlCyberware, strSecondHalf, intMinRating, intRating, token).ConfigureAwait(false);
-                                        strSecondHalf = (blnAddToParentCapacity ? "+[" : "[") + (blnIsSuccess ? decValue.ToString("#,0.##", GlobalSettings.CultureInfo) : strSecondHalf) + ']';
+                                        strSecondHalf = (blnAddToParentCapacity ? "+[" : "[") + (blnIsSuccess ? decValue.ToString("#,0.##", GlobalSettings.CultureInfo) : strSecondHalf) + "]";
                                     }
                                     else
                                         strSecondHalf = (blnAddToParentCapacity ? "+[" : "[")
-                                                        + decValue.ToString("#,0.##", GlobalSettings.InvariantCultureInfo) + ']';
-                                    await lblCapacity.DoThreadSafeAsync(x => x.Text += '/' + strSecondHalf, token: token).ConfigureAwait(false);
+                                                        + decValue.ToString("#,0.##", GlobalSettings.InvariantCultureInfo) + "]";
+                                    await lblCapacity.DoThreadSafeAsync(x => x.Text += "/" + strSecondHalf, token: token).ConfigureAwait(false);
                                 }
                                 else
                                 {
@@ -1331,8 +1371,8 @@ namespace Chummer
                                     if (blnSquareBrackets)
                                     {
                                         strText = blnAddToParentCapacity
-                                            ? "+[" + strText + ']'
-                                            : '[' + strText + ']';
+                                            ? "+[" + strText + "]"
+                                            : "[" + strText + "]";
                                     }
                                     await lblCapacity.DoThreadSafeAsync(x => x.Text = strText, token: token).ConfigureAwait(false);
                                 }
@@ -1457,7 +1497,7 @@ namespace Chummer
                     sbdFilter.Append(" and ").Append(CommonFunctions.GenerateSearchXPath(strSearch));
 
                 if (sbdFilter.Length > 0)
-                    strFilter = '[' + sbdFilter.ToString() + ']';
+                    strFilter = "[" + sbdFilter.ToString() + "]";
             }
 
             XPathNodeIterator xmlIterator;
@@ -1964,7 +2004,7 @@ namespace Chummer
                         {
                             string strGradeName = objWareGrade.Name;
                             if (setBannedWareGrades.Contains(strGradeName) || strGradeName.ContainsAny(setBannedWareGrades))
-                                lstGrade.Add(new ListItem(objWareGrade.SourceIDString, '*' + strGradeDisplayName));
+                                lstGrade.Add(new ListItem(objWareGrade.SourceIDString, "*" + strGradeDisplayName));
                             else
                                 lstGrade.Add(new ListItem(objWareGrade.SourceIDString, strGradeDisplayName));
                         }
@@ -2024,7 +2064,7 @@ namespace Chummer
             if (_strSubsystems.Length > 0)
             {
                 // Populate the Cyberware Category list.
-                string strSubsystem = "categories/category[. = " + _strSubsystems.CleanXPath().Replace(",", "\" or . = \"") + ']';
+                string strSubsystem = "categories/category[. = " + _strSubsystems.CleanXPath().Replace(",", "\" or . = \"") + "]";
                 objXmlCategoryList = _xmlBaseCyberwareDataNode.Select(strSubsystem);
             }
             else

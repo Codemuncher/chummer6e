@@ -181,7 +181,7 @@ namespace Chummer
                     }
                 }
 
-                int intRandomResult = await GlobalSettings.RandomGenerator.NextModuloBiasRemovedAsync(intTotalWeight, token: token).ConfigureAwait(false);
+                int intRandomResult = await Utils.GlobalRandom.NextModuloBiasRemovedAsync(intTotalWeight, token: token).ConfigureAwait(false);
                 string strSelectedId = string.Empty;
                 foreach (KeyValuePair<string, int> objStoryId in dicStoriesListWithWeights)
                 {
@@ -275,7 +275,7 @@ namespace Chummer
                                     .ConfigureAwait(false);
                         }
 
-                        return string.Join(string.Empty, astrModuleOutputStrings, 0, intCount);
+                        return StringExtensions.ConcatFast(astrModuleOutputStrings, 0, intCount);
                     }
                     finally
                     {

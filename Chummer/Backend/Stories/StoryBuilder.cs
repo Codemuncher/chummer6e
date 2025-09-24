@@ -79,11 +79,11 @@ namespace Chummer
                                                                 ? (i + 1).ToString(GlobalSettings
                                                                     .InvariantCultureInfo)
                                                                 .CleanXPath()
-                                                                : "\"5\"") + ']', token: token)?.Value;
+                                                                : "\"5\"") + "]", token: token)?.Value;
                     int j;
                     for (j = i; j < modules.Count; j++)
                     {
-                        if (modules[j]["stage"]?.InnerTextViaPool() == stageName)
+                        if (modules[j]["stage"]?.InnerTextViaPool(token) == stageName)
                             break;
                     }
 
@@ -104,12 +104,12 @@ namespace Chummer
                         using (new FetchSafelyFromObjectPool<StringBuilder>(Utils.StringBuilderPool,
                                            out StringBuilder sbdTemp))
                         {
-                            story[i] = (await Write(sbdTemp, modules[i]["story"]?.InnerTextViaPool() ?? string.Empty, 5,
+                            story[i] = (await Write(sbdTemp, modules[i]["story"]?.InnerTextViaPool(token) ?? string.Empty, 5,
                                 xmlBaseMacrosNode, token).ConfigureAwait(false)).ToTrimmedString();
                         }
                     }, token).ConfigureAwait(false);
 
-                    return string.Join(Environment.NewLine + Environment.NewLine, story, 0, modules.Count);
+                    return StringExtensions.JoinFast(Environment.NewLine + Environment.NewLine, story, 0, modules.Count);
                 }
                 finally
                 {
@@ -270,7 +270,7 @@ namespace Chummer
                                     if (xmlPossibleNodeList.Count > 0)
                                     {
                                         int intUseIndex = xmlPossibleNodeList.Count > 1
-                                            ? await GlobalSettings.RandomGenerator
+                                            ? await Utils.GlobalRandom
                                                 .NextModuloBiasRemovedAsync(
                                                     xmlPossibleNodeList.Count, token: token)
                                                 .ConfigureAwait(false)
@@ -299,7 +299,7 @@ namespace Chummer
                                     if (xmlPossibleNodeList.Count > 0)
                                     {
                                         int intUseIndex = xmlPossibleNodeList.Count > 1
-                                            ? await GlobalSettings.RandomGenerator
+                                            ? await Utils.GlobalRandom
                                                 .NextModuloBiasRemovedAsync(
                                                     xmlPossibleNodeList.Count, token: token)
                                                 .ConfigureAwait(false)
@@ -324,7 +324,7 @@ namespace Chummer
                                     break;
                                 }
                                 default:
-                                    return "(Formating error in $DOLLAR" + macroName + ')';
+                                    return "(Formating error in $DOLLAR" + macroName + ")";
                             }
                         }
 
@@ -342,13 +342,13 @@ namespace Chummer
                             return strDefault;
                         }
 
-                        return "(Unknown key " + macroPool + " in $DOLLAR" + macroName + ')';
+                        return "(Unknown key " + macroPool + " in $DOLLAR" + macroName + ")";
                     }
 
                     return xmlUserMacroNode.Value;
                 }
 
-                return "(Unknown Macro $DOLLAR" + innerText.Substring(1) + ')';
+                return "(Unknown Macro $DOLLAR" + innerText.Substring(1) + ")";
             }
             finally
             {

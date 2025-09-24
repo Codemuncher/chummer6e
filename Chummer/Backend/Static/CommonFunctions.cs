@@ -378,10 +378,14 @@ namespace Chummer
             foreach (string strCharAttributeName in Backend.Attributes.AttributeSection.AttributeStrings)
             {
                 if (!string.IsNullOrEmpty(strXPathExpression))
-                    strXPathExpression = strXPathExpression
-                                         .Replace('{' + strCharAttributeName + '}', "1")
-                                         .Replace('{' + strCharAttributeName + "Unaug}", "1")
-                                         .Replace('{' + strCharAttributeName + "Base}", "1");
+                {
+                    string strNeedleCommon = "{" + strCharAttributeName;
+                    if (strXPathExpression.Contains(strNeedleCommon))
+                        strXPathExpression = strXPathExpression
+                                             .Replace(strNeedleCommon + "}", "1")
+                                             .Replace(strNeedleCommon + "Unaug}", "1")
+                                             .Replace(strNeedleCommon + "Base}", "1");
+                }
             }
 
             if (string.IsNullOrEmpty(strXPathExpression))
@@ -399,15 +403,21 @@ namespace Chummer
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static async Task<bool> IsCharacterAttributeXPathValidOrNullAsync(string strXPathExpression, bool blnIsNullSuccess = true, CancellationToken token = default)
         {
+            token.ThrowIfCancellationRequested();
             if (string.IsNullOrEmpty(strXPathExpression))
                 return blnIsNullSuccess;
             foreach (string strCharAttributeName in Backend.Attributes.AttributeSection.AttributeStrings)
             {
+                token.ThrowIfCancellationRequested();
                 if (!string.IsNullOrEmpty(strXPathExpression))
-                    strXPathExpression = strXPathExpression
-                                         .Replace('{' + strCharAttributeName + '}', "1")
-                                         .Replace('{' + strCharAttributeName + "Unaug}", "1")
-                                         .Replace('{' + strCharAttributeName + "Base}", "1");
+                {
+                    string strNeedleCommon = "{" + strCharAttributeName;
+                    if (strXPathExpression.Contains(strNeedleCommon))
+                        strXPathExpression = strXPathExpression
+                                             .Replace(strNeedleCommon + "}", "1")
+                                             .Replace(strNeedleCommon + "Unaug}", "1")
+                                             .Replace(strNeedleCommon + "Base}", "1");
+                }
             }
 
             if (string.IsNullOrEmpty(strXPathExpression))
@@ -1518,7 +1528,7 @@ namespace Chummer
             XPathNavigator xmlBook = objSettings != null
                 ? objSettings.LoadDataXPath("books.xml", strLanguage, token: token)
                 : XmlManager.LoadXPath("books.xml", null, strLanguage, token: token);
-            xmlBook = xmlBook?.SelectSingleNodeAndCacheExpression("/chummer/books/book[code = " + strCode.CleanXPath() + ']', token);
+            xmlBook = xmlBook?.SelectSingleNodeAndCacheExpression("/chummer/books/book[code = " + strCode.CleanXPath() + "]", token);
             if (xmlBook != null)
             {
                 string strReturn = xmlBook.SelectSingleNodeAndCacheExpression("translate", token)?.Value
@@ -1547,7 +1557,7 @@ namespace Chummer
             if (xmlBook != null)
             {
                 xmlBook = xmlBook.SelectSingleNodeAndCacheExpression(
-                    "/chummer/books/book[code = " + strCode.CleanXPath() + ']', token: token);
+                    "/chummer/books/book[code = " + strCode.CleanXPath() + "]", token: token);
                 if (xmlBook != null)
                 {
                     string strReturn = xmlBook.SelectSingleNodeAndCacheExpression("translate", token: token)?.Value
@@ -1582,7 +1592,7 @@ namespace Chummer
 
             using (objSettings.LockObject.EnterReadLock(token))
             {
-                string strNotes = GetTextFromPdf(strSource + ' ' + strPage, strEnglishNameOnPage, objSettings, token);
+                string strNotes = GetTextFromPdf(strSource + " " + strPage, strEnglishNameOnPage, objSettings, token);
 
                 if (!string.IsNullOrEmpty(strNotes)
                     || GlobalSettings.Language.Equals(GlobalSettings.DefaultLanguage,
@@ -1599,7 +1609,7 @@ namespace Chummer
                     && !string.IsNullOrEmpty(strNameOnPage) && strNameOnPage != strEnglishNameOnPage)
                     strTranslatedNameOnPage = strNameOnPage;
 
-                return GetTextFromPdf(strSource + ' ' + strDisplayPage,
+                return GetTextFromPdf(strSource + " " + strDisplayPage,
                                       strTranslatedNameOnPage, objSettings, token);
             }
         }
@@ -1630,7 +1640,7 @@ namespace Chummer
             try
             {
                 token.ThrowIfCancellationRequested();
-                string strNotes = await GetTextFromPdfAsync(strSource + ' ' + strPage, strEnglishNameOnPage, objSettings, token).ConfigureAwait(false);
+                string strNotes = await GetTextFromPdfAsync(strSource + " " + strPage, strEnglishNameOnPage, objSettings, token).ConfigureAwait(false);
 
                 if (!string.IsNullOrEmpty(strNotes)
                     || GlobalSettings.Language.Equals(GlobalSettings.DefaultLanguage,
@@ -1647,7 +1657,7 @@ namespace Chummer
                     && !string.IsNullOrEmpty(strNameOnPage) && strNameOnPage != strEnglishNameOnPage)
                     strTranslatedNameOnPage = strNameOnPage;
 
-                return await GetTextFromPdfAsync(strSource + ' ' + strDisplayPage,
+                return await GetTextFromPdfAsync(strSource + " " + strDisplayPage,
                                                  strTranslatedNameOnPage, objSettings, token).ConfigureAwait(false);
             }
             finally
@@ -1716,7 +1726,7 @@ namespace Chummer
                                + strSearchText + "))";
             if (!string.IsNullOrEmpty(strSearchText2))
             {
-                strReturn = '(' + strReturn + " or ((not(" + strTranslateElement + ") and contains(translate("
+                strReturn = "(" + strReturn + " or ((not(" + strTranslateElement + ") and contains(translate("
                             + strNameElement
                             // ReSharper disable once StringLiteralTypo
                             + ",'abcdefghijklmnopqrstuvwxyzàáâãäåæăąāçčćđďèéêëěęēėģğıìíîïīįķłĺļñňńņòóôõöőøœřŕšśşțťùúûüűůūųẃẁŵẅýỳŷÿžźżßａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺ０１２３４５６７８９','ABCDEFGHIJKLMNOPQRSTUVWXYZÀÁÂÃÄÅÆĂĄĀÇČĆĐĎÈÉÊËĚĘĒĖĢĞIÌÍÎÏĪĮĶŁĹĻÑŇŃŅÒÓÔÕÖŐØŒŘŔŠŚŞȚŤÙÚÛÜŰŮŪŲẂẀŴẄÝỲŶŸŽŹŻßABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'), "
@@ -2633,7 +2643,7 @@ namespace Chummer
                 token.ThrowIfCancellationRequested();
                 // if it is a "paragraph title" just concatenate everything
                 if (blnTitleWithColon)
-                    return string.Join(" ", strArray, intTitleIndex, intBlockEndIndex - intTitleIndex);
+                    return StringExtensions.JoinFast(" ", strArray, intTitleIndex, intBlockEndIndex - intTitleIndex);
                 token.ThrowIfCancellationRequested();
                 // add the title
                 using (new FetchSafelyFromObjectPool<StringBuilder>(Utils.StringBuilderPool,

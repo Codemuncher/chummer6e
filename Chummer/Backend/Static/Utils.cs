@@ -45,6 +45,7 @@ using Microsoft.Win32;
 using NLog;
 using Microsoft.IO;
 using System.Xml.XPath;
+using Xoshiro.PRNG64;
 
 namespace Chummer
 {
@@ -305,6 +306,27 @@ namespace Chummer
                 throw new ArgumentOutOfRangeException(nameof(objIcon));
             }, token), token);
         }
+
+        /// <summary>
+        /// Maximum size of a stackalloc'ed array for an 8-bit type (byte, sbyte, bool)
+        /// </summary>
+        public const int MaxStackLimit8BitTypes = 4096;
+        /// <summary>
+        /// Maximum size of a stackalloc'ed array for a 16-bit type (short, ushort, char)
+        /// </summary>
+        public const int MaxStackLimit16BitTypes = MaxStackLimit8BitTypes * sizeof(byte) / sizeof(short);
+        /// <summary>
+        /// Maximum size of a stackalloc'ed array for a 32-bit type (int, uint, float)
+        /// </summary>
+        public const int MaxStackLimit32BitTypes = MaxStackLimit8BitTypes * sizeof(byte) / sizeof(int);
+        /// <summary>
+        /// Maximum size of a stackalloc'ed array for a 64-bit type (long, ulong, double)
+        /// </summary>
+        public const int MaxStackLimit64BitTypes = MaxStackLimit8BitTypes * sizeof(byte) / sizeof(long);
+        /// <summary>
+        /// Maximum size of a stackalloc'ed array for a 128-bit type (decimal)
+        /// </summary>
+        public const int MaxStackLimit128BitTypes = MaxStackLimit8BitTypes * sizeof(byte) / sizeof(decimal);
 
         /// <summary>
         /// Maximum amount of tasks to run in parallel, useful to use with batching to avoid overloading the task scheduler.
@@ -853,14 +875,21 @@ namespace Chummer
         /// <summary>
         /// Restarts Chummer5a.
         /// </summary>
-        /// <param name="strLanguage">Language in which to display any prompts or warnings. If empty, use Chummer's current language.</param>
+        /// <param name="objCulture">Culture info to use when displaying any prompts or warnings. If empty, use the culture info of Chummer's current language.</param>
+        /// <param name="strLanguage">Language in which to display any prompts or warnings. If empty, use the language of <paramref name="objCulture"/> (Chummer's current language if that is null).</param>
         /// <param name="strText">Text to display in the prompt to restart. If empty, no prompt is displayed.</param>
         /// <param name="token">Cancellation token to listen to.</param>
-        public static async ValueTask RestartApplication(string strLanguage = "", string strText = "", CancellationToken token = default)
+        public static async ValueTask RestartApplication(CultureInfo objCulture = null, string strLanguage = "", string strText = "", CancellationToken token = default)
         {
             token.ThrowIfCancellationRequested();
-            if (string.IsNullOrEmpty(strLanguage))
-                strLanguage = GlobalSettings.Language;
+            if (objCulture == null)
+            {
+                objCulture = GlobalSettings.CultureInfo;
+                if (string.IsNullOrEmpty(strLanguage))
+                    strLanguage = GlobalSettings.Language;
+            }
+            else if (string.IsNullOrEmpty(strLanguage))
+                strLanguage = objCulture.ToString();
             if (!string.IsNullOrEmpty(strText))
             {
                 string text = await LanguageManager.GetStringAsync(strText, strLanguage, token: token).ConfigureAwait(false);
@@ -902,7 +931,7 @@ namespace Chummer
                                                                             .GetCharacterNameAsync(token)
                                                                             .ConfigureAwait(false);
                         if (await Program.ShowScrollableMessageBoxAsync(
-                                string.Format(GlobalSettings.CultureInfo,
+                                string.Format(objCulture,
                                     await LanguageManager.GetStringAsync(
                                             "Message_UnsavedChanges", strLanguage,
                                             token: token)
@@ -972,7 +1001,7 @@ namespace Chummer
 #pragma warning disable VSTHRD001
             MySynchronizationContext.Post(x =>
             {
-                (string strMyFileName, string strMyArguments) = (Tuple<string, string>) x;
+                (string strMyFileName, string strMyArguments) = (ValueTuple<string, string>) x;
                 ProcessStartInfo objStartInfo = new ProcessStartInfo
                 {
                     FileName = strMyFileName,
@@ -1615,7 +1644,7 @@ namespace Chummer
         private static bool DefaultIsOkToRunDoEvents => (!IsUnitTest || IsUnitTestForUI) && EverDoEvents;
 
         /// <summary>
-        /// This member makes sure we aren't swamping the program with massive amounts of Application.DoEvents() calls
+        /// This member makes sure we aren't swamping the program with massive amounts of <see cref="Application.DoEvents"/> calls
         /// </summary>
         private static int _intIsOkToRunDoEvents = DefaultIsOkToRunDoEvents.ToInt32();
 
@@ -2671,11 +2700,11 @@ namespace Chummer
                         break;
 
                     case PlatformID.WinCE:
-                        strReturn = "Windows Embedded Compact " + objOSInfoVersion.Major + ".0";
+                        strReturn = "Windows Embedded Compact " + objOSInfoVersion.Major.ToString(CultureInfo.InvariantCulture) + ".0";
                         break;
 
                     case PlatformID.Unix:
-                        strReturn = "Unix Kernel " + objOSInfoVersion;
+                        strReturn = "Unix Kernel " + objOSInfoVersion.ToString();
                         break;
 
                     case PlatformID.Xbox:
@@ -2683,7 +2712,7 @@ namespace Chummer
                         break;
 
                     case PlatformID.MacOSX:
-                        strReturn = "macOS with Darwin Kernel " + objOSInfoVersion;
+                        strReturn = "macOS with Darwin Kernel " + objOSInfoVersion.ToString();
                         break;
 
                     default:
@@ -2697,7 +2726,7 @@ namespace Chummer
                 if (strReturn.StartsWith("Windows", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrEmpty(objOSInfo.ServicePack))
                 {
                     //Append service pack to the OS name.  i.e. "Windows XP Service Pack 3"
-                    strReturn += ' ' + objOSInfo.ServicePack;
+                    strReturn += " " + objOSInfo.ServicePack;
                 }
             }
             catch (Exception e)
@@ -2708,9 +2737,9 @@ namespace Chummer
             return string.IsNullOrEmpty(strReturn) ? "Unknown" : strReturn;
         }
 
-        public static void SetupWebBrowserRegistryKeys()
+        public static void SetupWebBrowserRegistryKeys(int intEmulatedBrowserVersion)
         {
-            int intInternetExplorerVersionKey = GlobalSettings.EmulatedBrowserVersion * 1000;
+            int intInternetExplorerVersionKey = intEmulatedBrowserVersion * 1000;
             string strChummerExeName = AppDomain.CurrentDomain.FriendlyName;
             try
             {
@@ -2765,7 +2794,7 @@ namespace Chummer
 
         /// <summary>
         /// Gets a temporary file folder that is exclusive to Chummer and therefore can be manipulated at will without worrying about interfering with anything else.
-        /// Basically, like Path.GetTempPath(), but safer.
+        /// Basically, like <see cref="Path.GetTempPath()"/>, but safer.
         /// </summary>
         public static string GetTempPath()
         {
@@ -2846,5 +2875,10 @@ namespace Chummer
         /// RecyclableMemoryStreamManager to be used for all RecyclableMemoryStream constructors.
         /// </summary>
         public static RecyclableMemoryStreamManager MemoryStreamManager { get; } = new RecyclableMemoryStreamManager();
+
+        /// <summary>
+        /// Global random number generator.
+        /// </summary>
+        public static ThreadSafeCachedRandom GlobalRandom { get; } = new ThreadSafeCachedRandom(new XoRoShiRo128starstar(), true);
     }
 }

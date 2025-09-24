@@ -899,7 +899,7 @@ namespace Chummer.Backend.Attributes
                 {
                     using (Timekeeper.StartSyncron("create_char_attrib", null,
                                                        CustomActivity.OperationType.RequestOperation,
-                                                       charNode.InnerTextViaPool()))
+                                                       charNode.InnerTextViaPool(token)))
                     {
                         CharacterAttrib objBod = GetAttributeByName("BOD", token);
                         int intOldBODBase = objBod?.Base ?? 0;
@@ -998,61 +998,61 @@ namespace Chummer.Backend.Attributes
                         objDep = GetAttributeByName("DEP", token);
 
                         objBod.AssignLimits(
-                            CommonFunctions.ExpressionToInt(charNode["bodmin"]?.InnerTextViaPool(), intValue, intMinModifier, token: token),
-                            CommonFunctions.ExpressionToInt(charNode["bodmax"]?.InnerTextViaPool(), intValue, intMaxModifier, token: token),
-                            CommonFunctions.ExpressionToInt(charNode["bodaug"]?.InnerTextViaPool(), intValue, intMaxModifier, token: token));
+                            CommonFunctions.ExpressionToInt(charNode["bodmin"]?.InnerTextViaPool(token), intValue, intMinModifier, token: token),
+                            CommonFunctions.ExpressionToInt(charNode["bodmax"]?.InnerTextViaPool(token), intValue, intMaxModifier, token: token),
+                            CommonFunctions.ExpressionToInt(charNode["bodaug"]?.InnerTextViaPool(token), intValue, intMaxModifier, token: token));
                         objAgi.AssignLimits(
-                            CommonFunctions.ExpressionToInt(charNode["agimin"]?.InnerTextViaPool(), intValue, intMinModifier, token: token),
-                            CommonFunctions.ExpressionToInt(charNode["agimax"]?.InnerTextViaPool(), intValue, intMaxModifier, token: token),
-                            CommonFunctions.ExpressionToInt(charNode["agiaug"]?.InnerTextViaPool(), intValue, intMaxModifier, token: token));
+                            CommonFunctions.ExpressionToInt(charNode["agimin"]?.InnerTextViaPool(token), intValue, intMinModifier, token: token),
+                            CommonFunctions.ExpressionToInt(charNode["agimax"]?.InnerTextViaPool(token), intValue, intMaxModifier, token: token),
+                            CommonFunctions.ExpressionToInt(charNode["agiaug"]?.InnerTextViaPool(token), intValue, intMaxModifier, token: token));
                         objRea.AssignLimits(
-                            CommonFunctions.ExpressionToInt(charNode["reamin"]?.InnerTextViaPool(), intValue, intMinModifier, token: token),
-                            CommonFunctions.ExpressionToInt(charNode["reamax"]?.InnerTextViaPool(), intValue, intMaxModifier, token: token),
-                            CommonFunctions.ExpressionToInt(charNode["reaaug"]?.InnerTextViaPool(), intValue, intMaxModifier, token: token));
+                            CommonFunctions.ExpressionToInt(charNode["reamin"]?.InnerTextViaPool(token), intValue, intMinModifier, token: token),
+                            CommonFunctions.ExpressionToInt(charNode["reamax"]?.InnerTextViaPool(token), intValue, intMaxModifier, token: token),
+                            CommonFunctions.ExpressionToInt(charNode["reaaug"]?.InnerTextViaPool(token), intValue, intMaxModifier, token: token));
                         objStr.AssignLimits(
-                            CommonFunctions.ExpressionToInt(charNode["strmin"]?.InnerTextViaPool(), intValue, intMinModifier, token: token),
-                            CommonFunctions.ExpressionToInt(charNode["strmax"]?.InnerTextViaPool(), intValue, intMaxModifier, token: token),
-                            CommonFunctions.ExpressionToInt(charNode["straug"]?.InnerTextViaPool(), intValue, intMaxModifier, token: token));
+                            CommonFunctions.ExpressionToInt(charNode["strmin"]?.InnerTextViaPool(token), intValue, intMinModifier, token: token),
+                            CommonFunctions.ExpressionToInt(charNode["strmax"]?.InnerTextViaPool(token), intValue, intMaxModifier, token: token),
+                            CommonFunctions.ExpressionToInt(charNode["straug"]?.InnerTextViaPool(token), intValue, intMaxModifier, token: token));
                         objCha.AssignLimits(
-                            CommonFunctions.ExpressionToInt(charNode["chamin"]?.InnerTextViaPool(), intValue, intMinModifier, token: token),
-                            CommonFunctions.ExpressionToInt(charNode["chamax"]?.InnerTextViaPool(), intValue, intMaxModifier, token: token),
-                            CommonFunctions.ExpressionToInt(charNode["chaaug"]?.InnerTextViaPool(), intValue, intMaxModifier, token: token));
+                            CommonFunctions.ExpressionToInt(charNode["chamin"]?.InnerTextViaPool(token), intValue, intMinModifier, token: token),
+                            CommonFunctions.ExpressionToInt(charNode["chamax"]?.InnerTextViaPool(token), intValue, intMaxModifier, token: token),
+                            CommonFunctions.ExpressionToInt(charNode["chaaug"]?.InnerTextViaPool(token), intValue, intMaxModifier, token: token));
                         objInt.AssignLimits(
-                            CommonFunctions.ExpressionToInt(charNode["intmin"]?.InnerTextViaPool(), intValue, intMinModifier, token: token),
-                            CommonFunctions.ExpressionToInt(charNode["intmax"]?.InnerTextViaPool(), intValue, intMaxModifier, token: token),
-                            CommonFunctions.ExpressionToInt(charNode["intaug"]?.InnerTextViaPool(), intValue, intMaxModifier, token: token));
+                            CommonFunctions.ExpressionToInt(charNode["intmin"]?.InnerTextViaPool(token), intValue, intMinModifier, token: token),
+                            CommonFunctions.ExpressionToInt(charNode["intmax"]?.InnerTextViaPool(token), intValue, intMaxModifier, token: token),
+                            CommonFunctions.ExpressionToInt(charNode["intaug"]?.InnerTextViaPool(token), intValue, intMaxModifier, token: token));
                         objLog.AssignLimits(
-                            CommonFunctions.ExpressionToInt(charNode["logmin"]?.InnerTextViaPool(), intValue, intMinModifier, token: token),
-                            CommonFunctions.ExpressionToInt(charNode["logmax"]?.InnerTextViaPool(), intValue, intMaxModifier, token: token),
-                            CommonFunctions.ExpressionToInt(charNode["logaug"]?.InnerTextViaPool(), intValue, intMaxModifier, token: token));
+                            CommonFunctions.ExpressionToInt(charNode["logmin"]?.InnerTextViaPool(token), intValue, intMinModifier, token: token),
+                            CommonFunctions.ExpressionToInt(charNode["logmax"]?.InnerTextViaPool(token), intValue, intMaxModifier, token: token),
+                            CommonFunctions.ExpressionToInt(charNode["logaug"]?.InnerTextViaPool(token), intValue, intMaxModifier, token: token));
                         objWil.AssignLimits(
-                            CommonFunctions.ExpressionToInt(charNode["wilmin"]?.InnerTextViaPool(), intValue, intMinModifier, token: token),
-                            CommonFunctions.ExpressionToInt(charNode["wilmax"]?.InnerTextViaPool(), intValue, intMaxModifier, token: token),
-                            CommonFunctions.ExpressionToInt(charNode["wilaug"]?.InnerTextViaPool(), intValue, intMaxModifier, token: token));
+                            CommonFunctions.ExpressionToInt(charNode["wilmin"]?.InnerTextViaPool(token), intValue, intMinModifier, token: token),
+                            CommonFunctions.ExpressionToInt(charNode["wilmax"]?.InnerTextViaPool(token), intValue, intMaxModifier, token: token),
+                            CommonFunctions.ExpressionToInt(charNode["wilaug"]?.InnerTextViaPool(token), intValue, intMaxModifier, token: token));
                         objMag.AssignLimits(
-                            CommonFunctions.ExpressionToInt(charNode["magmin"]?.InnerTextViaPool(), intValue, intMinModifier, token: token),
-                            CommonFunctions.ExpressionToInt(charNode["magmax"]?.InnerTextViaPool(), intValue, intMaxModifier, token: token),
-                            CommonFunctions.ExpressionToInt(charNode["magaug"]?.InnerTextViaPool(), intValue, intMaxModifier, token: token));
+                            CommonFunctions.ExpressionToInt(charNode["magmin"]?.InnerTextViaPool(token), intValue, intMinModifier, token: token),
+                            CommonFunctions.ExpressionToInt(charNode["magmax"]?.InnerTextViaPool(token), intValue, intMaxModifier, token: token),
+                            CommonFunctions.ExpressionToInt(charNode["magaug"]?.InnerTextViaPool(token), intValue, intMaxModifier, token: token));
                         objRes.AssignLimits(
-                            CommonFunctions.ExpressionToInt(charNode["resmin"]?.InnerTextViaPool(), intValue, intMinModifier, token: token),
-                            CommonFunctions.ExpressionToInt(charNode["resmax"]?.InnerTextViaPool(), intValue, intMaxModifier, token: token),
-                            CommonFunctions.ExpressionToInt(charNode["resaug"]?.InnerTextViaPool(), intValue, intMaxModifier, token: token));
+                            CommonFunctions.ExpressionToInt(charNode["resmin"]?.InnerTextViaPool(token), intValue, intMinModifier, token: token),
+                            CommonFunctions.ExpressionToInt(charNode["resmax"]?.InnerTextViaPool(token), intValue, intMaxModifier, token: token),
+                            CommonFunctions.ExpressionToInt(charNode["resaug"]?.InnerTextViaPool(token), intValue, intMaxModifier, token: token));
                         objEdg.AssignLimits(
-                            CommonFunctions.ExpressionToInt(charNode["edgmin"]?.InnerTextViaPool(), intValue, intMinModifier, token: token),
-                            CommonFunctions.ExpressionToInt(charNode["edgmax"]?.InnerTextViaPool(), intValue, intMaxModifier, token: token),
-                            CommonFunctions.ExpressionToInt(charNode["edgaug"]?.InnerTextViaPool(), intValue, intMaxModifier, token: token));
+                            CommonFunctions.ExpressionToInt(charNode["edgmin"]?.InnerTextViaPool(token), intValue, intMinModifier, token: token),
+                            CommonFunctions.ExpressionToInt(charNode["edgmax"]?.InnerTextViaPool(token), intValue, intMaxModifier, token: token),
+                            CommonFunctions.ExpressionToInt(charNode["edgaug"]?.InnerTextViaPool(token), intValue, intMaxModifier, token: token));
                         objDep.AssignLimits(
-                            CommonFunctions.ExpressionToInt(charNode["depmin"]?.InnerTextViaPool(), intValue, intMinModifier, token: token),
-                            CommonFunctions.ExpressionToInt(charNode["depmax"]?.InnerTextViaPool(), intValue, intMaxModifier, token: token),
-                            CommonFunctions.ExpressionToInt(charNode["depaug"]?.InnerTextViaPool(), intValue, intMaxModifier, token: token));
+                            CommonFunctions.ExpressionToInt(charNode["depmin"]?.InnerTextViaPool(token), intValue, intMinModifier, token: token),
+                            CommonFunctions.ExpressionToInt(charNode["depmax"]?.InnerTextViaPool(token), intValue, intMaxModifier, token: token),
+                            CommonFunctions.ExpressionToInt(charNode["depaug"]?.InnerTextViaPool(token), intValue, intMaxModifier, token: token));
                         objMagAdept.AssignLimits(
-                            CommonFunctions.ExpressionToInt(charNode["magmin"]?.InnerTextViaPool(), intValue, intMinModifier, token: token),
-                            CommonFunctions.ExpressionToInt(charNode["magmax"]?.InnerTextViaPool(), intValue, intMaxModifier, token: token),
-                            CommonFunctions.ExpressionToInt(charNode["magaug"]?.InnerTextViaPool(), intValue, intMaxModifier, token: token));
+                            CommonFunctions.ExpressionToInt(charNode["magmin"]?.InnerTextViaPool(token), intValue, intMinModifier, token: token),
+                            CommonFunctions.ExpressionToInt(charNode["magmax"]?.InnerTextViaPool(token), intValue, intMaxModifier, token: token),
+                            CommonFunctions.ExpressionToInt(charNode["magaug"]?.InnerTextViaPool(token), intValue, intMaxModifier, token: token));
                         GetAttributeByName("ESS", token).AssignLimits(
-                            CommonFunctions.ExpressionToInt(charNode["essmin"]?.InnerTextViaPool(), intValue, token: token),
-                            CommonFunctions.ExpressionToInt(charNode["essmax"]?.InnerTextViaPool(), intValue, token: token),
-                            CommonFunctions.ExpressionToInt(charNode["essaug"]?.InnerTextViaPool(), intValue, token: token));
+                            CommonFunctions.ExpressionToInt(charNode["essmin"]?.InnerTextViaPool(token), intValue, token: token),
+                            CommonFunctions.ExpressionToInt(charNode["essmax"]?.InnerTextViaPool(token), intValue, token: token),
+                            CommonFunctions.ExpressionToInt(charNode["essaug"]?.InnerTextViaPool(token), intValue, token: token));
 
                         objBod.Base = Math.Min(intOldBODBase, objBod.PriorityMaximum);
                         objBod.Karma = Math.Min(intOldBODKarma, objBod.KarmaMaximum);
@@ -1125,7 +1125,7 @@ namespace Chummer.Backend.Attributes
                 {
                     using (Timekeeper.StartSyncron("create_char_attrib", null,
                                CustomActivity.OperationType.RequestOperation,
-                               charNode.InnerTextViaPool()))
+                               charNode.InnerTextViaPool(token)))
                     {
                         CharacterAttrib objBod = await GetAttributeByNameAsync("BOD", token).ConfigureAwait(false);
                         int intOldBODBase = objBod != null ? await objBod.GetBaseAsync(token).ConfigureAwait(false) : 0;
@@ -1241,102 +1241,102 @@ namespace Chummer.Backend.Attributes
                         objDep = await GetAttributeByNameAsync("DEP", token).ConfigureAwait(false);
 
                         await objBod.AssignLimitsAsync(
-                            await CommonFunctions.ExpressionToIntAsync(charNode["bodmin"]?.InnerTextViaPool(), intValue,
+                            await CommonFunctions.ExpressionToIntAsync(charNode["bodmin"]?.InnerTextViaPool(token), intValue,
                                 intMinModifier, token: token).ConfigureAwait(false),
-                            await CommonFunctions.ExpressionToIntAsync(charNode["bodmax"]?.InnerTextViaPool(), intValue,
+                            await CommonFunctions.ExpressionToIntAsync(charNode["bodmax"]?.InnerTextViaPool(token), intValue,
                                 intMaxModifier, token: token).ConfigureAwait(false),
-                            await CommonFunctions.ExpressionToIntAsync(charNode["bodaug"]?.InnerTextViaPool(), intValue,
+                            await CommonFunctions.ExpressionToIntAsync(charNode["bodaug"]?.InnerTextViaPool(token), intValue,
                                 intMaxModifier, token: token).ConfigureAwait(false), token).ConfigureAwait(false);
                         await objAgi.AssignLimitsAsync(
-                            await CommonFunctions.ExpressionToIntAsync(charNode["agimin"]?.InnerTextViaPool(), intValue,
+                            await CommonFunctions.ExpressionToIntAsync(charNode["agimin"]?.InnerTextViaPool(token), intValue,
                                 intMinModifier, token: token).ConfigureAwait(false),
-                            await CommonFunctions.ExpressionToIntAsync(charNode["agimax"]?.InnerTextViaPool(), intValue,
+                            await CommonFunctions.ExpressionToIntAsync(charNode["agimax"]?.InnerTextViaPool(token), intValue,
                                 intMaxModifier, token: token).ConfigureAwait(false),
-                            await CommonFunctions.ExpressionToIntAsync(charNode["agiaug"]?.InnerTextViaPool(), intValue,
+                            await CommonFunctions.ExpressionToIntAsync(charNode["agiaug"]?.InnerTextViaPool(token), intValue,
                                 intMaxModifier, token: token).ConfigureAwait(false), token).ConfigureAwait(false);
                         await objRea.AssignLimitsAsync(
-                            await CommonFunctions.ExpressionToIntAsync(charNode["reamin"]?.InnerTextViaPool(), intValue,
+                            await CommonFunctions.ExpressionToIntAsync(charNode["reamin"]?.InnerTextViaPool(token), intValue,
                                 intMinModifier, token: token).ConfigureAwait(false),
-                            await CommonFunctions.ExpressionToIntAsync(charNode["reamax"]?.InnerTextViaPool(), intValue,
+                            await CommonFunctions.ExpressionToIntAsync(charNode["reamax"]?.InnerTextViaPool(token), intValue,
                                 intMaxModifier, token: token).ConfigureAwait(false),
-                            await CommonFunctions.ExpressionToIntAsync(charNode["reaaug"]?.InnerTextViaPool(), intValue,
+                            await CommonFunctions.ExpressionToIntAsync(charNode["reaaug"]?.InnerTextViaPool(token), intValue,
                                 intMaxModifier, token: token).ConfigureAwait(false), token).ConfigureAwait(false);
                         await objStr.AssignLimitsAsync(
-                            await CommonFunctions.ExpressionToIntAsync(charNode["strmin"]?.InnerTextViaPool(), intValue,
+                            await CommonFunctions.ExpressionToIntAsync(charNode["strmin"]?.InnerTextViaPool(token), intValue,
                                 intMinModifier, token: token).ConfigureAwait(false),
-                            await CommonFunctions.ExpressionToIntAsync(charNode["strmax"]?.InnerTextViaPool(), intValue,
+                            await CommonFunctions.ExpressionToIntAsync(charNode["strmax"]?.InnerTextViaPool(token), intValue,
                                 intMaxModifier, token: token).ConfigureAwait(false),
-                            await CommonFunctions.ExpressionToIntAsync(charNode["straug"]?.InnerTextViaPool(), intValue,
+                            await CommonFunctions.ExpressionToIntAsync(charNode["straug"]?.InnerTextViaPool(token), intValue,
                                 intMaxModifier, token: token).ConfigureAwait(false), token).ConfigureAwait(false);
                         await objCha.AssignLimitsAsync(
-                            await CommonFunctions.ExpressionToIntAsync(charNode["chamin"]?.InnerTextViaPool(), intValue,
+                            await CommonFunctions.ExpressionToIntAsync(charNode["chamin"]?.InnerTextViaPool(token), intValue,
                                 intMinModifier, token: token).ConfigureAwait(false),
-                            await CommonFunctions.ExpressionToIntAsync(charNode["chamax"]?.InnerTextViaPool(), intValue,
+                            await CommonFunctions.ExpressionToIntAsync(charNode["chamax"]?.InnerTextViaPool(token), intValue,
                                 intMaxModifier, token: token).ConfigureAwait(false),
-                            await CommonFunctions.ExpressionToIntAsync(charNode["chaaug"]?.InnerTextViaPool(), intValue,
+                            await CommonFunctions.ExpressionToIntAsync(charNode["chaaug"]?.InnerTextViaPool(token), intValue,
                                 intMaxModifier, token: token).ConfigureAwait(false), token).ConfigureAwait(false);
                         await objInt.AssignLimitsAsync(
-                            await CommonFunctions.ExpressionToIntAsync(charNode["intmin"]?.InnerTextViaPool(), intValue,
+                            await CommonFunctions.ExpressionToIntAsync(charNode["intmin"]?.InnerTextViaPool(token), intValue,
                                 intMinModifier, token: token).ConfigureAwait(false),
-                            await CommonFunctions.ExpressionToIntAsync(charNode["intmax"]?.InnerTextViaPool(), intValue,
+                            await CommonFunctions.ExpressionToIntAsync(charNode["intmax"]?.InnerTextViaPool(token), intValue,
                                 intMaxModifier, token: token).ConfigureAwait(false),
-                            await CommonFunctions.ExpressionToIntAsync(charNode["intaug"]?.InnerTextViaPool(), intValue,
+                            await CommonFunctions.ExpressionToIntAsync(charNode["intaug"]?.InnerTextViaPool(token), intValue,
                                 intMaxModifier, token: token).ConfigureAwait(false), token).ConfigureAwait(false);
                         await objLog.AssignLimitsAsync(
-                            await CommonFunctions.ExpressionToIntAsync(charNode["logmin"]?.InnerTextViaPool(), intValue,
+                            await CommonFunctions.ExpressionToIntAsync(charNode["logmin"]?.InnerTextViaPool(token), intValue,
                                 intMinModifier, token: token).ConfigureAwait(false),
-                            await CommonFunctions.ExpressionToIntAsync(charNode["logmax"]?.InnerTextViaPool(), intValue,
+                            await CommonFunctions.ExpressionToIntAsync(charNode["logmax"]?.InnerTextViaPool(token), intValue,
                                 intMaxModifier, token: token).ConfigureAwait(false),
-                            await CommonFunctions.ExpressionToIntAsync(charNode["logaug"]?.InnerTextViaPool(), intValue,
+                            await CommonFunctions.ExpressionToIntAsync(charNode["logaug"]?.InnerTextViaPool(token), intValue,
                                 intMaxModifier, token: token).ConfigureAwait(false), token).ConfigureAwait(false);
                         await objWil.AssignLimitsAsync(
-                            await CommonFunctions.ExpressionToIntAsync(charNode["wilmin"]?.InnerTextViaPool(), intValue,
+                            await CommonFunctions.ExpressionToIntAsync(charNode["wilmin"]?.InnerTextViaPool(token), intValue,
                                 intMinModifier, token: token).ConfigureAwait(false),
-                            await CommonFunctions.ExpressionToIntAsync(charNode["wilmax"]?.InnerTextViaPool(), intValue,
+                            await CommonFunctions.ExpressionToIntAsync(charNode["wilmax"]?.InnerTextViaPool(token), intValue,
                                 intMaxModifier, token: token).ConfigureAwait(false),
-                            await CommonFunctions.ExpressionToIntAsync(charNode["wilaug"]?.InnerTextViaPool(), intValue,
+                            await CommonFunctions.ExpressionToIntAsync(charNode["wilaug"]?.InnerTextViaPool(token), intValue,
                                 intMaxModifier, token: token).ConfigureAwait(false), token).ConfigureAwait(false);
                         await objMag.AssignLimitsAsync(
-                            await CommonFunctions.ExpressionToIntAsync(charNode["magmin"]?.InnerTextViaPool(), intValue,
+                            await CommonFunctions.ExpressionToIntAsync(charNode["magmin"]?.InnerTextViaPool(token), intValue,
                                 intMinModifier, token: token).ConfigureAwait(false),
-                            await CommonFunctions.ExpressionToIntAsync(charNode["magmax"]?.InnerTextViaPool(), intValue,
+                            await CommonFunctions.ExpressionToIntAsync(charNode["magmax"]?.InnerTextViaPool(token), intValue,
                                 intMaxModifier, token: token).ConfigureAwait(false),
-                            await CommonFunctions.ExpressionToIntAsync(charNode["magaug"]?.InnerTextViaPool(), intValue,
+                            await CommonFunctions.ExpressionToIntAsync(charNode["magaug"]?.InnerTextViaPool(token), intValue,
                                 intMaxModifier, token: token).ConfigureAwait(false), token).ConfigureAwait(false);
                         await objRes.AssignLimitsAsync(
-                            await CommonFunctions.ExpressionToIntAsync(charNode["resmin"]?.InnerTextViaPool(), intValue,
+                            await CommonFunctions.ExpressionToIntAsync(charNode["resmin"]?.InnerTextViaPool(token), intValue,
                                 intMinModifier, token: token).ConfigureAwait(false),
-                            await CommonFunctions.ExpressionToIntAsync(charNode["resmax"]?.InnerTextViaPool(), intValue,
+                            await CommonFunctions.ExpressionToIntAsync(charNode["resmax"]?.InnerTextViaPool(token), intValue,
                                 intMaxModifier, token: token).ConfigureAwait(false),
-                            await CommonFunctions.ExpressionToIntAsync(charNode["resaug"]?.InnerTextViaPool(), intValue,
+                            await CommonFunctions.ExpressionToIntAsync(charNode["resaug"]?.InnerTextViaPool(token), intValue,
                                 intMaxModifier, token: token).ConfigureAwait(false), token).ConfigureAwait(false);
                         await objEdg.AssignLimitsAsync(
-                            await CommonFunctions.ExpressionToIntAsync(charNode["edgmin"]?.InnerTextViaPool(), intValue,
+                            await CommonFunctions.ExpressionToIntAsync(charNode["edgmin"]?.InnerTextViaPool(token), intValue,
                                 intMinModifier, token: token).ConfigureAwait(false),
-                            await CommonFunctions.ExpressionToIntAsync(charNode["edgmax"]?.InnerTextViaPool(), intValue,
+                            await CommonFunctions.ExpressionToIntAsync(charNode["edgmax"]?.InnerTextViaPool(token), intValue,
                                 intMaxModifier, token: token).ConfigureAwait(false),
-                            await CommonFunctions.ExpressionToIntAsync(charNode["edgaug"]?.InnerTextViaPool(), intValue,
+                            await CommonFunctions.ExpressionToIntAsync(charNode["edgaug"]?.InnerTextViaPool(token), intValue,
                                 intMaxModifier, token: token).ConfigureAwait(false), token).ConfigureAwait(false);
                         await objDep.AssignLimitsAsync(
-                            await CommonFunctions.ExpressionToIntAsync(charNode["depmin"]?.InnerTextViaPool(), intValue,
+                            await CommonFunctions.ExpressionToIntAsync(charNode["depmin"]?.InnerTextViaPool(token), intValue,
                                 intMinModifier, token: token).ConfigureAwait(false),
-                            await CommonFunctions.ExpressionToIntAsync(charNode["depmax"]?.InnerTextViaPool(), intValue,
+                            await CommonFunctions.ExpressionToIntAsync(charNode["depmax"]?.InnerTextViaPool(token), intValue,
                                 intMaxModifier, token: token).ConfigureAwait(false),
-                            await CommonFunctions.ExpressionToIntAsync(charNode["depaug"]?.InnerTextViaPool(), intValue,
+                            await CommonFunctions.ExpressionToIntAsync(charNode["depaug"]?.InnerTextViaPool(token), intValue,
                                 intMaxModifier, token: token).ConfigureAwait(false), token).ConfigureAwait(false);
                         await objMagAdept.AssignLimitsAsync(
-                            await CommonFunctions.ExpressionToIntAsync(charNode["magmin"]?.InnerTextViaPool(), intValue,
+                            await CommonFunctions.ExpressionToIntAsync(charNode["magmin"]?.InnerTextViaPool(token), intValue,
                                 intMinModifier, token: token).ConfigureAwait(false),
-                            await CommonFunctions.ExpressionToIntAsync(charNode["magmax"]?.InnerTextViaPool(), intValue,
+                            await CommonFunctions.ExpressionToIntAsync(charNode["magmax"]?.InnerTextViaPool(token), intValue,
                                 intMaxModifier, token: token).ConfigureAwait(false),
-                            await CommonFunctions.ExpressionToIntAsync(charNode["magaug"]?.InnerTextViaPool(), intValue,
+                            await CommonFunctions.ExpressionToIntAsync(charNode["magaug"]?.InnerTextViaPool(token), intValue,
                                 intMaxModifier, token: token).ConfigureAwait(false), token).ConfigureAwait(false);
                         await (await GetAttributeByNameAsync("ESS", token).ConfigureAwait(false)).AssignLimitsAsync(
-                            await CommonFunctions.ExpressionToIntAsync(charNode["essmin"]?.InnerTextViaPool(), intValue,
+                            await CommonFunctions.ExpressionToIntAsync(charNode["essmin"]?.InnerTextViaPool(token), intValue,
                                 token: token).ConfigureAwait(false),
-                            await CommonFunctions.ExpressionToIntAsync(charNode["essmax"]?.InnerTextViaPool(), intValue,
+                            await CommonFunctions.ExpressionToIntAsync(charNode["essmax"]?.InnerTextViaPool(token), intValue,
                                 token: token).ConfigureAwait(false),
-                            await CommonFunctions.ExpressionToIntAsync(charNode["essaug"]?.InnerTextViaPool(), intValue,
+                            await CommonFunctions.ExpressionToIntAsync(charNode["essaug"]?.InnerTextViaPool(token), intValue,
                                 token: token).ConfigureAwait(false), token).ConfigureAwait(false);
 
                         await objBod.SetBaseAsync(
@@ -1517,8 +1517,7 @@ namespace Chummer.Backend.Attributes
                     {
                         XmlNodeList lstAttributeNodes =
                             xmlSavedCharacterNode.SelectNodes("attributes/attribute[name = " + strAttribute.CleanXPath()
-                                                              +
-                                                              ']');
+                                                              + "]");
                         // Couldn't find the appropriate attribute in the loaded file, so regenerate it from scratch.
                         if (lstAttributeNodes == null || lstAttributeNodes.Count == 0 || xmlCharNodeAnimalForm != null
                             && _objCharacter.LastSavedVersion < new ValueVersion(5, 200, 25))
@@ -1876,8 +1875,7 @@ namespace Chummer.Backend.Attributes
                         XPathNavigator xmlHeroLabAttributeNode =
                             xmlStatBlockBaseNode.SelectSingleNode(
                                 "attributes/attribute[@name = " + GetAttributeEnglishName(strAttribute).CleanXPath()
-                                                                +
-                                                                ']');
+                                                                + "]");
                         XPathNavigator xmlAttributeBaseNode =
                             xmlHeroLabAttributeNode?.SelectSingleNodeAndCacheExpression("@base", token);
                         if (xmlAttributeBaseNode != null &&
@@ -2750,10 +2748,12 @@ namespace Chummer.Backend.Attributes
                 foreach (string strCharAttributeName in AttributeStrings)
                 {
                     token.ThrowIfCancellationRequested();
+                    string strNeedleCommon = "{" + strCharAttributeName;
+                    if (!strReturn.Contains(strNeedleCommon))
+                        continue;
                     Lazy<CharacterAttrib> objAttribute = new Lazy<CharacterAttrib>(() => _objCharacter.GetAttribute(strCharAttributeName, token: token));
-                    string strNeedleCommon = '{' + strCharAttributeName;
                     strReturn = strReturn
-                                .CheapReplace(strNeedleCommon + '}', () =>
+                                .CheapReplace(strNeedleCommon + "}", () =>
                                                   (dicValueOverrides != null && dicValueOverrides.TryGetValue(strCharAttributeName, out int intOverride)
                                                       ? intOverride
                                                       : objAttribute.Value.TotalValue)
@@ -2798,9 +2798,11 @@ namespace Chummer.Backend.Attributes
                 foreach (string strCharAttributeName in AttributeStrings)
                 {
                     token.ThrowIfCancellationRequested();
+                    string strNeedleCommon = "{" + strCharAttributeName;
+                    if (!strOriginal.Contains(strNeedleCommon))
+                        continue;
                     Lazy<CharacterAttrib> objAttribute = new Lazy<CharacterAttrib>(() => _objCharacter.GetAttribute(strCharAttributeName, token: token));
-                    string strNeedleCommon = '{' + strCharAttributeName;
-                    sbdInput.CheapReplace(strOriginal, strNeedleCommon + '}', () =>
+                    sbdInput.CheapReplace(strOriginal, strNeedleCommon + "}", () =>
                         (dicValueOverrides != null && dicValueOverrides.TryGetValue(strCharAttributeName, out int intOverride)
                             ? intOverride
                             : objAttribute.Value.TotalValue)
@@ -2843,12 +2845,14 @@ namespace Chummer.Backend.Attributes
                 string strReturn = strInput;
                 foreach (string strCharAttributeName in AttributeStrings)
                 {
+                    string strNeedleCommon = "{" + strCharAttributeName;
+                    if (!strReturn.Contains(strNeedleCommon))
+                        continue;
                     Microsoft.VisualStudio.Threading.AsyncLazy<CharacterAttrib> objAttribute =
                         new Microsoft.VisualStudio.Threading.AsyncLazy<CharacterAttrib>(
                             () => _objCharacter.GetAttributeAsync(strCharAttributeName, token: token), Utils.JoinableTaskFactory);
-                    string strNeedleCommon = '{' + strCharAttributeName;
                     strReturn = await (await (await (await (await strReturn
-                                        .CheapReplaceAsync(strNeedleCommon + '}', async () =>
+                                        .CheapReplaceAsync(strNeedleCommon + "}", async () =>
                                             (dicValueOverrides != null && dicValueOverrides.TryGetValue(strCharAttributeName, out int intOverride)
                                                 ? intOverride
                                                 : await (await objAttribute.GetValueAsync(token).ConfigureAwait(false)).GetTotalValueAsync(token).ConfigureAwait(false))
@@ -2900,11 +2904,13 @@ namespace Chummer.Backend.Attributes
                 token.ThrowIfCancellationRequested();
                 foreach (string strCharAttributeName in AttributeStrings)
                 {
+                    string strNeedleCommon = "{" + strCharAttributeName;
+                    if (!strOriginal.Contains(strNeedleCommon))
+                        continue;
                     Microsoft.VisualStudio.Threading.AsyncLazy<CharacterAttrib> objAttribute =
                         new Microsoft.VisualStudio.Threading.AsyncLazy<CharacterAttrib>(
                             () => _objCharacter.GetAttributeAsync(strCharAttributeName, token: token), Utils.JoinableTaskFactory);
-                    string strNeedleCommon = '{' + strCharAttributeName;
-                    await sbdInput.CheapReplaceAsync(strOriginal, strNeedleCommon + '}', async () =>
+                    await sbdInput.CheapReplaceAsync(strOriginal, strNeedleCommon + "}", async () =>
                         (dicValueOverrides != null && dicValueOverrides.TryGetValue(strCharAttributeName, out int intOverride)
                             ? intOverride
                             : await (await objAttribute.GetValueAsync(token).ConfigureAwait(false)).GetTotalValueAsync(token).ConfigureAwait(false))
@@ -2954,35 +2960,37 @@ namespace Chummer.Backend.Attributes
             {
                 foreach (string strCharAttributeName in AttributeStrings)
                 {
-                    Lazy<CharacterAttrib> objAttribute = new Lazy<CharacterAttrib>(() => _objCharacter.GetAttribute(strCharAttributeName, token: token));
-                    string strNeedleCommon = '{' + strCharAttributeName;
+                    string strNeedleCommon = "{" + strCharAttributeName;
+                    if (!strReturn.Contains(strNeedleCommon))
+                        continue;
+                    CharacterAttrib objAttribute = _objCharacter.GetAttribute(strCharAttributeName, token: token);
                     strReturn = strReturn
-                                .CheapReplace(strNeedleCommon + '}', () =>
+                                .CheapReplace(strNeedleCommon + "}", () =>
                                 {
-                                    string strInnerReturn = objAttribute.Value.DisplayNameShort(strLanguage);
+                                    string strInnerReturn = objAttribute.DisplayNameShort(strLanguage);
                                     if (blnShowValues)
                                     {
                                         if (dicValueOverrides == null
                                             || !dicValueOverrides.TryGetValue(
                                                 strCharAttributeName, out int intAttributeValue))
-                                            intAttributeValue = objAttribute.Value.TotalValue;
-                                        strInnerReturn += strSpace + '(' + intAttributeValue.ToString(objCultureInfo)
-                                                          + ')';
+                                            intAttributeValue = objAttribute.TotalValue;
+                                        strInnerReturn += strSpace + "(" + intAttributeValue.ToString(objCultureInfo)
+                                                          + ")";
                                     }
 
                                     return strInnerReturn;
                                 })
                                 .CheapReplace(strNeedleCommon + "Unaug}", () =>
                                 {
-                                    string strInnerReturn = objAttribute.Value.DisplayNameShort(strLanguage);
+                                    string strInnerReturn = objAttribute.DisplayNameShort(strLanguage);
                                     if (blnShowValues)
                                     {
                                         if (dicValueOverrides == null
                                             || !dicValueOverrides.TryGetValue(
                                                 strCharAttributeName + "Unaug", out int intAttributeValue))
-                                            intAttributeValue = objAttribute.Value.Value;
-                                        strInnerReturn += strSpace + '(' + intAttributeValue.ToString(objCultureInfo)
-                                                          + ')';
+                                            intAttributeValue = objAttribute.Value;
+                                        strInnerReturn += strSpace + "(" + intAttributeValue.ToString(objCultureInfo)
+                                                          + ")";
                                     }
 
                                     return string.Format(objCultureInfo,
@@ -2991,15 +2999,15 @@ namespace Chummer.Backend.Attributes
                                 })
                                 .CheapReplace(strNeedleCommon + "Base}", () =>
                                 {
-                                    string strInnerReturn = objAttribute.Value.DisplayNameShort(strLanguage);
+                                    string strInnerReturn = objAttribute.DisplayNameShort(strLanguage);
                                     if (blnShowValues)
                                     {
                                         if (dicValueOverrides == null
                                             || !dicValueOverrides.TryGetValue(
                                                 strCharAttributeName + "Base", out int intAttributeValue))
-                                            intAttributeValue = objAttribute.Value.TotalBase;
-                                        strInnerReturn += strSpace + '(' + intAttributeValue.ToString(objCultureInfo)
-                                                          + ')';
+                                            intAttributeValue = objAttribute.TotalBase;
+                                        strInnerReturn += strSpace + "(" + intAttributeValue.ToString(objCultureInfo)
+                                                          + ")";
                                     }
 
                                     return string.Format(objCultureInfo,
@@ -3008,15 +3016,15 @@ namespace Chummer.Backend.Attributes
                                 })
                                 .CheapReplace(strNeedleCommon + "Minimum}", () =>
                                 {
-                                    string strInnerReturn = objAttribute.Value.DisplayNameShort(strLanguage);
+                                    string strInnerReturn = objAttribute.DisplayNameShort(strLanguage);
                                     if (blnShowValues)
                                     {
                                         if (dicValueOverrides == null
                                             || !dicValueOverrides.TryGetValue(
                                                 strCharAttributeName + "Minimum", out int intAttributeValue))
-                                            intAttributeValue = objAttribute.Value.TotalMinimum;
-                                        strInnerReturn += strSpace + '(' + intAttributeValue.ToString(objCultureInfo)
-                                                          + ')';
+                                            intAttributeValue = objAttribute.TotalMinimum;
+                                        strInnerReturn += strSpace + "(" + intAttributeValue.ToString(objCultureInfo)
+                                                          + ")";
                                     }
 
                                     return string.Format(objCultureInfo,
@@ -3025,15 +3033,15 @@ namespace Chummer.Backend.Attributes
                                 })
                                 .CheapReplace(strNeedleCommon + "Maximum}", () =>
                                 {
-                                    string strInnerReturn = objAttribute.Value.DisplayNameShort(strLanguage);
+                                    string strInnerReturn = objAttribute.DisplayNameShort(strLanguage);
                                     if (blnShowValues)
                                     {
                                         if (dicValueOverrides == null
                                             || !dicValueOverrides.TryGetValue(
                                                 strCharAttributeName + "Maximum", out int intAttributeValue))
-                                            intAttributeValue = objAttribute.Value.TotalMaximum;
-                                        strInnerReturn += strSpace + '(' + intAttributeValue.ToString(objCultureInfo)
-                                                          + ')';
+                                            intAttributeValue = objAttribute.TotalMaximum;
+                                        strInnerReturn += strSpace + "(" + intAttributeValue.ToString(objCultureInfo)
+                                                          + ")";
                                     }
 
                                     return string.Format(objCultureInfo,
@@ -3064,31 +3072,33 @@ namespace Chummer.Backend.Attributes
             {
                 foreach (string strCharAttributeName in AttributeStrings)
                 {
-                    Lazy<CharacterAttrib> objAttribute = new Lazy<CharacterAttrib>(() => _objCharacter.GetAttribute(strCharAttributeName, token: token));
-                    string strNeedleCommon = '{' + strCharAttributeName;
-                    sbdInput.CheapReplace(strOriginal, strNeedleCommon + '}', () =>
+                    string strNeedleCommon = "{" + strCharAttributeName;
+                    if (!strOriginal.Contains(strNeedleCommon))
+                        continue;
+                    CharacterAttrib objAttribute = _objCharacter.GetAttribute(strCharAttributeName, token: token);
+                    sbdInput.CheapReplace(strOriginal, strNeedleCommon + "}", () =>
                     {
-                        string strInnerReturn = objAttribute.Value.DisplayNameShort(strLanguage);
+                        string strInnerReturn = objAttribute.DisplayNameShort(strLanguage);
                         if (blnShowValues)
                         {
                             if (dicValueOverrides == null
                                 || !dicValueOverrides.TryGetValue(strCharAttributeName, out int intAttributeValue))
-                                intAttributeValue = objAttribute.Value.TotalValue;
-                            strInnerReturn += strSpace + '(' + intAttributeValue.ToString(objCultureInfo) + ')';
+                                intAttributeValue = objAttribute.TotalValue;
+                            strInnerReturn += strSpace + "(" + intAttributeValue.ToString(objCultureInfo) + ")";
                         }
 
                         return strInnerReturn;
                     });
                     sbdInput.CheapReplace(strOriginal, strNeedleCommon + "Unaug}", () =>
                     {
-                        string strInnerReturn = objAttribute.Value.DisplayNameShort(strLanguage);
+                        string strInnerReturn = objAttribute.DisplayNameShort(strLanguage);
                         if (blnShowValues)
                         {
                             if (dicValueOverrides == null
                                 || !dicValueOverrides.TryGetValue(strCharAttributeName + "Unaug",
                                                                   out int intAttributeValue))
-                                intAttributeValue = objAttribute.Value.Value;
-                            strInnerReturn += strSpace + '(' + intAttributeValue.ToString(objCultureInfo) + ')';
+                                intAttributeValue = objAttribute.Value;
+                            strInnerReturn += strSpace + "(" + intAttributeValue.ToString(objCultureInfo) + ")";
                         }
 
                         return string.Format(objCultureInfo,
@@ -3097,14 +3107,14 @@ namespace Chummer.Backend.Attributes
                     });
                     sbdInput.CheapReplace(strOriginal, strNeedleCommon + "Base}", () =>
                     {
-                        string strInnerReturn = objAttribute.Value.DisplayNameShort(strLanguage);
+                        string strInnerReturn = objAttribute.DisplayNameShort(strLanguage);
                         if (blnShowValues)
                         {
                             if (dicValueOverrides == null
                                 || !dicValueOverrides.TryGetValue(strCharAttributeName + "Base",
                                                                   out int intAttributeValue))
-                                intAttributeValue = objAttribute.Value.TotalBase;
-                            strInnerReturn += strSpace + '(' + intAttributeValue.ToString(objCultureInfo) + ')';
+                                intAttributeValue = objAttribute.TotalBase;
+                            strInnerReturn += strSpace + "(" + intAttributeValue.ToString(objCultureInfo) + ")";
                         }
 
                         return string.Format(objCultureInfo,
@@ -3113,14 +3123,14 @@ namespace Chummer.Backend.Attributes
                     });
                     sbdInput.CheapReplace(strOriginal, strNeedleCommon + "Minimum}", () =>
                     {
-                        string strInnerReturn = objAttribute.Value.DisplayNameShort(strLanguage);
+                        string strInnerReturn = objAttribute.DisplayNameShort(strLanguage);
                         if (blnShowValues)
                         {
                             if (dicValueOverrides == null
                                 || !dicValueOverrides.TryGetValue(strCharAttributeName + "Minimum",
                                     out int intAttributeValue))
-                                intAttributeValue = objAttribute.Value.TotalMinimum;
-                            strInnerReturn += strSpace + '(' + intAttributeValue.ToString(objCultureInfo) + ')';
+                                intAttributeValue = objAttribute.TotalMinimum;
+                            strInnerReturn += strSpace + "(" + intAttributeValue.ToString(objCultureInfo) + ")";
                         }
 
                         return string.Format(objCultureInfo,
@@ -3129,14 +3139,14 @@ namespace Chummer.Backend.Attributes
                     });
                     sbdInput.CheapReplace(strOriginal, strNeedleCommon + "Maximum}", () =>
                     {
-                        string strInnerReturn = objAttribute.Value.DisplayNameShort(strLanguage);
+                        string strInnerReturn = objAttribute.DisplayNameShort(strLanguage);
                         if (blnShowValues)
                         {
                             if (dicValueOverrides == null
                                 || !dicValueOverrides.TryGetValue(strCharAttributeName + "Maximum",
                                     out int intAttributeValue))
-                                intAttributeValue = objAttribute.Value.TotalMaximum;
-                            strInnerReturn += strSpace + '(' + intAttributeValue.ToString(objCultureInfo) + ')';
+                                intAttributeValue = objAttribute.TotalMaximum;
+                            strInnerReturn += strSpace + "(" + intAttributeValue.ToString(objCultureInfo) + ")";
                         }
 
                         return string.Format(objCultureInfo,
@@ -3166,45 +3176,43 @@ namespace Chummer.Backend.Attributes
                 token.ThrowIfCancellationRequested();
                 foreach (string strCharAttributeName in AttributeStrings)
                 {
-                    Microsoft.VisualStudio.Threading.AsyncLazy<CharacterAttrib> objAttribute =
-                        new Microsoft.VisualStudio.Threading.AsyncLazy<CharacterAttrib>(
-                            () => _objCharacter.GetAttributeAsync(strCharAttributeName, token: token), Utils.JoinableTaskFactory);
-                    string strNeedleCommon = '{' + strCharAttributeName;
+                    string strNeedleCommon = "{" + strCharAttributeName;
+                    if (!strInput.Contains(strNeedleCommon))
+                        continue;
+                    CharacterAttrib objAttribute = await _objCharacter.GetAttributeAsync(strCharAttributeName, token: token).ConfigureAwait(false);
                     strReturn = await strReturn
-                        .CheapReplaceAsync(strNeedleCommon + '}', async () =>
+                        .CheapReplaceAsync(strNeedleCommon + "}", async () =>
                         {
-                            string strInnerReturn = await (await objAttribute.GetValueAsync(token).ConfigureAwait(false))
+                            string strInnerReturn = await objAttribute
                                 .DisplayNameShortAsync(strLanguage, token).ConfigureAwait(false);
                             if (blnShowValues)
                             {
                                 if (dicValueOverrides == null
                                     || !dicValueOverrides.TryGetValue(
                                         strCharAttributeName, out int intAttributeValue))
-                                    intAttributeValue = await (await objAttribute.GetValueAsync(token)
-                                            .ConfigureAwait(false))
+                                    intAttributeValue = await objAttribute
                                         .GetTotalValueAsync(token).ConfigureAwait(false);
                                 strInnerReturn
-                                    += strSpace + '(' + intAttributeValue.ToString(objCultureInfo)
-                                       + ')';
+                                    += strSpace + "(" + intAttributeValue.ToString(objCultureInfo)
+                                       + ")";
                             }
 
                             return strInnerReturn;
                         }, token: token)
                         .CheapReplaceAsync(strNeedleCommon + "Unaug}", async () =>
                         {
-                            string strInnerReturn = await (await objAttribute.GetValueAsync(token).ConfigureAwait(false))
+                            string strInnerReturn = await objAttribute
                                 .DisplayNameShortAsync(strLanguage, token).ConfigureAwait(false);
                             if (blnShowValues)
                             {
                                 if (dicValueOverrides == null
                                     || !dicValueOverrides.TryGetValue(
                                         strCharAttributeName + "Unaug", out int intAttributeValue))
-                                    intAttributeValue = await (await objAttribute.GetValueAsync(token)
-                                            .ConfigureAwait(false))
+                                    intAttributeValue = await objAttribute
                                         .GetValueAsync(token).ConfigureAwait(false);
                                 strInnerReturn
-                                    += strSpace + '(' + intAttributeValue.ToString(objCultureInfo)
-                                       + ')';
+                                    += strSpace + "(" + intAttributeValue.ToString(objCultureInfo)
+                                       + ")";
                             }
 
                             return string.Format(objCultureInfo,
@@ -3214,19 +3222,18 @@ namespace Chummer.Backend.Attributes
                         }, token: token)
                         .CheapReplaceAsync(strNeedleCommon + "Base}", async () =>
                         {
-                            string strInnerReturn = await (await objAttribute.GetValueAsync(token).ConfigureAwait(false))
+                            string strInnerReturn = await objAttribute
                                 .DisplayNameShortAsync(strLanguage, token).ConfigureAwait(false);
                             if (blnShowValues)
                             {
                                 if (dicValueOverrides == null
                                     || !dicValueOverrides.TryGetValue(
                                         strCharAttributeName + "Base", out int intAttributeValue))
-                                    intAttributeValue = await (await objAttribute.GetValueAsync(token)
-                                            .ConfigureAwait(false))
+                                    intAttributeValue = await objAttribute
                                         .GetTotalBaseAsync(token).ConfigureAwait(false);
                                 strInnerReturn
-                                    += strSpace + '(' + intAttributeValue.ToString(objCultureInfo)
-                                       + ')';
+                                    += strSpace + "(" + intAttributeValue.ToString(objCultureInfo)
+                                       + ")";
                             }
 
                             return string.Format(objCultureInfo,
@@ -3236,19 +3243,18 @@ namespace Chummer.Backend.Attributes
                         }, token: token)
                         .CheapReplaceAsync(strNeedleCommon + "Minimum}", async () =>
                         {
-                            string strInnerReturn = await (await objAttribute.GetValueAsync(token).ConfigureAwait(false))
+                            string strInnerReturn = await objAttribute
                                 .DisplayNameShortAsync(strLanguage, token).ConfigureAwait(false);
                             if (blnShowValues)
                             {
                                 if (dicValueOverrides == null
                                     || !dicValueOverrides.TryGetValue(
                                         strCharAttributeName + "Minimum", out int intAttributeValue))
-                                    intAttributeValue = await (await objAttribute.GetValueAsync(token)
-                                            .ConfigureAwait(false))
+                                    intAttributeValue = await objAttribute
                                         .GetTotalMinimumAsync(token).ConfigureAwait(false);
                                 strInnerReturn
-                                    += strSpace + '(' + intAttributeValue.ToString(objCultureInfo)
-                                       + ')';
+                                    += strSpace + "(" + intAttributeValue.ToString(objCultureInfo)
+                                       + ")";
                             }
 
                             return string.Format(objCultureInfo,
@@ -3258,19 +3264,18 @@ namespace Chummer.Backend.Attributes
                         }, token: token)
                         .CheapReplaceAsync(strNeedleCommon + "Maximum}", async () =>
                         {
-                            string strInnerReturn = await (await objAttribute.GetValueAsync(token).ConfigureAwait(false))
+                            string strInnerReturn = await objAttribute
                                 .DisplayNameShortAsync(strLanguage, token).ConfigureAwait(false);
                             if (blnShowValues)
                             {
                                 if (dicValueOverrides == null
                                     || !dicValueOverrides.TryGetValue(
                                         strCharAttributeName + "Maximum", out int intAttributeValue))
-                                    intAttributeValue = await (await objAttribute.GetValueAsync(token)
-                                            .ConfigureAwait(false))
+                                    intAttributeValue = await objAttribute
                                         .GetTotalMaximumAsync(token).ConfigureAwait(false);
                                 strInnerReturn
-                                    += strSpace + '(' + intAttributeValue.ToString(objCultureInfo)
-                                       + ')';
+                                    += strSpace + "(" + intAttributeValue.ToString(objCultureInfo)
+                                       + ")";
                             }
 
                             return string.Format(objCultureInfo,
@@ -3311,29 +3316,28 @@ namespace Chummer.Backend.Attributes
                 token.ThrowIfCancellationRequested();
                 foreach (string strCharAttributeName in AttributeStrings)
                 {
-                    Microsoft.VisualStudio.Threading.AsyncLazy<CharacterAttrib> objAttribute =
-                        new Microsoft.VisualStudio.Threading.AsyncLazy<CharacterAttrib>(
-                            () => _objCharacter.GetAttributeAsync(strCharAttributeName, token: token), Utils.JoinableTaskFactory);
-                    string strNeedleCommon = '{' + strCharAttributeName;
-                    await sbdInput.CheapReplaceAsync(strOriginal, strNeedleCommon + '}', async () =>
+                    string strNeedleCommon = "{" + strCharAttributeName;
+                    if (!strOriginal.Contains(strNeedleCommon))
+                        continue;
+                    CharacterAttrib objAttribute = await _objCharacter.GetAttributeAsync(strCharAttributeName, token: token).ConfigureAwait(false);
+                    await sbdInput.CheapReplaceAsync(strOriginal, strNeedleCommon + "}", async () =>
                     {
-                        string strInnerReturn = await (await objAttribute.GetValueAsync(token).ConfigureAwait(false))
+                        string strInnerReturn = await objAttribute
                             .DisplayNameShortAsync(strLanguage, token).ConfigureAwait(false);
                         if (blnShowValues)
                         {
                             if (dicValueOverrides == null
                                 || !dicValueOverrides.TryGetValue(strCharAttributeName, out int intAttributeValue))
                                 intAttributeValue =
-                                    await (await objAttribute.GetValueAsync(token)
-                                        .ConfigureAwait(false)).GetTotalValueAsync(token).ConfigureAwait(false);
-                            strInnerReturn += strSpace + '(' + intAttributeValue.ToString(objCultureInfo) + ')';
+                                    await objAttribute.GetTotalValueAsync(token).ConfigureAwait(false);
+                            strInnerReturn += strSpace + "(" + intAttributeValue.ToString(objCultureInfo) + ")";
                         }
 
                         return strInnerReturn;
                     }, token: token).ConfigureAwait(false);
                     await sbdInput.CheapReplaceAsync(strOriginal, strNeedleCommon + "Unaug}", async () =>
                     {
-                        string strInnerReturn = await (await objAttribute.GetValueAsync(token).ConfigureAwait(false))
+                        string strInnerReturn = await objAttribute
                             .DisplayNameShortAsync(strLanguage, token).ConfigureAwait(false);
                         if (blnShowValues)
                         {
@@ -3341,9 +3345,8 @@ namespace Chummer.Backend.Attributes
                                 || !dicValueOverrides.TryGetValue(strCharAttributeName + "Unaug",
                                     out int intAttributeValue))
                                 intAttributeValue =
-                                    await (await objAttribute.GetValueAsync(token)
-                                        .ConfigureAwait(false)).GetValueAsync(token).ConfigureAwait(false);
-                            strInnerReturn += strSpace + '(' + intAttributeValue.ToString(objCultureInfo) + ')';
+                                    await objAttribute.GetValueAsync(token).ConfigureAwait(false);
+                            strInnerReturn += strSpace + "(" + intAttributeValue.ToString(objCultureInfo) + ")";
                         }
 
                         return string.Format(objCultureInfo,
@@ -3353,7 +3356,7 @@ namespace Chummer.Backend.Attributes
                     }, token: token).ConfigureAwait(false);
                     await sbdInput.CheapReplaceAsync(strOriginal, strNeedleCommon + "Base}", async () =>
                     {
-                        string strInnerReturn = await (await objAttribute.GetValueAsync(token).ConfigureAwait(false))
+                        string strInnerReturn = await objAttribute
                             .DisplayNameShortAsync(strLanguage, token).ConfigureAwait(false);
                         if (blnShowValues)
                         {
@@ -3361,9 +3364,8 @@ namespace Chummer.Backend.Attributes
                                 || !dicValueOverrides.TryGetValue(strCharAttributeName + "Base",
                                     out int intAttributeValue))
                                 intAttributeValue =
-                                    await (await objAttribute.GetValueAsync(token)
-                                        .ConfigureAwait(false)).GetTotalBaseAsync(token).ConfigureAwait(false);
-                            strInnerReturn += strSpace + '(' + intAttributeValue.ToString(objCultureInfo) + ')';
+                                    await objAttribute.GetTotalBaseAsync(token).ConfigureAwait(false);
+                            strInnerReturn += strSpace + "(" + intAttributeValue.ToString(objCultureInfo) + ")";
                         }
 
                         return string.Format(objCultureInfo,
@@ -3373,7 +3375,7 @@ namespace Chummer.Backend.Attributes
                     }, token: token).ConfigureAwait(false);
                     await sbdInput.CheapReplaceAsync(strOriginal, strNeedleCommon + "Minimum}", async () =>
                     {
-                        string strInnerReturn = await (await objAttribute.GetValueAsync(token).ConfigureAwait(false))
+                        string strInnerReturn = await objAttribute
                             .DisplayNameShortAsync(strLanguage, token).ConfigureAwait(false);
                         if (blnShowValues)
                         {
@@ -3381,9 +3383,8 @@ namespace Chummer.Backend.Attributes
                                 || !dicValueOverrides.TryGetValue(strCharAttributeName + "Minimum",
                                     out int intAttributeValue))
                                 intAttributeValue =
-                                    await (await objAttribute.GetValueAsync(token)
-                                        .ConfigureAwait(false)).GetTotalMinimumAsync(token).ConfigureAwait(false);
-                            strInnerReturn += strSpace + '(' + intAttributeValue.ToString(objCultureInfo) + ')';
+                                    await objAttribute.GetTotalMinimumAsync(token).ConfigureAwait(false);
+                            strInnerReturn += strSpace + "(" + intAttributeValue.ToString(objCultureInfo) + ")";
                         }
 
                         return string.Format(objCultureInfo,
@@ -3393,7 +3394,7 @@ namespace Chummer.Backend.Attributes
                     }, token: token).ConfigureAwait(false);
                     await sbdInput.CheapReplaceAsync(strOriginal, strNeedleCommon + "Maximum}", async () =>
                     {
-                        string strInnerReturn = await (await objAttribute.GetValueAsync(token).ConfigureAwait(false))
+                        string strInnerReturn = await objAttribute
                             .DisplayNameShortAsync(strLanguage, token).ConfigureAwait(false);
                         if (blnShowValues)
                         {
@@ -3401,9 +3402,8 @@ namespace Chummer.Backend.Attributes
                                 || !dicValueOverrides.TryGetValue(strCharAttributeName + "Maximum",
                                     out int intAttributeValue))
                                 intAttributeValue =
-                                    await (await objAttribute.GetValueAsync(token)
-                                        .ConfigureAwait(false)).GetTotalMaximumAsync(token).ConfigureAwait(false);
-                            strInnerReturn += strSpace + '(' + intAttributeValue.ToString(objCultureInfo) + ')';
+                                    await objAttribute.GetTotalMaximumAsync(token).ConfigureAwait(false);
+                            strInnerReturn += strSpace + "(" + intAttributeValue.ToString(objCultureInfo) + ")";
                         }
 
                         return string.Format(objCultureInfo,

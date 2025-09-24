@@ -718,9 +718,9 @@ namespace Chummer.Backend.Skills
                     {
                         if (xmlSkillNode["forced"] != null)
                             objKnowledgeSkill = new KnowledgeSkill(objCharacter,
-                                xmlSkillNode["name"]?.InnerTextViaPool() ?? string.Empty,
+                                xmlSkillNode["name"]?.InnerTextViaPool(token) ?? string.Empty,
                                 !Convert.ToBoolean(
-                                    xmlSkillNode["disableupgrades"]?.InnerTextViaPool(),
+                                    xmlSkillNode["disableupgrades"]?.InnerTextViaPool(token),
                                     GlobalSettings.InvariantCultureInfo));
                         else
                         {
@@ -786,7 +786,7 @@ namespace Chummer.Backend.Skills
                     if (xmlSkillDataNode == null)
                     {
                         // Legacy sweeper: we might have an active skill by the same name whose ID was changed for whatever reason.
-                        string strName = xmlSkillNode["name"]?.InnerTextViaPool() ?? string.Empty;
+                        string strName = xmlSkillNode["name"]?.InnerTextViaPool(token) ?? string.Empty;
                         if (!string.IsNullOrEmpty(strName))
                         {
                             xmlSkillDataNode = xmlSkillsDoc.TryGetNodeByNameOrId("/chummer/skills/skill", strName);
@@ -853,9 +853,9 @@ namespace Chummer.Backend.Skills
                 if (xmlSkillNode["forced"] != null)
                 {
                     objLoadingSkill = new KnowledgeSkill(objCharacter,
-                        xmlSkillNode["name"]?.InnerTextViaPool() ?? string.Empty,
+                        xmlSkillNode["name"]?.InnerTextViaPool(token) ?? string.Empty,
                         !Convert.ToBoolean(
-                            xmlSkillNode["disableupgrades"]?.InnerTextViaPool(),
+                            xmlSkillNode["disableupgrades"]?.InnerTextViaPool(token),
                             GlobalSettings.InvariantCultureInfo));
                     try
                     {
@@ -962,13 +962,13 @@ namespace Chummer.Backend.Skills
                 return null;
             xmlSkillNode.TryGetField("id", Guid.TryParse, out Guid suid, Guid.NewGuid());
 
-            int.TryParse(xmlSkillNode["base"]?.InnerTextViaPool(), NumberStyles.Any, GlobalSettings.InvariantCultureInfo, out int intBaseRating);
-            int.TryParse(xmlSkillNode["rating"]?.InnerTextViaPool(), NumberStyles.Any, GlobalSettings.InvariantCultureInfo, out int intFullRating);
+            int.TryParse(xmlSkillNode["base"]?.InnerTextViaPool(token), NumberStyles.Any, GlobalSettings.InvariantCultureInfo, out int intBaseRating);
+            int.TryParse(xmlSkillNode["rating"]?.InnerTextViaPool(token), NumberStyles.Any, GlobalSettings.InvariantCultureInfo, out int intFullRating);
             int intKarmaRating = intFullRating - intBaseRating;  //Not reading karma directly as career only increases rating
 
             bool blnTemp = false;
 
-            string strName = xmlSkillNode["name"]?.InnerTextViaPool() ?? string.Empty;
+            string strName = xmlSkillNode["name"]?.InnerTextViaPool(token) ?? string.Empty;
             Skill objSkill;
             if (xmlSkillNode.TryGetBoolFieldQuickly("knowledge", ref blnTemp) && blnTemp)
             {
@@ -980,14 +980,14 @@ namespace Chummer.Backend.Skills
                         objKnoSkill.WritableName = strName;
                         objKnoSkill.Base = intBaseRating;
                         objKnoSkill.Karma = intKarmaRating;
-                        objKnoSkill.Type = xmlSkillNode["skillcategory"]?.InnerTextViaPool();
+                        objKnoSkill.Type = xmlSkillNode["skillcategory"]?.InnerTextViaPool(token);
                     }
                     else
                     {
                         await objKnoSkill.SetWritableNameAsync(strName, token).ConfigureAwait(false);
                         await objKnoSkill.SetBaseAsync(intBaseRating, token).ConfigureAwait(false);
                         await objKnoSkill.SetKarmaAsync(intKarmaRating, token).ConfigureAwait(false);
-                        await objKnoSkill.SetTypeAsync(xmlSkillNode["skillcategory"]?.InnerTextViaPool(), token).ConfigureAwait(false);
+                        await objKnoSkill.SetTypeAsync(xmlSkillNode["skillcategory"]?.InnerTextViaPool(token), token).ConfigureAwait(false);
                     }
                     objSkill = objKnoSkill;
                 }
@@ -1011,7 +1011,7 @@ namespace Chummer.Backend.Skills
                                            && xmlSkillsDocument
                                               .SelectSingleNodeAndCacheExpressionAsNavigator(
                                                   "/chummer/categories/category[. = "
-                                                  + xmlSkillDataNode["category"]?.InnerTextViaPool().CleanXPath() + "]/@type", token)
+                                                  + xmlSkillDataNode["category"]?.InnerTextViaPool(token).CleanXPath() + "]/@type", token)
                                               ?.Value != "active";
 
                 objSkill = blnSync ? FromData(xmlSkillDataNode, objCharacter, blnIsKnowledgeSkill) : await FromDataAsync(xmlSkillDataNode, objCharacter, blnIsKnowledgeSkill, token).ConfigureAwait(false);
@@ -1125,7 +1125,7 @@ namespace Chummer.Backend.Skills
                 {
                     objKnoSkill.WritableName = strName;
                     objKnoSkill.Karma = intKarmaRating;
-                    objKnoSkill.Type = !string.IsNullOrEmpty(strSkillType) ? strSkillType : xmlSkillDataNode?["category"]?.InnerTextViaPool() ?? "Academic";
+                    objKnoSkill.Type = !string.IsNullOrEmpty(strSkillType) ? strSkillType : xmlSkillDataNode?["category"]?.InnerTextViaPool(token) ?? "Academic";
                     objKnoSkill.IsNativeLanguage = blnIsNativeLanguage;
                 }
                 catch
@@ -1263,7 +1263,7 @@ namespace Chummer.Backend.Skills
                 try
                 {
                     await objExoticReturn.SetIsLoadingAsync(true, token).ConfigureAwait(false);
-                    string strExoticGroup = xmlNode["skillgroup"]?.InnerTextViaPool();
+                    string strExoticGroup = xmlNode["skillgroup"]?.InnerTextViaPool(token);
 
                     if (!string.IsNullOrEmpty(strExoticGroup))
                     {
@@ -1320,7 +1320,7 @@ namespace Chummer.Backend.Skills
             try
             {
                 await objReturn.SetIsLoadingAsync(true, token).ConfigureAwait(false);
-                string strGroup = xmlNode["skillgroup"]?.InnerTextViaPool();
+                string strGroup = xmlNode["skillgroup"]?.InnerTextViaPool(token);
 
                 if (!string.IsNullOrEmpty(strGroup))
                 {
@@ -2459,7 +2459,7 @@ namespace Chummer.Backend.Skills
         /// </summary>
         /// <param name="strAttribute">The English abbreviation of the used attribute.</param>
         /// <param name="blnIncludeConditionals">Whether to include improvements that don't apply under all circumstances.</param>
-        /// <param name="intAttributeOverrideValue">The value to be used for the attribute if it's not the default value. int.MinValue is equivalent to not overriding.</param>
+        /// <param name="intAttributeOverrideValue">The value to be used for the attribute if it's not the default value. <see cref="int.MinValue"/> is equivalent to not overriding.</param>
         /// <returns></returns>
         public int PoolOtherAttribute(string strAttribute, bool blnIncludeConditionals = false, int intAttributeOverrideValue = int.MinValue)
         {
@@ -2494,7 +2494,7 @@ namespace Chummer.Backend.Skills
         /// </summary>
         /// <param name="strAttribute">The English abbreviation of the used attribute.</param>
         /// <param name="blnIncludeConditionals">Whether to include improvements that don't apply under all circumstances.</param>
-        /// <param name="intAttributeOverrideValue">The value to be used for the attribute if it's not the default value. int.MinValue is equivalent to not overriding.</param>
+        /// <param name="intAttributeOverrideValue">The value to be used for the attribute if it's not the default value. <see cref="int.MinValue"/> is equivalent to not overriding.</param>
         /// <param name="token">Cancellation token to listen to.</param>
         /// <returns></returns>
         public async Task<int> PoolOtherAttributeAsync(string strAttribute, bool blnIncludeConditionals = false,
@@ -4932,7 +4932,7 @@ namespace Chummer.Backend.Skills
                 if (_dicCachedStringSpec.TryGetValue(strLanguage, out string strReturn))
                     return strReturn;
                 string strSpace = LanguageManager.GetString("String_Space", strLanguage);
-                strReturn = string.Join(',' + strSpace, Specializations.Select(x => x.DisplayName(strLanguage)));
+                strReturn = StringExtensions.JoinFast("," + strSpace, Specializations.Select(x => x.DisplayName(strLanguage)));
 
                 _dicCachedStringSpec.Add(strLanguage, strReturn);
 
@@ -4950,7 +4950,7 @@ namespace Chummer.Backend.Skills
                     return strReturn;
                 string strSpace = await LanguageManager.GetStringAsync("String_Space", strLanguage, token: token).ConfigureAwait(false);
                 strReturn = await StringExtensions
-                    .JoinAsync(',' + strSpace, (await GetSpecializationsAsync(token).ConfigureAwait(false)).Select(x => x.DisplayNameAsync(strLanguage, token)), token)
+                    .JoinAsync("," + strSpace, (await GetSpecializationsAsync(token).ConfigureAwait(false)).Select(x => x.DisplayNameAsync(strLanguage, token)), token)
                     .ConfigureAwait(false);
 
                 _dicCachedStringSpec.Add(strLanguage, strReturn);
@@ -5419,9 +5419,9 @@ namespace Chummer.Backend.Skills
                         sbdReturn.Append(strSpace).Append('+').Append(strSpace).Append('(').AppendJoin(
                             strSpace + LanguageManager.GetString("String_Or") + strSpace,
                             lstConditionalImprovements.Select(
-                                x => CharacterObject.GetObjectName(x) + strSpace + '('
-                                     + x.Value.ToString(GlobalSettings.CultureInfo) + ',' + strSpace
-                                     + x.Condition + ')')).Append(')');
+                                x => CharacterObject.GetObjectName(x) + strSpace + "("
+                                     + x.Value.ToString(GlobalSettings.CultureInfo) + "," + strSpace
+                                     + x.Condition + ")")).Append(')');
                     }
 
                     int wound = CharacterObject.WoundModifier;
@@ -8636,8 +8636,8 @@ namespace Chummer.Backend.Skills
                             = await LanguageManager.GetStringAsync("String_ExpenseLearnSpecialization", token: token)
                                 .ConfigureAwait(false) + strSpace
                                                        + await GetCurrentDisplayNameAsync(token)
-                                                           .ConfigureAwait(false) + strSpace + '('
-                                                       + strName + ')';
+                                                           .ConfigureAwait(false) + strSpace + "("
+                                                       + strName + ")";
                         ExpenseLogEntry objExpense = new ExpenseLogEntry(CharacterObject);
                         objExpense.Create(intPrice * -1, strUpgradeText, ExpenseType.Karma, DateTime.Now);
                         objExpense.Undo =

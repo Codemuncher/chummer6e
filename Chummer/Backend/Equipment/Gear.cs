@@ -525,7 +525,7 @@ namespace Chummer.Backend.Equipment
                     // More than one Weapon can be added, so loop through all occurrences.
                     foreach (XmlNode objXmlAddWeapon in xmlWeaponList)
                     {
-                        string strLoopID = objXmlAddWeapon.InnerTextViaPool();
+                        string strLoopID = objXmlAddWeapon.InnerTextViaPool(token);
                         XmlNode objXmlWeapon =
                             objXmlWeaponDocument.TryGetNodeByNameOrId("/chummer/weapons/weapon",
                                 strLoopID);
@@ -533,7 +533,7 @@ namespace Chummer.Backend.Equipment
                         if (objXmlWeapon != null)
                         {
                             int intAddWeaponRating = 0;
-                            string strLoopRating = objXmlAddWeapon.Attributes["rating"]?.InnerTextViaPool();
+                            string strLoopRating = objXmlAddWeapon.Attributes["rating"]?.InnerTextViaPool(token);
                             if (!string.IsNullOrEmpty(strLoopRating))
                             {
                                 strLoopRating = blnSync
@@ -743,7 +743,7 @@ namespace Chummer.Backend.Equipment
                                     string strFilter = "/chummer/gears/gear";
                                     if (xmlChoiceName != null || xmlChoiceCategory != null)
                                     {
-                                        strFilter += '[';
+                                        strFilter += "[";
                                         if (xmlChoiceName != null)
                                         {
                                             strFilter += "name = " + xmlChoiceName.InnerTextViaPool().CleanXPath();
@@ -754,7 +754,7 @@ namespace Chummer.Backend.Equipment
                                         else
                                             strFilter += "category = " + xmlChoiceCategory.InnerTextViaPool().CleanXPath();
 
-                                        strFilter += ']';
+                                        strFilter += "]";
                                     }
 
                                     XmlNode objXmlLoopGear = xmlDocument.SelectSingleNode(strFilter);
@@ -861,7 +861,7 @@ namespace Chummer.Backend.Equipment
             string strFilter = "/chummer/gears/gear";
             if (xmlChildName != null || xmlChildCategory != null)
             {
-                strFilter += '[';
+                strFilter += "[";
                 if (xmlChildName != null)
                 {
                     strFilter += "name = " + xmlChildName.InnerTextViaPool().CleanXPath();
@@ -870,7 +870,7 @@ namespace Chummer.Backend.Equipment
                 }
                 else
                     strFilter += "category = " + xmlChildCategory.InnerTextViaPool().CleanXPath();
-                strFilter += ']';
+                strFilter += "]";
             }
             XmlDocument xmlDocument = xmlChildNode.OwnerDocument ?? _objCharacter.LoadData("gear.xml");
             XmlNode xmlChildDataNode = xmlDocument.SelectSingleNode(strFilter);
@@ -961,18 +961,18 @@ namespace Chummer.Backend.Equipment
                                     string strFilter = "/chummer/gears/gear";
                                     if (xmlChoiceName != null || xmlChoiceCategory != null)
                                     {
-                                        strFilter += '[';
+                                        strFilter += "[";
                                         if (xmlChoiceName != null)
                                         {
-                                            strFilter += "name = " + xmlChoiceName.InnerTextViaPool().CleanXPath();
+                                            strFilter += "name = " + xmlChoiceName.InnerTextViaPool(token).CleanXPath();
                                             if (xmlChoiceCategory != null)
                                                 strFilter += " and category = "
-                                                             + xmlChoiceCategory.InnerTextViaPool().CleanXPath();
+                                                             + xmlChoiceCategory.InnerTextViaPool(token).CleanXPath();
                                         }
                                         else
-                                            strFilter += "category = " + xmlChoiceCategory.InnerTextViaPool().CleanXPath();
+                                            strFilter += "category = " + xmlChoiceCategory.InnerTextViaPool(token).CleanXPath();
 
-                                        strFilter += ']';
+                                        strFilter += "]";
                                     }
 
                                     XmlNode objXmlLoopGear = xmlDocument.SelectSingleNode(strFilter);
@@ -994,7 +994,7 @@ namespace Chummer.Backend.Equipment
                                         continue;
                                     }
 
-                                    string strName = objChoiceNode["name"]?.InnerTextViaPool() ?? string.Empty;
+                                    string strName = objChoiceNode["name"]?.InnerTextViaPool(token) ?? string.Empty;
                                     string strDisplayName = await LanguageManager.GetStringAsync(strName, false, token).ConfigureAwait(false);
                                     if (string.IsNullOrEmpty(strDisplayName))
                                         strDisplayName = await _objCharacter.TranslateExtraAsync(strName, token: token).ConfigureAwait(false);
@@ -1012,7 +1012,7 @@ namespace Chummer.Backend.Equipment
                                     continue;
                                 }
 
-                                string strChooseGearNodeName = objXmlChooseGearNode["name"]?.InnerTextViaPool() ?? string.Empty;
+                                string strChooseGearNodeName = objXmlChooseGearNode["name"]?.InnerTextViaPool(token) ?? string.Empty;
                                 string strFriendlyName = await LanguageManager.GetStringAsync(strChooseGearNodeName, false, token).ConfigureAwait(false);
                                 if (string.IsNullOrEmpty(strFriendlyName))
                                     strFriendlyName = await _objCharacter.TranslateExtraAsync(strChooseGearNodeName, token: token).ConfigureAwait(false);
@@ -1079,16 +1079,16 @@ namespace Chummer.Backend.Equipment
             string strFilter = "/chummer/gears/gear";
             if (xmlChildName != null || xmlChildCategory != null)
             {
-                strFilter += '[';
+                strFilter += "[";
                 if (xmlChildName != null)
                 {
-                    strFilter += "name = " + xmlChildName.InnerTextViaPool().CleanXPath();
+                    strFilter += "name = " + xmlChildName.InnerTextViaPool(token).CleanXPath();
                     if (xmlChildCategory != null)
-                        strFilter += " and category = " + xmlChildCategory.InnerTextViaPool().CleanXPath();
+                        strFilter += " and category = " + xmlChildCategory.InnerTextViaPool(token).CleanXPath();
                 }
                 else
-                    strFilter += "category = " + xmlChildCategory.InnerTextViaPool().CleanXPath();
-                strFilter += ']';
+                    strFilter += "category = " + xmlChildCategory.InnerTextViaPool(token).CleanXPath();
+                strFilter += "]";
             }
             XmlDocument xmlDocument = xmlChildNode.OwnerDocument ?? await _objCharacter.LoadDataAsync("gear.xml", token: token).ConfigureAwait(false);
             XmlNode xmlChildDataNode = xmlDocument.SelectSingleNode(strFilter);
@@ -1096,14 +1096,14 @@ namespace Chummer.Backend.Equipment
                 return;
             int intChildRating = 0;
             xmlChildNode.TryGetInt32FieldQuickly("rating", ref intChildRating);
-            string strChildForceSource = xmlChildNode["source"]?.InnerTextViaPool() ?? string.Empty;
-            string strChildForcePage = xmlChildNode["page"]?.InnerTextViaPool() ?? string.Empty;
+            string strChildForceSource = xmlChildNode["source"]?.InnerTextViaPool(token) ?? string.Empty;
+            string strChildForcePage = xmlChildNode["page"]?.InnerTextViaPool(token) ?? string.Empty;
             XmlAttributeCollection xmlChildNameAttributes = xmlChildName?.Attributes;
-            string strChildForceValue = xmlChildNameAttributes?["select"]?.InnerTextViaPool() ?? string.Empty;
-            bool blnCreateChildren = xmlChildNameAttributes?["createchildren"]?.InnerTextViaPool() != bool.FalseString;
-            bool blnAddChildImprovements = xmlChildNameAttributes?["addimprovements"]?.InnerTextViaPool() != bool.FalseString &&
+            string strChildForceValue = xmlChildNameAttributes?["select"]?.InnerTextViaPool(token) ?? string.Empty;
+            bool blnCreateChildren = xmlChildNameAttributes?["createchildren"]?.InnerTextViaPool(token) != bool.FalseString;
+            bool blnAddChildImprovements = xmlChildNameAttributes?["addimprovements"]?.InnerTextViaPool(token) != bool.FalseString &&
                                            blnAddImprovements;
-            string strChildQty = xmlChildNameAttributes?["qty"]?.InnerTextViaPool();
+            string strChildQty = xmlChildNameAttributes?["qty"]?.InnerTextViaPool(token);
             decimal decChildQty;
             if (string.IsNullOrEmpty(strChildQty) || !decimal.TryParse(strChildQty, NumberStyles.Any, GlobalSettings.InvariantCultureInfo, out decChildQty))
                 decChildQty = 1.0m;
@@ -1126,7 +1126,7 @@ namespace Chummer.Backend.Equipment
 
                 // Change the Capacity of the child if necessary.
                 if (xmlChildNode["capacity"] != null)
-                    objChild.Capacity = xmlChildNode["capacity"].InnerTextViaPool();
+                    objChild.Capacity = xmlChildNode["capacity"].InnerTextViaPool(token);
 
                 await objChild.CreateChildrenAsync(xmlChildNode, blnAddChildImprovements, blnSkipSelectForms, token).ConfigureAwait(false);
             }
@@ -1267,13 +1267,13 @@ namespace Chummer.Backend.Equipment
             XmlNode xmlGearDataNode;
             List<Gear> lstChildGears = new List<Gear>(1);
             XmlAttributeCollection lstGearAttributes = xmlGearNode.Attributes;
-            if (!int.TryParse(lstGearAttributes?["rating"]?.InnerTextViaPool(), NumberStyles.Any,
+            if (!int.TryParse(lstGearAttributes?["rating"]?.InnerTextViaPool(token), NumberStyles.Any,
                     GlobalSettings.InvariantCultureInfo, out int intRating))
             {
-                int.TryParse(xmlGearNode["rating"]?.InnerTextViaPool(), NumberStyles.Any,
+                int.TryParse(xmlGearNode["rating"]?.InnerTextViaPool(token), NumberStyles.Any,
                     GlobalSettings.InvariantCultureInfo, out intRating);
             }
-            string strName = xmlGearNode["id"]?.InnerTextViaPool() ?? xmlGearNode["name"]?.InnerTextViaPool();
+            string strName = xmlGearNode["id"]?.InnerTextViaPool(token) ?? xmlGearNode["name"]?.InnerTextViaPool(token);
             if (!string.IsNullOrEmpty(strName))
             {
                 xmlGearDataNode = xmlGearsDocument.TryGetNodeByNameOrId("/chummer/gears/gear", strName);
@@ -1306,23 +1306,23 @@ namespace Chummer.Backend.Equipment
             else
             {
                 xmlGearDataNode =
-                    xmlGearsDocument.TryGetNodeByNameOrId("/chummer/gears/gear", xmlGearNode.InnerTextViaPool());
+                    xmlGearsDocument.TryGetNodeByNameOrId("/chummer/gears/gear", xmlGearNode.InnerTextViaPool(token));
             }
 
             if (xmlGearDataNode != null)
             {
                 bool blnConsumeCapacity = lstGearAttributes?["consumecapacity"]?.InnerTextIsTrueString() == true;
 
-                string strForceValue = lstGearAttributes?["select"]?.InnerTextViaPool() ?? string.Empty;
-                string strQty = lstGearAttributes?["qty"]?.InnerTextViaPool();
+                string strForceValue = lstGearAttributes?["select"]?.InnerTextViaPool(token) ?? string.Empty;
+                string strQty = lstGearAttributes?["qty"]?.InnerTextViaPool(token);
                 if (string.IsNullOrEmpty(strQty) || !decimal.TryParse(strQty, NumberStyles.Any, GlobalSettings.InvariantCultureInfo, out decimal decQty))
                     decQty = 1.0m;
-                string strMaxRating = lstGearAttributes?["maxrating"]?.InnerTextViaPool() ?? string.Empty;
+                string strMaxRating = lstGearAttributes?["maxrating"]?.InnerTextViaPool(token) ?? string.Empty;
                 await CreateAsync(xmlGearDataNode, intRating, lstWeapons, strForceValue, blnAddImprovements, true, blnSkipSelectForms, token).ConfigureAwait(false);
 
                 // Change the Capacity of the child if necessary.
                 if (xmlGearNode["capacity"] != null)
-                    Capacity = xmlGearNode["capacity"].InnerTextViaPool();
+                    Capacity = xmlGearNode["capacity"].InnerTextViaPool(token);
 
                 if (!blnConsumeCapacity)
                 {
@@ -1886,7 +1886,7 @@ namespace Chummer.Backend.Equipment
                 }
             }
 
-            string strLocation = objNode["location"]?.InnerTextViaPool();
+            string strLocation = objNode["location"]?.InnerTextViaPool(token);
             if (!string.IsNullOrEmpty(strLocation))
             {
                 if (blnSync)
@@ -2868,19 +2868,19 @@ namespace Chummer.Backend.Equipment
                         sbdValue.CheapReplace("{Rating}", () => strRating.Value);
                         foreach (string strMatrixAttribute in MatrixAttributes.MatrixAttributeStrings)
                         {
-                            sbdValue.CheapReplace(strExpression, "{Gear " + strMatrixAttribute + '}',
+                            sbdValue.CheapReplace(strExpression, "{Gear " + strMatrixAttribute + "}",
                                                   () => (Parent as IHasMatrixAttributes)?.GetBaseMatrixAttribute(
                                                           strMatrixAttribute).ToString(GlobalSettings.InvariantCultureInfo) ?? "0");
-                            sbdValue.CheapReplace(strExpression, "{Parent " + strMatrixAttribute + '}',
+                            sbdValue.CheapReplace(strExpression, "{Parent " + strMatrixAttribute + "}",
                                                   () => (Parent as IHasMatrixAttributes).GetMatrixAttributeString(
                                                       strMatrixAttribute) ?? "0");
-                            if (Children.Count == 0 || !strExpression.Contains("{Children " + strMatrixAttribute + '}'))
+                            if (Children.Count == 0 || !strExpression.Contains("{Children " + strMatrixAttribute + "}"))
                                 continue;
                             int intTotalChildrenValue = Children.Sum(g => g.Equipped, loopGear =>
                                                                          loopGear.GetBaseMatrixAttribute(
                                                                              strMatrixAttribute));
 
-                            sbdValue.Replace("{Children " + strMatrixAttribute + '}',
+                            sbdValue.Replace("{Children " + strMatrixAttribute + "}",
                                              intTotalChildrenValue.ToString(GlobalSettings.InvariantCultureInfo));
                         }
                         sbdValue.CheapReplace("Rating", () => strRating.Value);
@@ -3031,20 +3031,20 @@ namespace Chummer.Backend.Equipment
                         await sbdValue.CheapReplaceAsync(strExpression, "{Rating}", async () => (await funcRating().ConfigureAwait(false)).ToString(GlobalSettings.InvariantCultureInfo), token: token).ConfigureAwait(false);
                         foreach (string strMatrixAttribute in MatrixAttributes.MatrixAttributeStrings)
                         {
-                            await sbdValue.CheapReplaceAsync(strExpression, "{Gear " + strMatrixAttribute + '}',
+                            await sbdValue.CheapReplaceAsync(strExpression, "{Gear " + strMatrixAttribute + "}",
                                 () => (Parent as IHasMatrixAttributes)?.GetBaseMatrixAttribute(
                                         strMatrixAttribute).ToString(GlobalSettings.InvariantCultureInfo) ?? "0"
                                     , token: token).ConfigureAwait(false);
-                            await sbdValue.CheapReplaceAsync(strExpression, "{Parent " + strMatrixAttribute + '}',
+                            await sbdValue.CheapReplaceAsync(strExpression, "{Parent " + strMatrixAttribute + "}",
                                 () => (Parent as IHasMatrixAttributes)?.GetMatrixAttributeString(
                                     strMatrixAttribute) ?? "0", token: token).ConfigureAwait(false);
-                            if (Children.Count == 0 || !strExpression.Contains("{Children " + strMatrixAttribute + '}'))
+                            if (Children.Count == 0 || !strExpression.Contains("{Children " + strMatrixAttribute + "}"))
                                 continue;
                             int intTotalChildrenValue = await Children.SumAsync(g => g.Equipped, loopGear =>
                                 loopGear.GetBaseMatrixAttributeAsync(
                                     strMatrixAttribute, token), token: token).ConfigureAwait(false);
 
-                            sbdValue.Replace("{Children " + strMatrixAttribute + '}',
+                            sbdValue.Replace("{Children " + strMatrixAttribute + "}",
                                              intTotalChildrenValue.ToString(GlobalSettings.InvariantCultureInfo));
                         }
                         await sbdValue.CheapReplaceAsync(strExpression, "Rating", async () => (await funcRating().ConfigureAwait(false)).ToString(GlobalSettings.InvariantCultureInfo), token: token).ConfigureAwait(false);
@@ -3590,7 +3590,7 @@ namespace Chummer.Backend.Equipment
                 {
                     case "Device Rating":
                         strExtraExpression
-                            = string.Concat(ImprovementManager
+                            = StringExtensions.ConcatFast(ImprovementManager
                                             .GetCachedImprovementListForValueOf(
                                                 CharacterObject, Improvement.ImprovementType.LivingPersonaDeviceRating)
                                             .Select(x => x.ImprovedName));
@@ -3598,7 +3598,7 @@ namespace Chummer.Backend.Equipment
 
                     case "Program Limit":
                         strExtraExpression
-                            = string.Concat(ImprovementManager
+                            = StringExtensions.ConcatFast(ImprovementManager
                                             .GetCachedImprovementListForValueOf(
                                                 CharacterObject, Improvement.ImprovementType.LivingPersonaProgramLimit)
                                             .Select(x => x.ImprovedName));
@@ -3606,7 +3606,7 @@ namespace Chummer.Backend.Equipment
 
                     case "Attack":
                         strExtraExpression
-                            = string.Concat(ImprovementManager
+                            = StringExtensions.ConcatFast(ImprovementManager
                                             .GetCachedImprovementListForValueOf(
                                                 CharacterObject, Improvement.ImprovementType.LivingPersonaAttack)
                                             .Select(x => x.ImprovedName));
@@ -3614,7 +3614,7 @@ namespace Chummer.Backend.Equipment
 
                     case "Sleaze":
                         strExtraExpression
-                            = string.Concat(ImprovementManager
+                            = StringExtensions.ConcatFast(ImprovementManager
                                             .GetCachedImprovementListForValueOf(
                                                 CharacterObject, Improvement.ImprovementType.LivingPersonaSleaze)
                                             .Select(x => x.ImprovedName));
@@ -3622,7 +3622,7 @@ namespace Chummer.Backend.Equipment
 
                     case "Data Processing":
                         strExtraExpression
-                            = string.Concat(ImprovementManager
+                            = StringExtensions.ConcatFast(ImprovementManager
                                             .GetCachedImprovementListForValueOf(
                                                 CharacterObject, Improvement.ImprovementType.LivingPersonaDataProcessing)
                                             .Select(x => x.ImprovedName));
@@ -3630,7 +3630,7 @@ namespace Chummer.Backend.Equipment
 
                     case "Firewall":
                         strExtraExpression
-                            = string.Concat(ImprovementManager
+                            = StringExtensions.ConcatFast(ImprovementManager
                                             .GetCachedImprovementListForValueOf(
                                                 CharacterObject, Improvement.ImprovementType.LivingPersonaFirewall)
                                             .Select(x => x.ImprovedName));
@@ -3690,7 +3690,7 @@ namespace Chummer.Backend.Equipment
                 {
                     case "Device Rating":
                         strExtraExpression
-                            = string.Concat((await ImprovementManager
+                            = StringExtensions.ConcatFast((await ImprovementManager
                                     .GetCachedImprovementListForValueOfAsync(
                                         CharacterObject, Improvement.ImprovementType.LivingPersonaDeviceRating, token: token).ConfigureAwait(false))
                                             .Select(x => x.ImprovedName));
@@ -3698,7 +3698,7 @@ namespace Chummer.Backend.Equipment
 
                     case "Program Limit":
                         strExtraExpression
-                            = string.Concat((await ImprovementManager
+                            = StringExtensions.ConcatFast((await ImprovementManager
                                     .GetCachedImprovementListForValueOfAsync(
                                         CharacterObject, Improvement.ImprovementType.LivingPersonaProgramLimit, token: token).ConfigureAwait(false))
                                             .Select(x => x.ImprovedName));
@@ -3706,7 +3706,7 @@ namespace Chummer.Backend.Equipment
 
                     case "Attack":
                         strExtraExpression
-                            = string.Concat((await ImprovementManager
+                            = StringExtensions.ConcatFast((await ImprovementManager
                                     .GetCachedImprovementListForValueOfAsync(
                                         CharacterObject, Improvement.ImprovementType.LivingPersonaAttack, token: token).ConfigureAwait(false))
                                             .Select(x => x.ImprovedName));
@@ -3714,7 +3714,7 @@ namespace Chummer.Backend.Equipment
 
                     case "Sleaze":
                         strExtraExpression
-                            = string.Concat((await ImprovementManager
+                            = StringExtensions.ConcatFast((await ImprovementManager
                                     .GetCachedImprovementListForValueOfAsync(
                                         CharacterObject, Improvement.ImprovementType.LivingPersonaSleaze, token: token).ConfigureAwait(false))
                                             .Select(x => x.ImprovedName));
@@ -3722,7 +3722,7 @@ namespace Chummer.Backend.Equipment
 
                     case "Data Processing":
                         strExtraExpression
-                            = string.Concat((await ImprovementManager
+                            = StringExtensions.ConcatFast((await ImprovementManager
                                     .GetCachedImprovementListForValueOfAsync(
                                         CharacterObject, Improvement.ImprovementType.LivingPersonaDataProcessing, token: token).ConfigureAwait(false))
                                             .Select(x => x.ImprovedName));
@@ -3730,7 +3730,7 @@ namespace Chummer.Backend.Equipment
 
                     case "Firewall":
                         strExtraExpression
-                            = string.Concat((await ImprovementManager
+                            = StringExtensions.ConcatFast((await ImprovementManager
                                     .GetCachedImprovementListForValueOfAsync(
                                         CharacterObject, Improvement.ImprovementType.LivingPersonaFirewall, token: token).ConfigureAwait(false))
                                             .Select(x => x.ImprovedName));
@@ -4273,9 +4273,9 @@ namespace Chummer.Backend.Equipment
                 }
 
                 if (blnSquareBrackets)
-                    strReturn = '[' + strReturn + ']';
+                    strReturn = "[" + strReturn + "]";
                 if (!string.IsNullOrEmpty(strSecondHalf))
-                    strReturn += '/' + strSecondHalf;
+                    strReturn += "/" + strSecondHalf;
             }
             else
             {
@@ -4298,7 +4298,7 @@ namespace Chummer.Backend.Equipment
                 }
 
                 if (blnSquareBrackets)
-                    strReturn = '[' + strReturn + ']';
+                    strReturn = "[" + strReturn + "]";
             }
 
             return strReturn;
@@ -4351,9 +4351,9 @@ namespace Chummer.Backend.Equipment
                 }
 
                 if (blnSquareBrackets)
-                    strReturn = '[' + strReturn + ']';
+                    strReturn = "[" + strReturn + "]";
                 if (!string.IsNullOrEmpty(strSecondHalf))
-                    strReturn += '/' + strSecondHalf;
+                    strReturn += "/" + strSecondHalf;
             }
             else
             {
@@ -4377,7 +4377,7 @@ namespace Chummer.Backend.Equipment
                 }
 
                 if (blnSquareBrackets)
-                    strReturn = '[' + strReturn + ']';
+                    strReturn = "[" + strReturn + "]";
             }
 
             return strReturn;
@@ -4420,8 +4420,8 @@ namespace Chummer.Backend.Equipment
                 }
 
                 if (blnSquareBrackets)
-                    strReturn = '[' + strReturn + ']';
-                strReturn += '/' + strSecondHalf;
+                    strReturn = "[" + strReturn + "]";
+                strReturn += "/" + strSecondHalf;
             }
             else if (strReturn.DoesNeedXPathProcessingToBeConvertedToNumber(out decimal decReturn))
             {
@@ -4435,7 +4435,7 @@ namespace Chummer.Backend.Equipment
                 if (blnIsSuccess)
                     strReturn = decReturn.ToString("#,0.##", objCulture);
                 if (blnSquareBrackets)
-                    strReturn = '[' + strReturn + ']';
+                    strReturn = "[" + strReturn + "]";
             }
             else
             {
@@ -4492,8 +4492,8 @@ namespace Chummer.Backend.Equipment
                 }
 
                 if (blnSquareBrackets)
-                    strReturn = '[' + strReturn + ']';
-                strReturn += '/' + strSecondHalf;
+                    strReturn = "[" + strReturn + "]";
+                strReturn += "/" + strSecondHalf;
             }
             else if (strReturn.DoesNeedXPathProcessingToBeConvertedToNumber(out decimal decReturn))
             {
@@ -4507,7 +4507,7 @@ namespace Chummer.Backend.Equipment
                 if (blnIsSuccess)
                     strReturn = decReturn.ToString("#,0.##", objCulture);
                 if (blnSquareBrackets)
-                    strReturn = '[' + strReturn + ']';
+                    strReturn = "[" + strReturn + "]";
             }
             else
             {
@@ -4918,23 +4918,23 @@ namespace Chummer.Backend.Equipment
             {
                 if (objCulture == null)
                     objCulture = GlobalSettings.CultureInfo;
-                strReturn += strSpace + '('
+                strReturn += strSpace + "("
                                       + string.Format(
                                           objCulture, LanguageManager.GetString("Label_RatingFormat", strLanguage),
                                           LanguageManager.GetString(RatingLabel, strLanguage)) + strSpace
-                                      + intRating.ToString(objCulture) + ')';
+                                      + intRating.ToString(objCulture) + ")";
             }
             if (!string.IsNullOrEmpty(Extra))
-                strReturn += strSpace + '(' + _objCharacter.TranslateExtra(Extra, strLanguage) + ')';
+                strReturn += strSpace + "(" + _objCharacter.TranslateExtra(Extra, strLanguage) + ")";
             if (!string.IsNullOrEmpty(GearName))
                 strReturn += strSpace + "(\"" + GearName + "\")";
             if ((Category == "Foci" || Category == "Metamagic Foci") && Bonded)
-                strReturn += strSpace + '(' + LanguageManager.GetString("Label_BondedFoci", strLanguage) + ')';
+                strReturn += strSpace + "(" + LanguageManager.GetString("Label_BondedFoci", strLanguage) + ")";
             if (LoadedIntoClip != null)
             {
                 if (objCulture == null)
                     objCulture = GlobalSettings.CultureInfo;
-                strReturn += strSpace + '(' + string.Format(objCulture, LanguageManager.GetString("Label_Loaded"), LoadedIntoClip.DisplayWeaponName(objCulture, strLanguage)) + ')';
+                strReturn += strSpace + "(" + string.Format(objCulture, LanguageManager.GetString("Label_Loaded"), LoadedIntoClip.DisplayWeaponName(objCulture, strLanguage)) + ")";
             }
             return strReturn;
         }
@@ -4954,7 +4954,7 @@ namespace Chummer.Backend.Equipment
             {
                 if (objCulture == null)
                     objCulture = GlobalSettings.CultureInfo;
-                strReturn += strSpace + '('
+                strReturn += strSpace + "("
                                       + string.Format(
                                           objCulture,
                                           await LanguageManager
@@ -4962,24 +4962,24 @@ namespace Chummer.Backend.Equipment
                                                 .ConfigureAwait(false),
                                           await LanguageManager.GetStringAsync(RatingLabel, strLanguage, token: token)
                                                                .ConfigureAwait(false)) + strSpace
-                                      + intRating.ToString(objCulture) + ')';
+                                      + intRating.ToString(objCulture) + ")";
             }
             if (!string.IsNullOrEmpty(Extra))
-                strReturn += strSpace + '(' + await _objCharacter.TranslateExtraAsync(Extra, strLanguage, token: token).ConfigureAwait(false) + ')';
+                strReturn += strSpace + "(" + await _objCharacter.TranslateExtraAsync(Extra, strLanguage, token: token).ConfigureAwait(false) + ")";
             if (!string.IsNullOrEmpty(GearName))
                 strReturn += strSpace + "(\"" + GearName + "\")";
             if ((Category == "Foci" || Category == "Metamagic Foci") && Bonded)
-                strReturn += strSpace + '(' + await LanguageManager.GetStringAsync("Label_BondedFoci", strLanguage, token: token).ConfigureAwait(false) + ')';
+                strReturn += strSpace + "(" + await LanguageManager.GetStringAsync("Label_BondedFoci", strLanguage, token: token).ConfigureAwait(false) + ")";
             if (LoadedIntoClip != null)
             {
                 if (objCulture == null)
                     objCulture = GlobalSettings.CultureInfo;
-                strReturn += strSpace + '('
+                strReturn += strSpace + "("
                                       + string.Format(
                                           objCulture,
                                           await LanguageManager.GetStringAsync("Label_Loaded", token: token).ConfigureAwait(false),
                                           await LoadedIntoClip.DisplayWeaponNameAsync(objCulture, strLanguage, token).ConfigureAwait(false))
-                                      + ')';
+                                      + ")";
             }
             return strReturn;
         }
@@ -5014,7 +5014,7 @@ namespace Chummer.Backend.Equipment
 
                 // If this does not start with "-", add a "+" to the string.
                 if (!strReturn.StartsWith('-', '+'))
-                    strReturn = '+' + strReturn;
+                    strReturn = "+" + strReturn;
             }
             else
             {
@@ -5033,22 +5033,22 @@ namespace Chummer.Backend.Equipment
             token.ThrowIfCancellationRequested();
             if (WeaponBonus == null)
                 return string.Empty;
-            string strReturn = WeaponBonus["damagereplace"]?.InnerTextViaPool() ?? "0";
+            string strReturn = WeaponBonus["damagereplace"]?.InnerTextViaPool(token) ?? "0";
             // Use the damagereplace value if applicable.
             if (strReturn == "0")
             {
                 // Use the damage bonus if available, otherwise use 0.
-                strReturn = WeaponBonus["damage"]?.InnerTextViaPool() ?? "0";
+                strReturn = WeaponBonus["damage"]?.InnerTextViaPool(token) ?? "0";
 
                 // Attach the type if applicable.
-                strReturn += WeaponBonus["damagetype"]?.InnerTextViaPool() ?? string.Empty;
+                strReturn += WeaponBonus["damagetype"]?.InnerTextViaPool(token) ?? string.Empty;
 
                 // Translate the string.
                 strReturn = await Weapon.ReplaceDamageStringsAsync(strReturn, strLanguage, token).ConfigureAwait(false);
 
                 // If this does not start with "-", add a "+" to the string.
                 if (!strReturn.StartsWith('-', '+'))
-                    strReturn = '+' + strReturn;
+                    strReturn = "+" + strReturn;
             }
             else
             {
@@ -5077,7 +5077,7 @@ namespace Chummer.Backend.Equipment
 
             // If this does not start with "-", add a "+" to the string.
             if (!strReturn.StartsWith('-', '+'))
-                strReturn = '+' + strReturn;
+                strReturn = "+" + strReturn;
 
             return strReturn;
         }
@@ -5092,7 +5092,7 @@ namespace Chummer.Backend.Equipment
                 return string.Empty;
             // Use the apreplace value if applicable.
             // Use the ap bonus if available, otherwise use 0.
-            string strReturn = WeaponBonus["apreplace"]?.InnerTextViaPool() ?? WeaponBonus["ap"]?.InnerTextViaPool() ?? "0";
+            string strReturn = WeaponBonus["apreplace"]?.InnerTextViaPool(token) ?? WeaponBonus["ap"]?.InnerTextViaPool(token) ?? "0";
 
             // Translate the string.
             strReturn = await Weapon
@@ -5104,7 +5104,7 @@ namespace Chummer.Backend.Equipment
 
             // If this does not start with "-", add a "+" to the string.
             if (!strReturn.StartsWith('-', '+'))
-                strReturn = '+' + strReturn;
+                strReturn = "+" + strReturn;
 
             return strReturn;
         }
@@ -5125,7 +5125,7 @@ namespace Chummer.Backend.Equipment
 
                 // If this does not start with "-", add a "+" to the string.
                 if (!strReturn.StartsWith('-', '+'))
-                    strReturn = '+' + strReturn;
+                    strReturn = "+" + strReturn;
 
                 return strReturn;
             }
@@ -5144,7 +5144,7 @@ namespace Chummer.Backend.Equipment
                 WeaponBonus.TryGetStringFieldQuickly("rangebonus", ref strReturn);
                 // If this does not start with "-", add a "+" to the string.
                 if (!strReturn.StartsWith('-', '+'))
-                    strReturn = '+' + strReturn;
+                    strReturn = "+" + strReturn;
 
                 return strReturn;
             }
@@ -5163,7 +5163,7 @@ namespace Chummer.Backend.Equipment
                 WeaponBonus.TryGetStringFieldQuickly("pool", ref strReturn);
                 // If this does not start with "-", add a "+" to the string.
                 if (!string.IsNullOrEmpty(strReturn) && !strReturn.StartsWith('-', '+'))
-                    strReturn = '+' + strReturn;
+                    strReturn = "+" + strReturn;
 
                 return strReturn;
             }
@@ -5182,7 +5182,7 @@ namespace Chummer.Backend.Equipment
                 WeaponBonus.TryGetStringFieldQuickly("smartlinkpool", ref strReturn);
                 // If this does not start with "-", add a "+" to the string.
                 if (!string.IsNullOrEmpty(strReturn) && !strReturn.StartsWith('-', '+'))
-                    strReturn = '+' + strReturn;
+                    strReturn = "+" + strReturn;
 
                 return strReturn;
             }
@@ -5210,7 +5210,7 @@ namespace Chummer.Backend.Equipment
 
                 // If this does not start with "-", add a "+" to the string.
                 if (!strReturn.StartsWith('-', '+'))
-                    strReturn = '+' + strReturn;
+                    strReturn = "+" + strReturn;
             }
             else
             {
@@ -5229,22 +5229,22 @@ namespace Chummer.Backend.Equipment
             token.ThrowIfCancellationRequested();
             if (FlechetteWeaponBonus == null)
                 return string.Empty;
-            string strReturn = FlechetteWeaponBonus["damagereplace"]?.InnerTextViaPool() ?? "0";
+            string strReturn = FlechetteWeaponBonus["damagereplace"]?.InnerTextViaPool(token) ?? "0";
             // Use the damagereplace value if applicable.
             if (strReturn == "0")
             {
                 // Use the damage bonus if available, otherwise use 0.
-                strReturn = FlechetteWeaponBonus["damage"]?.InnerTextViaPool() ?? "0";
+                strReturn = FlechetteWeaponBonus["damage"]?.InnerTextViaPool(token) ?? "0";
 
                 // Attach the type if applicable.
-                strReturn += FlechetteWeaponBonus["damagetype"]?.InnerTextViaPool() ?? string.Empty;
+                strReturn += FlechetteWeaponBonus["damagetype"]?.InnerTextViaPool(token) ?? string.Empty;
 
                 // Translate the string.
                 strReturn = await Weapon.ReplaceDamageStringsAsync(strReturn, strLanguage, token).ConfigureAwait(false);
 
                 // If this does not start with "-", add a "+" to the string.
                 if (!strReturn.StartsWith('-', '+'))
-                    strReturn = '+' + strReturn;
+                    strReturn = "+" + strReturn;
             }
             else
             {
@@ -5273,7 +5273,7 @@ namespace Chummer.Backend.Equipment
 
             // If this does not start with "-", add a "+" to the string.
             if (!strReturn.StartsWith('-', '+'))
-                strReturn = '+' + strReturn;
+                strReturn = "+" + strReturn;
 
             return strReturn;
         }
@@ -5288,7 +5288,7 @@ namespace Chummer.Backend.Equipment
                 return string.Empty;
             // Use the apreplace value if applicable.
             // Use the ap bonus if available, otherwise use 0.
-            string strReturn = FlechetteWeaponBonus["apreplace"]?.InnerTextViaPool() ?? FlechetteWeaponBonus["ap"]?.InnerTextViaPool() ?? "0";
+            string strReturn = FlechetteWeaponBonus["apreplace"]?.InnerTextViaPool(token) ?? FlechetteWeaponBonus["ap"]?.InnerTextViaPool(token) ?? "0";
 
             // Translate the string.
             strReturn = await Weapon
@@ -5300,7 +5300,7 @@ namespace Chummer.Backend.Equipment
 
             // If this does not start with "-", add a "+" to the string.
             if (!strReturn.StartsWith('-', '+'))
-                strReturn = '+' + strReturn;
+                strReturn = "+" + strReturn;
 
             return strReturn;
         }
@@ -5321,7 +5321,7 @@ namespace Chummer.Backend.Equipment
 
                 // If this does not start with "-", add a "+" to the string.
                 if (!strReturn.StartsWith('-', '+'))
-                    strReturn = '+' + strReturn;
+                    strReturn = "+" + strReturn;
 
                 return strReturn;
             }
@@ -5340,7 +5340,7 @@ namespace Chummer.Backend.Equipment
                 FlechetteWeaponBonus.TryGetStringFieldQuickly("rangebonus", ref strReturn);
                 // If this does not start with "-", add a "+" to the string.
                 if (!strReturn.StartsWith('-', '+'))
-                    strReturn = '+' + strReturn;
+                    strReturn = "+" + strReturn;
 
                 return strReturn;
             }
@@ -5359,7 +5359,7 @@ namespace Chummer.Backend.Equipment
                 FlechetteWeaponBonus.TryGetStringFieldQuickly("pool", ref strReturn);
                 // If this does not start with "-", add a "+" to the string.
                 if (!string.IsNullOrEmpty(strReturn) && !strReturn.StartsWith('-', '+'))
-                    strReturn = '+' + strReturn;
+                    strReturn = "+" + strReturn;
 
                 return strReturn;
             }
@@ -5378,7 +5378,7 @@ namespace Chummer.Backend.Equipment
                 FlechetteWeaponBonus.TryGetStringFieldQuickly("smartlinkpool", ref strReturn);
                 // If this does not start with "-", add a "+" to the string.
                 if (!string.IsNullOrEmpty(strReturn) && !strReturn.StartsWith('-', '+'))
-                    strReturn = '+' + strReturn;
+                    strReturn = "+" + strReturn;
 
                 return strReturn;
             }
@@ -5409,7 +5409,7 @@ namespace Chummer.Backend.Equipment
                 if (Name == "Living Persona")
                 {
                     string strExpression
-                        = string.Concat(ImprovementManager
+                        = StringExtensions.ConcatFast(ImprovementManager
                                         .GetCachedImprovementListForValueOf(
                                             CharacterObject, Improvement.ImprovementType.LivingPersonaMatrixCM)
                                         .Select(x => x.ImprovedName));
@@ -7054,7 +7054,7 @@ namespace Chummer.Backend.Equipment
             // Create the Expense Log Entry for the sale.
             ExpenseLogEntry objExpense = new ExpenseLogEntry(CharacterObject);
             string strEntry = LanguageManager.GetString(strExpense);
-            objExpense.Create(decAmount, strEntry + ' ' + CurrentDisplayNameShort, ExpenseType.Nuyen,
+            objExpense.Create(decAmount, strEntry + " " + CurrentDisplayNameShort, ExpenseType.Nuyen,
                 DateTime.Now);
             CharacterObject.ExpenseEntries.AddWithSort(objExpense);
             CharacterObject.Nuyen += decAmount;
@@ -7118,7 +7118,7 @@ namespace Chummer.Backend.Equipment
             ExpenseLogEntry objExpense = new ExpenseLogEntry(_objCharacter);
             objExpense.Create(decAmount,
                 await LanguageManager.GetStringAsync(strExpense, token: token).ConfigureAwait(false) +
-                ' ' + await GetCurrentDisplayNameShortAsync(token).ConfigureAwait(false), ExpenseType.Nuyen,
+                " " + await GetCurrentDisplayNameShortAsync(token).ConfigureAwait(false), ExpenseType.Nuyen,
                 DateTime.Now);
             await _objCharacter.ExpenseEntries.AddWithSortAsync(objExpense, token: token).ConfigureAwait(false);
             await _objCharacter.ModifyNuyenAsync(decAmount, token).ConfigureAwait(false);

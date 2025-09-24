@@ -1248,7 +1248,7 @@ namespace Chummer
         }
 
         /// <summary>
-        /// Needed because it's not a strict replacement for GetHashCode().
+        /// Needed because it's not a strict replacement for <see cref="object.GetHashCode()"/>.
         /// Gets a number based on every single private property of the setting.
         /// If two settings have unequal Hash Codes, they will never actually be equal.
         /// </summary>
@@ -1259,7 +1259,7 @@ namespace Chummer
         }
 
         /// <summary>
-        /// Needed because it's not a strict replacement for GetHashCode().
+        /// Needed because it's not a strict replacement for <see cref="object.GetHashCode()"/>.
         /// Gets a number based on every single private property of the setting.
         /// If two settings have unequal Hash Codes, they will never actually be equal.
         /// </summary>
@@ -3488,7 +3488,7 @@ namespace Chummer
                 // A very hacky legacy shim, but also works as a bit of a sanity check
                 else if (!_strChargenKarmaToNuyenExpression.Contains("{PriorityNuyen}"))
                 {
-                    _strChargenKarmaToNuyenExpression = '(' + _strChargenKarmaToNuyenExpression + ") + {PriorityNuyen}";
+                    _strChargenKarmaToNuyenExpression = "(" + _strChargenKarmaToNuyenExpression + ") + {PriorityNuyen}";
                 }
 
                 // Various expressions used to determine certain character stats
@@ -3621,7 +3621,7 @@ namespace Chummer
                     if (intIndex == 0)
                     {
                         ++intIndex;
-                        _strEssenceFormat = '0' + _strEssenceFormat;
+                        _strEssenceFormat = "0" + _strEssenceFormat;
                     }
 
                     switch (_strEssenceFormat.Length - 1 - intIndex)
@@ -4258,7 +4258,7 @@ namespace Chummer
                 // A very hacky legacy shim, but also works as a bit of a sanity check
                 else if (!_strChargenKarmaToNuyenExpression.Contains("{PriorityNuyen}"))
                 {
-                    _strChargenKarmaToNuyenExpression = '(' + _strChargenKarmaToNuyenExpression + ") + {PriorityNuyen}";
+                    _strChargenKarmaToNuyenExpression = "(" + _strChargenKarmaToNuyenExpression + ") + {PriorityNuyen}";
                 }
 
                 // Various expressions used to determine certain character stats
@@ -4393,7 +4393,7 @@ namespace Chummer
                     if (intIndex == 0)
                     {
                         ++intIndex;
-                        _strEssenceFormat = '0' + _strEssenceFormat;
+                        _strEssenceFormat = "0" + _strEssenceFormat;
                     }
 
                     switch (_strEssenceFormat.Length - 1 - intIndex)
@@ -6212,8 +6212,8 @@ namespace Chummer
                     }
                 }
 
-                if (sbdPath.Length > 1)
-                    return '(' + sbdPath.ToString() + ')';
+                if (sbdPath.Length > 0)
+                    return "(" + sbdPath.ToString() + ")";
             }
 
             // We have only the opening parentheses; return an empty string
@@ -6267,8 +6267,8 @@ namespace Chummer
                     await objLocker.DisposeAsync().ConfigureAwait(false);
                 }
 
-                if (sbdPath.Length > 1)
-                    return '(' + sbdPath.ToString() + ')';
+                if (sbdPath.Length > 0)
+                    return "(" + sbdPath.ToString() + ")";
             }
 
             // We have only the opening parentheses; return an empty string
@@ -6584,7 +6584,7 @@ namespace Chummer
         }
 
         /// <summary>
-        /// Syntactic sugar for XmlManager.LoadXPath() where we use the current enabled custom data directory list from our options file.
+        /// Syntactic sugar for <see cref="XmlManager.LoadXPath(string, IReadOnlyCollection{string}, string, bool, CancellationToken)"/> where we use the current enabled custom data directory list from our options file.
         /// XPathDocuments are usually faster than XmlDocuments, but are read-only and take longer to load if live custom data is enabled
         /// Returns a new XPathNavigator associated with the XPathDocument so that multiple threads each get their own navigator if they're called on the same file
         /// </summary>
@@ -6608,7 +6608,7 @@ namespace Chummer
         }
 
         /// <summary>
-        /// Syntactic sugar for XmlManager.LoadXPathAsync() where we use the current enabled custom data directory list from our options file.
+        /// Syntactic sugar for <see cref="XmlManager.LoadXPathAsync(string, IReadOnlyCollection{string}, string, bool, CancellationToken)"/> where we use the current enabled custom data directory list from our options file.
         /// XPathDocuments are usually faster than XmlDocuments, but are read-only and take longer to load if live custom data is enabled
         /// Returns a new XPathNavigator associated with the XPathDocument so that multiple threads each get their own navigator if they're called on the same file
         /// </summary>
@@ -6633,7 +6633,7 @@ namespace Chummer
         }
 
         /// <summary>
-        /// Syntactic sugar for XmlManager.Load() where we use the current enabled custom data directory list from our options file.
+        /// Syntactic sugar for <see cref="XmlManager.Load(string, IReadOnlyCollection{string}, string, bool, CancellationToken)"/> where we use the current enabled custom data directory list from our options file.
         /// </summary>
         /// <param name="strFileName">Name of the XML file to load.</param>
         /// <param name="strLanguage">Language in which to load the data document.</param>
@@ -6656,7 +6656,7 @@ namespace Chummer
         }
 
         /// <summary>
-        /// Syntactic sugar for XmlManager.LoadAsync() where we use the current enabled custom data directory list from our options file.
+        /// Syntactic sugar for <see cref="XmlManager.LoadAsync(string, IReadOnlyCollection{string}, string, bool, CancellationToken)"/> where we use the current enabled custom data directory list from our options file.
         /// </summary>
         /// <param name="strFileName">Name of the XML file to load.</param>
         /// <param name="strLanguage">Language in which to load the data document.</param>
@@ -6694,7 +6694,7 @@ namespace Chummer
                                                .SplitNoAlloc(';', StringSplitOptions.RemoveEmptyEntries))
             {
                 XPathNavigator objXmlBook
-                    = objXmlDocument.SelectSingleNodeAndCacheExpression("/chummer/books/book[code = " + strBook.CleanXPath() + ']');
+                    = objXmlDocument.SelectSingleNodeAndCacheExpression("/chummer/books/book[code = " + strBook.CleanXPath() + "]");
                 if (objXmlBook != null)
                 {
                     string strToAppend = objXmlBook.SelectSingleNodeAndCacheExpression("translate")?.Value;
@@ -6709,8 +6709,8 @@ namespace Chummer
                         {
                             strToAppend = objXmlBook.SelectSingleNodeAndCacheExpression("altcode")?.Value ?? strBook;
                             lstBooks.Add(LanguageManager.GetString("String_Unknown", strLanguage)
-                                         + LanguageManager.GetString("String_Space", strLanguage) + '('
-                                         + strToAppend + ')');
+                                         + LanguageManager.GetString("String_Space", strLanguage) + "("
+                                         + strToAppend + ")");
                         }
                     }
                 }
@@ -6751,7 +6751,7 @@ namespace Chummer
                                                .SplitNoAlloc(';', StringSplitOptions.RemoveEmptyEntries))
             {
                 XPathNavigator objXmlBook
-                    = objXmlDocument.SelectSingleNodeAndCacheExpression("/chummer/books/book[code = " + strBook.CleanXPath() + ']', token);
+                    = objXmlDocument.SelectSingleNodeAndCacheExpression("/chummer/books/book[code = " + strBook.CleanXPath() + "]", token);
                 if (objXmlBook != null)
                 {
                     string strToAppend = objXmlBook.SelectSingleNodeAndCacheExpression("translate", token)?.Value;
@@ -6770,8 +6770,8 @@ namespace Chummer
                                                .ConfigureAwait(false)
                                          + await LanguageManager
                                                  .GetStringAsync("String_Space", strLanguage, token: token)
-                                                 .ConfigureAwait(false) + '('
-                                         + strToAppend + ')');
+                                                 .ConfigureAwait(false) + "("
+                                         + strToAppend + ")");
                         }
                     }
                 }
@@ -8328,7 +8328,7 @@ namespace Chummer
                 if (SettingsManager.LoadedCharacterSettings.ContainsKey(DictionaryKey)
                     && !value.Contains("{PriorityNuyen}"))
                 {
-                    value = '(' + value + ") + {PriorityNuyen}";
+                    value = "(" + value + ") + {PriorityNuyen}";
                 }
                 using (LockObject.EnterUpgradeableReadLock())
                 {
@@ -8368,7 +8368,7 @@ namespace Chummer
                 && !value.Contains("{PriorityNuyen}"))
             {
                 value
-                    = '(' + value + ") + {PriorityNuyen}";
+                    = "(" + value + ") + {PriorityNuyen}";
             }
 
             IAsyncDisposable objLocker = await LockObject.EnterUpgradeableReadLockAsync(token).ConfigureAwait(false);
@@ -9341,7 +9341,7 @@ namespace Chummer
                     }
                     else
                     {
-                        strReturn += LanguageManager.GetString("String_Space") + '[' + FileName + ']';
+                        strReturn += LanguageManager.GetString("String_Space") + "[" + FileName + "]";
                     }
 
                     return strReturn;
@@ -9370,9 +9370,9 @@ namespace Chummer
                 else
                 {
                     strReturn += await LanguageManager.GetStringAsync("String_Space", token: token)
-                                                      .ConfigureAwait(false) + '['
+                                                      .ConfigureAwait(false) + "["
                                                                              + await GetFileNameAsync(token)
-                                                                                 .ConfigureAwait(false) + ']';
+                                                                                 .ConfigureAwait(false) + "]";
                 }
 
                 return strReturn;
@@ -12019,7 +12019,7 @@ namespace Chummer
                     if (intIndex == 0)
                     {
                         ++intIndex;
-                        value = '0' + value;
+                        value = "0" + value;
                     }
 
                     switch (value.Length - 1 - intIndex)

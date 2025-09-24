@@ -214,7 +214,7 @@ namespace Chummer
     }
 
     /// <summary>
-    /// Global Settings. A single instance class since Settings are common for all characters, reduces execution time and memory usage.
+    /// Global Settings. A static class since these settings are common across all characters, reducing execution time and memory usage.
     /// </summary>
     public static class GlobalSettings
     {
@@ -284,30 +284,7 @@ namespace Chummer
         private static bool _blnPrintSkillsWithZeroRating = true;
         private static bool _blnInsertPdfNotesIfAvailable = true;
 
-        /// <summary>
-        /// Maximum size of a stackalloc'ed array for an 8-bit type (byte, sbyte, bool)
-        /// </summary>
-        public const int MaxStackLimit8BitTypes = 4096;
-        /// <summary>
-        /// Maximum size of a stackalloc'ed array for a 16-bit type (short, ushort, char)
-        /// </summary>
-        public const int MaxStackLimit16BitTypes = MaxStackLimit8BitTypes * sizeof(byte) / sizeof(short);
-        /// <summary>
-        /// Maximum size of a stackalloc'ed array for a 32-bit type (int, uint, float)
-        /// </summary>
-        public const int MaxStackLimit32BitTypes = MaxStackLimit8BitTypes * sizeof(byte) / sizeof(int);
-        /// <summary>
-        /// Maximum size of a stackalloc'ed array for a 64-bit type (long, ulong, double)
-        /// </summary>
-        public const int MaxStackLimit64BitTypes = MaxStackLimit8BitTypes * sizeof(byte) / sizeof(long);
-        /// <summary>
-        /// Maximum size of a stackalloc'ed array for a 128-bit type (decimal)
-        /// </summary>
-        public const int MaxStackLimit128BitTypes = MaxStackLimit8BitTypes * sizeof(byte) / sizeof(decimal);
-
         private static bool _blnShowCharacterCustomDataWarning;
-
-        public static ThreadSafeCachedRandom RandomGenerator { get; } = new ThreadSafeCachedRandom(new XoRoShiRo128starstar(), true);
 
         // Plugins information
         private static readonly ConcurrentDictionary<string, bool> s_dicPluginsEnabled = new ConcurrentDictionary<string, bool>();
@@ -470,7 +447,7 @@ namespace Chummer
             }
             catch (Exception ex)
             {
-                ErrorMessage += ex;
+                ErrorMessage += ex.Demystify().ToString();
             }
             if (s_ObjBaseChummerKey == null)
                 return;
@@ -595,7 +572,7 @@ namespace Chummer
 
             // Which version of the Internet Explorer's rendering engine will be emulated for rendering the character view.
             LoadInt32FromRegistry(ref _intEmulatedBrowserVersion, "emulatedbrowserversion");
-            Utils.SetupWebBrowserRegistryKeys();
+            Utils.SetupWebBrowserRegistryKeys(_intEmulatedBrowserVersion);
 
             // Default character sheet.
             LoadStringFromRegistry(ref _strDefaultCharacterSheet, "defaultsheet");
@@ -989,7 +966,7 @@ namespace Chummer
                         {
                             SourcebookInfo objSourcebookInfo = kvpSourcebookInfo.Value; // Set up this way to avoid race condition in underlying SourcebookInfos dictionary
                             objSourceRegistry.SetValue(objSourcebookInfo.Code,
-                                objSourcebookInfo.Path + '|'
+                                objSourcebookInfo.Path + "|"
                                                        + objSourcebookInfo.Offset.ToString(
                                                            InvariantCultureInfo));
                         }
@@ -1372,7 +1349,7 @@ namespace Chummer
             set
             {
                 if (Interlocked.Exchange(ref _intEmulatedBrowserVersion, value) != value)
-                    Utils.SetupWebBrowserRegistryKeys();
+                    Utils.SetupWebBrowserRegistryKeys(value);
             }
         }
 
@@ -1602,17 +1579,17 @@ namespace Chummer
         public static void SetClipboard(XmlDocument value, ClipboardContentType eType, CancellationToken token = default)
         {
             token.ThrowIfCancellationRequested();
-            string strNewOuterXml = value.OuterXmlViaPool();
+            string strNewOuterXml = value.OuterXmlViaPool(token);
             using (_objClipboardLocker.EnterReadLock(token))
             {
                 token.ThrowIfCancellationRequested();
-                if (eType == _eClipboardContentType && s_xmlClipboard.OuterXmlViaPool() == strNewOuterXml)
+                if (eType == _eClipboardContentType && s_xmlClipboard.OuterXmlViaPool(token) == strNewOuterXml)
                     return;
             }
             using (_objClipboardLocker.EnterUpgradeableReadLock(token))
             {
                 token.ThrowIfCancellationRequested();
-                if (eType == _eClipboardContentType && s_xmlClipboard.OuterXmlViaPool() == strNewOuterXml)
+                if (eType == _eClipboardContentType && s_xmlClipboard.OuterXmlViaPool(token) == strNewOuterXml)
                     return;
 
                 using (_objClipboardLocker.EnterWriteLock(token))
@@ -1653,12 +1630,12 @@ namespace Chummer
         public static async Task SetClipboardAsync(XmlNode value, ClipboardContentType eType, CancellationToken token = default)
         {
             token.ThrowIfCancellationRequested();
-            string strNewOuterXml = value.OuterXmlViaPool();
+            string strNewOuterXml = value.OuterXmlViaPool(token);
             IAsyncDisposable objLocker = await _objClipboardLocker.EnterReadLockAsync(token).ConfigureAwait(false);
             try
             {
                 token.ThrowIfCancellationRequested();
-                if (eType == _eClipboardContentType && s_xmlClipboard.OuterXmlViaPool() == strNewOuterXml)
+                if (eType == _eClipboardContentType && s_xmlClipboard.OuterXmlViaPool(token) == strNewOuterXml)
                     return;
             }
             finally
@@ -1669,7 +1646,7 @@ namespace Chummer
             try
             {
                 token.ThrowIfCancellationRequested();
-                if (eType == _eClipboardContentType && s_xmlClipboard.OuterXmlViaPool() == strNewOuterXml)
+                if (eType == _eClipboardContentType && s_xmlClipboard.OuterXmlViaPool(token) == strNewOuterXml)
                     return;
 
                 IAsyncDisposable objLocker2 = await _objClipboardLocker.EnterWriteLockAsync(token).ConfigureAwait(false);
@@ -2373,7 +2350,7 @@ namespace Chummer
         public static string PdfArguments { get; internal set; }
 
         /// <summary>
-        /// Compression quality to use when saving images. int.MaxValue is PNG (Lossless), anything else that is positive is JPEG (Lossy),
+        /// Compression quality to use when saving images. <see cref="int.MaxValue"/> is PNG (Lossless), anything else that is positive is JPEG (Lossy),
         /// anything else that is negative is JPEG with quality set automatically based on the size of the image.
         /// </summary>
         public static int SavedImageQuality
@@ -2383,7 +2360,7 @@ namespace Chummer
         }
 
         /// <summary>
-        /// Converts an image to its Base64 string equivalent with compression settings specified by SavedImageQuality.
+        /// Converts an image to its Base64 string equivalent with compression settings specified by <see cref="SavedImageQuality"/>.
         /// </summary>
         /// <param name="objImageToSave">Image whose Base64 string should be created.</param>
         public static string ImageToBase64StringForStorage(Image objImageToSave, CancellationToken token = default)
@@ -2395,7 +2372,7 @@ namespace Chummer
         }
 
         /// <summary>
-        /// Converts an image to its Base64 string equivalent with compression settings specified by SavedImageQuality.
+        /// Converts an image to its Base64 string equivalent with compression settings specified by <see cref="SavedImageQuality"/>.
         /// </summary>
         /// <param name="objImageToSave">Image whose Base64 string should be created.</param>
         /// <param name="token">Cancellation token to listen to.</param>
