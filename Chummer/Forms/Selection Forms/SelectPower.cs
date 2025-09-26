@@ -226,7 +226,7 @@ namespace Chummer
                     if (sbdFilter.Length > 0)
                     {
                         sbdFilter.Length -= 4;
-                        strFilter += " and (" + sbdFilter.ToString() + ")";
+                        strFilter += " and (" + sbdFilter.Append(')').ToString();
                     }
                 }
             }
@@ -248,7 +248,7 @@ namespace Chummer
                                 async x => x.Name == strName
                                     && await x.GetTotalRatingAsync(token).ConfigureAwait(false) > 0, token).ConfigureAwait(false)
                         //If this power has already had its rating paid for with PP, we don't care about the extrapoints cost.
-                        && decimal.TryParse(strExtraPointCost, System.Globalization.NumberStyles.Any, GlobalSettings.InvariantCultureInfo, out decimal decExtraCost))
+                        && decimal.TryParse(strExtraPointCost, NumberStyles.Any, GlobalSettings.InvariantCultureInfo, out decimal decExtraCost))
                     {
                         decPoints += decExtraCost;
                     }

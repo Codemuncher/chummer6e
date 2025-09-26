@@ -2057,7 +2057,7 @@ namespace Chummer
                 }
                 finally
                 {
-                    if (objSemaphore?.IsDisposed == false)
+                    if (!objSemaphore.IsDisposed)
                         objSemaphore.Release();
                 }
             }
@@ -4460,11 +4460,11 @@ namespace Chummer
                                               "Message_ReapplyImprovementsFoundOutdatedItems_Top",
                                               token: token)
                                           .ConfigureAwait(false) +
-                                      sbdOutdatedItems.ToString() +
+                                      sbdOutdatedItems.Append(
                                       await LanguageManager.GetStringAsync(
                                               "Message_ReapplyImprovementsFoundOutdatedItems_Bottom",
                                               token: token)
-                                          .ConfigureAwait(false),
+                                          .ConfigureAwait(false)).ToString(),
                                 await LanguageManager
                                     .GetStringAsync("MessageTitle_ConfirmReapplyImprovements", token: token)
                                     .ConfigureAwait(false),
@@ -4758,7 +4758,7 @@ namespace Chummer
                                 await objLifestyle.RemoveAsync(false, CancellationToken.None).ConfigureAwait(false);
                                 throw;
                             }
-                                break;
+                            break;
                         }
                         case ClipboardContentType.Vehicle:
                         {

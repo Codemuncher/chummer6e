@@ -157,7 +157,7 @@ namespace Chummer
                         }
 
                         sbdMount.Append(". = \"General\"");
-                        objXmlCategoryList = _xmlBaseGearDataNode.Select("categories/category[" + sbdMount.ToString() + "]");
+                        objXmlCategoryList = _xmlBaseGearDataNode.Select("categories/category[" + sbdMount.Append(']').ToString());
                     }
                 }
                 else
@@ -312,7 +312,7 @@ namespace Chummer
                             }, token).ConfigureAwait(false);
                             if (!string.IsNullOrEmpty(strCostFor))
                             {
-                                decimal.TryParse(strCostFor, System.Globalization.NumberStyles.Any, GlobalSettings.InvariantCultureInfo, out decimal decCostFor);
+                                decimal.TryParse(strCostFor, NumberStyles.Any, GlobalSettings.InvariantCultureInfo, out decimal decCostFor);
                                 await nudGearQty.DoThreadSafeAsync(x =>
                                 {
                                     x.Value = decCostFor;
@@ -1178,7 +1178,7 @@ namespace Chummer
                     sbdFilter.Append(" and ").Append(CommonFunctions.GenerateSearchXPath(strSearch));
 
                 if (sbdFilter.Length > 0)
-                    strFilter = "[" + sbdFilter.ToString() + "]";
+                    strFilter = "[" + sbdFilter.Append(']').ToString();
             }
 
             int intOverLimit = 0;
