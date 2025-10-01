@@ -58,6 +58,11 @@ namespace Chummer
             this.UpdateLightDarkMode();
             this.TranslateWinForm();
             this.UpdateParentForToolTipControls();
+
+            // Prevent Enter key from closing the form when NumericUpDown controls have focus
+            nudMinimumCost.KeyDown += NumericUpDown_KeyDown;
+            nudMaximumCost.KeyDown += NumericUpDown_KeyDown;
+            nudExactCost.KeyDown += NumericUpDown_KeyDown;
             _lstCategory = Utils.ListItemListPool.Get();
             _setBlackMarketMaps = Utils.StringHashSetPool.Get();
             // Load the Vehicle information.
@@ -147,6 +152,23 @@ namespace Chummer
         private async void RefreshCurrentList(object sender, EventArgs e)
         {
             await RefreshList().ConfigureAwait(false);
+        }
+
+        private async void CostFilter(object sender, EventArgs e)
+        {
+            if (_blnLoading)
+                return;
+
+            await RefreshList().ConfigureAwait(false);
+        }
+
+        private void NumericUpDown_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                e.Handled = true;
+                e.SuppressKeyPress = true;
+            }
         }
 
         private async void nudRating_ValueChanged(object sender, EventArgs e)
@@ -319,6 +341,22 @@ namespace Chummer
 
             if (!string.IsNullOrEmpty(strSearch))
                 strFilter += " and " + CommonFunctions.GenerateSearchXPath(strSearch);
+
+            // Apply cost filtering
+            decimal decMinimumCost = await nudMinimumCost.DoThreadSafeFuncAsync(x => x.Value, token: token).ConfigureAwait(false);
+            decimal decMaximumCost = await nudMaximumCost.DoThreadSafeFuncAsync(x => x.Value, token: token).ConfigureAwait(false);
+            decimal decExactCost = await nudExactCost.DoThreadSafeFuncAsync(x => x.Value, token: token).ConfigureAwait(false);
+
+            if (decExactCost > 0)
+            {
+                // Exact cost filtering
+                strFilter += " and (cost = " + decExactCost.ToString(GlobalSettings.InvariantCultureInfo) + ")";
+            }
+            else if (decMinimumCost != 0 || decMaximumCost != 0)
+            {
+                // Range cost filtering
+                strFilter += " and (" + CommonFunctions.GenerateNumericRangeXPath(decMaximumCost, decMinimumCost, "cost") + ")";
+            }
 
             // Retrieve the list of Mods for the selected Category.
             XPathNodeIterator objXmlModList = VehicleMountMods
@@ -924,24 +962,24 @@ namespace Chummer
         {
             if (token.IsCancellationRequested)
                 return Task.FromCanceled<string>(token);
-            switch (strCategory)
+            switch (strCategory.ToUpperInvariant())
             {
-                case "Powertrain":
+                case "POWERTRAIN":
                     return _objVehicle.PowertrainModSlotsUsedAsync(intModSlots, token);
 
-                case "Protection":
+                case "PROTECTION":
                     return _objVehicle.ProtectionModSlotsUsedAsync(intModSlots, token);
 
-                case "Weapons":
+                case "WEAPONS":
                     return _objVehicle.WeaponModSlotsUsedAsync(intModSlots, token);
 
-                case "Body":
+                case "BODY":
                     return _objVehicle.BodyModSlotsUsedAsync(intModSlots, token);
 
-                case "Electromagnetic":
+                case "ELECTROMAGNETIC":
                     return _objVehicle.ElectromagneticModSlotsUsedAsync(intModSlots, token);
 
-                case "Cosmetic":
+                case "COSMETIC":
                     return _objVehicle.CosmeticModSlotsUsedAsync(intModSlots, token);
 
                 default:
@@ -970,10 +1008,10 @@ namespace Chummer
                         await sbdValue.CheapReplaceAsync(strExpression, "{Rating}", () => intRating.ToString(GlobalSettings.InvariantCultureInfo), token: token).ConfigureAwait(false);
                         await sbdValue.CheapReplaceAsync(strExpression, "Rating", () => intRating.ToString(GlobalSettings.InvariantCultureInfo), token: token).ConfigureAwait(false);
                         string strSlotsString = (_intWeaponMountSlots + intExtraSlots).ToString(GlobalSettings.InvariantCultureInfo);
-                        sbdValue.Replace("{Slots}", strSlotsString);
-                        sbdValue.Replace("Slots", strSlotsString);
                         sbdValue.Replace("{Parent Slots}", strSlotsString);
                         sbdValue.Replace("Parent Slots", strSlotsString);
+                        sbdValue.Replace("{Slots}", strSlotsString);
+                        sbdValue.Replace("Slots", strSlotsString);
                         sbdValue.Replace("{Parent Cost}", ParentWeaponMountOwnCost.ToString(GlobalSettings.InvariantCultureInfo));
                         sbdValue.Replace("Parent Cost", ParentWeaponMountOwnCost.ToString(GlobalSettings.InvariantCultureInfo));
                         await _objVehicle.ProcessAttributesInXPathAsync(sbdValue, strExpression, token: token).ConfigureAwait(false);
