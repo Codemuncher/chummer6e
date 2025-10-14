@@ -156,14 +156,15 @@ namespace Chummer
                 {
                     using (new FetchSafelyFromObjectPool<StringBuilder>(Utils.StringBuilderPool, out StringBuilder sbdMount))
                     {
+                        sbdMount.Append("categories/category[");
                         foreach (string strAllowedMount in _setAllowedCategories)
                         {
                             if (!string.IsNullOrEmpty(strAllowedMount))
                                 sbdMount.Append(". = ", strAllowedMount.CleanXPath(), " or ");
                         }
 
-                        sbdMount.Append(". = \"General\"");
-                        objXmlCategoryList = _xmlBaseGearDataNode.Select(sbdMount.Insert(0, "categories/category[").Append(']').ToString());
+                        sbdMount.Append(". = \"General\"]");
+                        objXmlCategoryList = _xmlBaseGearDataNode.Select(sbdMount.ToString());
                     }
                 }
                 else
@@ -1199,7 +1200,7 @@ namespace Chummer
             string strFilter = string.Empty;
             using (new FetchSafelyFromObjectPool<StringBuilder>(Utils.StringBuilderPool, out StringBuilder sbdFilter))
             {
-                sbdFilter.Append('(', await (await _objCharacter.GetSettingsAsync(token).ConfigureAwait(false)).BookXPathAsync(token: token).ConfigureAwait(false), ')');
+                sbdFilter.Append(await (await _objCharacter.GetSettingsAsync(token).ConfigureAwait(false)).BookXPathAsync(token: token).ConfigureAwait(false));
 
                 // Only add in category filter if we either are not searching or we have the option set to only search in categories
                 if (!string.IsNullOrEmpty(strCategory) && strCategory != "Show All"
@@ -1272,7 +1273,7 @@ namespace Chummer
                 else if (decMinimumCost != 0 || decMaximumCost != 0)
                 {
                     // Range cost filtering
-                    sbdFilter.Append(" and (", CommonFunctions.GenerateNumericRangeXPath(decMaximumCost, decMinimumCost, "cost"), ')');
+                    sbdFilter.Append(" and ", CommonFunctions.GenerateNumericRangeXPath(decMaximumCost, decMinimumCost, "cost"));
                 }
 
                 if (sbdFilter.Length > 0)
