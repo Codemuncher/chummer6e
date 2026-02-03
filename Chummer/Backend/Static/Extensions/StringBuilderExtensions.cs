@@ -1842,8 +1842,14 @@ namespace Chummer
             if (intExtraLength > 0)
             {
                 sbdInput.EnsureCapacity(sbdInput.Length + intExtraLength);
-                for (int i = astrValues.Length - 1; i > 0; --i)
-                    sbdInput.Insert(index, astrValues[i]);
+                // Multiple insert calls can hammer the GC, so let's assemble everything we want inserted first so we only need to call Insert once.
+                using (new FetchSafelyFromObjectPool<StringBuilder>(Utils.StringBuilderPool, out StringBuilder sbdTemp))
+                {
+                    sbdTemp.EnsureCapacity(intExtraLength);
+                    foreach (string strTemp in astrValues)
+                        sbdTemp.Append(strTemp);
+                    sbdInput.Insert(index, sbdTemp.ToString());
+                }
             }
             return sbdInput;
         }
@@ -1859,7 +1865,8 @@ namespace Chummer
             if (intExtraLength > 0)
             {
                 sbdInput.EnsureCapacity(sbdInput.Length + intExtraLength);
-                sbdInput.Insert(index, str2).Insert(index, str1);
+                // Multiple insert calls can hammer the GC because of MakeRoom calls, so let's concat as much as we can before using Insert
+                sbdInput.Insert(index, string.Concat(str1, str2));
             }
             return sbdInput;
         }
@@ -1873,7 +1880,7 @@ namespace Chummer
         {
             int intExtraLength = (str1?.Length ?? 0) + 1;
             sbdInput.EnsureCapacity(sbdInput.Length + intExtraLength);
-            return sbdInput.Insert(index, chr2).Insert(index, str1);
+            return sbdInput.Insert(index, StringExtensions.ConcatFast(str1, chr2));
         }
 
         /// <summary>
@@ -1885,7 +1892,7 @@ namespace Chummer
         {
             int intExtraLength = 1 + (str2?.Length ?? 0);
             sbdInput.EnsureCapacity(sbdInput.Length + intExtraLength);
-            return sbdInput.Insert(index, str2).Insert(index, chr1);
+            return sbdInput.Insert(index, StringExtensions.ConcatFast(chr1, str2));
         }
 
         /// <summary>
@@ -1896,7 +1903,8 @@ namespace Chummer
         public static StringBuilder Insert([NotNull] this StringBuilder sbdInput, int index, char chr1, char chr2)
         {
             sbdInput.EnsureCapacity(sbdInput.Length + 2);
-            return sbdInput.Insert(index, chr2).Insert(index, chr1);
+            // Multiple insert calls can hammer the GC, so it's better to assemble the chars into a temporary array to be able to call Insert once
+            return sbdInput.Insert(index, StringExtensions.ConcatFast(chr1, chr2));
         }
 
         /// <summary>
@@ -1910,7 +1918,8 @@ namespace Chummer
             if (intExtraLength > 0)
             {
                 sbdInput.EnsureCapacity(sbdInput.Length + intExtraLength);
-                sbdInput.Insert(index, str3).Insert(index, str2).Insert(index, str1);
+                // Multiple insert calls can hammer the GC, so let's assemble everything we want inserted first so we only need to call Insert once.
+                sbdInput.Insert(index, string.Concat(str1, str2, str3));
             }
             return sbdInput;
         }
@@ -1924,7 +1933,8 @@ namespace Chummer
         {
             int intExtraLength = (str1?.Length ?? 0) + (str2?.Length ?? 0) + 1;
             sbdInput.EnsureCapacity(sbdInput.Length + intExtraLength);
-            return sbdInput.Insert(index, chr3).Insert(index, str2).Insert(index, str1);
+            // Multiple insert calls can hammer the GC because of MakeRoom calls, so let's concat as much as we can before using Insert
+            return sbdInput.Insert(index, StringExtensions.ConcatFast(string.Concat(str1, str2), chr3));
         }
 
         /// <summary>
@@ -1936,7 +1946,7 @@ namespace Chummer
         {
             int intExtraLength = (str1?.Length ?? 0) + 1 + (str3?.Length ?? 0);
             sbdInput.EnsureCapacity(sbdInput.Length + intExtraLength);
-            return sbdInput.Insert(index, str3).Insert(index, chr2).Insert(index, str1);
+            return sbdInput.Insert(index, string.Concat(StringExtensions.ConcatFast(str1, chr2), str3));
         }
 
         /// <summary>
@@ -1948,7 +1958,8 @@ namespace Chummer
         {
             int intExtraLength = (str1?.Length ?? 0) + 2;
             sbdInput.EnsureCapacity(sbdInput.Length + intExtraLength);
-            return sbdInput.Insert(index, chr3).Insert(index, chr2).Insert(index, str1);
+            // Multiple insert calls can hammer the GC, so it's better to assemble the chars into a temporary array to be able to call Insert fewer times
+            return sbdInput.Insert(index, string.Concat(str1, StringExtensions.ConcatFast(chr2, chr3)));
         }
 
         /// <summary>
@@ -1960,7 +1971,8 @@ namespace Chummer
         {
             int intExtraLength = 1 + (str2?.Length ?? 0) + (str3?.Length ?? 0);
             sbdInput.EnsureCapacity(sbdInput.Length + intExtraLength);
-            return sbdInput.Insert(index, str3).Insert(index, str2).Insert(index, chr1);
+            // Multiple insert calls can hammer the GC because of MakeRoom calls, so let's concat as much as we can before using Insert
+            return sbdInput.Insert(index, StringExtensions.ConcatFast(chr1, string.Concat(str2, str3)));
         }
 
         /// <summary>
@@ -1972,7 +1984,7 @@ namespace Chummer
         {
             int intExtraLength = 2 + (str2?.Length ?? 0);
             sbdInput.EnsureCapacity(sbdInput.Length + intExtraLength);
-            return sbdInput.Insert(index, chr3).Insert(index, str2).Insert(index, chr1);
+            return sbdInput.Insert(index, StringExtensions.ConcatFast(StringExtensions.ConcatFast(chr1, str2), chr3));
         }
 
         /// <summary>
@@ -1984,7 +1996,7 @@ namespace Chummer
         {
             int intExtraLength = 2 + (str3?.Length ?? 0);
             sbdInput.EnsureCapacity(sbdInput.Length + intExtraLength);
-            return sbdInput.Insert(index, str3).Insert(index, chr2).Insert(index, chr1);
+            return sbdInput.Insert(index, string.Concat(StringExtensions.ConcatFast(chr1, chr2), str3));
         }
 
         /// <summary>
@@ -1994,7 +2006,8 @@ namespace Chummer
         public static StringBuilder Insert([NotNull] this StringBuilder sbdInput, int index, char chr1, char chr2, char chr3)
         {
             sbdInput.EnsureCapacity(sbdInput.Length + 3);
-            return sbdInput.Insert(index, chr3).Insert(index, chr2).Insert(index, chr1);
+            // Multiple insert calls can hammer the GC, so it's better to assemble the chars into a temporary array to be able to call Insert once
+            return sbdInput.Insert(index, StringExtensions.ConcatFast(chr1, chr2, chr3));
         }
 
         /// <summary>
@@ -2008,7 +2021,8 @@ namespace Chummer
             if (intExtraLength > 0)
             {
                 sbdInput.EnsureCapacity(sbdInput.Length + intExtraLength);
-                sbdInput.Insert(index, str4).Insert(index, str3).Insert(index, str2).Insert(index, str1);
+                // Multiple insert calls can hammer the GC, so let's assemble everything we want inserted first so we only need to call Insert once.
+                sbdInput.Insert(index, string.Concat(str1, str2, str3, str4));
             }
             return sbdInput;
         }
@@ -2024,7 +2038,8 @@ namespace Chummer
             if (intExtraLength > 0)
             {
                 sbdInput.EnsureCapacity(sbdInput.Length + intExtraLength);
-                sbdInput.Insert(index, str5).Insert(index, str4).Insert(index, str3).Insert(index, str2).Insert(index, str1);
+                // Multiple insert calls can hammer the GC because of MakeRoom calls, so let's concat as much as we can before using Insert
+                sbdInput.Insert(index, StringExtensions.ConcatFast(str1, str2, str3, str4, str5));
             }
             return sbdInput;
         }
@@ -2040,7 +2055,8 @@ namespace Chummer
             if (intExtraLength > 0)
             {
                 sbdInput.EnsureCapacity(sbdInput.Length + intExtraLength);
-                sbdInput.Insert(index, str6).Insert(index, str5).Insert(index, str4).Insert(index, str3).Insert(index, str2).Insert(index, str1);
+                // Multiple insert calls can hammer the GC because of MakeRoom calls, so let's concat as much as we can before using Insert
+                sbdInput.Insert(index, StringExtensions.ConcatFast(str1, str2, str3, str4, str5, str6));
             }
             return sbdInput;
         }
@@ -2056,7 +2072,8 @@ namespace Chummer
             if (intExtraLength > 0)
             {
                 sbdInput.EnsureCapacity(sbdInput.Length + intExtraLength);
-                sbdInput.Insert(index, str7).Insert(index, str6).Insert(index, str5).Insert(index, str4).Insert(index, str3).Insert(index, str2).Insert(index, str1);
+                // Multiple insert calls can hammer the GC because of MakeRoom calls, so let's concat as much as we can before using Insert
+                sbdInput.Insert(index, StringExtensions.ConcatFast(str1, str2, str3, str4, str5, str6, str7));
             }
             return sbdInput;
         }

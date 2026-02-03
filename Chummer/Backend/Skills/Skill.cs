@@ -654,7 +654,7 @@ namespace Chummer.Backend.Skills
                         {
                             foreach (XmlNode xmlSpec in xmlSpecList)
                             {
-                                SkillSpecialization objSpec = SkillSpecialization.Load(objCharacter, xmlSpec);
+                                SkillSpecialization objSpec = SkillSpecialization.Load(objCharacter, objLoadingSkill, xmlSpec);
                                 if (objSpec != null)
                                 {
                                     try
@@ -888,7 +888,7 @@ namespace Chummer.Backend.Skills
             try
             {
                 if (xmlSkillNode.TryGetField("guid", Guid.TryParse, out guiTemp))
-                    objLoadingSkill.Id = guiTemp;
+                    await objLoadingSkill.SetIdAsync(guiTemp, token).ConfigureAwait(false);
 
                 if (!xmlSkillNode.TryGetMultiLineStringFieldQuickly("altnotes", ref objLoadingSkill._strNotes))
                     xmlSkillNode.TryGetMultiLineStringFieldQuickly("notes", ref objLoadingSkill._strNotes);
@@ -908,7 +908,7 @@ namespace Chummer.Backend.Skills
                         {
                             foreach (XmlNode xmlSpec in xmlSpecList)
                             {
-                                SkillSpecialization objSpec = SkillSpecialization.Load(objCharacter, xmlSpec);
+                                SkillSpecialization objSpec = SkillSpecialization.Load(objCharacter, objLoadingSkill, xmlSpec);
                                 if (objSpec != null)
                                 {
                                     try
@@ -1055,7 +1055,7 @@ namespace Chummer.Backend.Skills
                     {
                         foreach (XmlNode xmlSpec in xmlSpecList)
                         {
-                            SkillSpecialization objSpec = SkillSpecialization.Load(objCharacter, xmlSpec);
+                            SkillSpecialization objSpec = SkillSpecialization.Load(objCharacter, objSkill, xmlSpec);
                             if (objSpec != null)
                             {
                                 try
@@ -1190,7 +1190,7 @@ namespace Chummer.Backend.Skills
                     int intLastPlus = strSpecializationName.LastIndexOf('+');
                     if (intLastPlus > strSpecializationName.Length)
                         strSpecializationName = strSpecializationName.Substring(0, intLastPlus - 1);
-                    SkillSpecialization objSpec = new SkillSpecialization(objCharacter, strSpecializationName);
+                    SkillSpecialization objSpec = new SkillSpecialization(objCharacter, objSkill, strSpecializationName);
                     try
                     {
                         objSkill.Specializations.Add(objSpec);
@@ -3996,7 +3996,7 @@ namespace Chummer.Backend.Skills
                     return false;
                 }
 
-                if (RequiresFlyMovement)
+                if (await GetRequiresFlyMovementAsync(token).ConfigureAwait(false))
                 {
                     // Check if there's an improvement that enables this skill despite movement requirements
                     if ((await ImprovementManager
@@ -4023,7 +4023,7 @@ namespace Chummer.Backend.Skills
                     }
                 }
 
-                if (RequiresSwimMovement)
+                if (await GetRequiresSwimMovementAsync(token).ConfigureAwait(false))
                 {
                     // Check if there's an improvement that enables this skill despite movement requirements
                     if ((await ImprovementManager
@@ -4051,7 +4051,7 @@ namespace Chummer.Backend.Skills
                     }
                 }
 
-                if (RequiresGroundMovement)
+                if (await GetRequiresGroundMovementAsync(token).ConfigureAwait(false))
                 {
                     string strMovementString
                         = await CharacterObject
@@ -4646,6 +4646,59 @@ namespace Chummer.Backend.Skills
             }
         }
 
+        public async Task<Guid> GetIdAsync(CancellationToken token = default)
+        {
+            IAsyncDisposable objLocker = await LockObject.EnterReadLockAsync(token).ConfigureAwait(false);
+            try
+            {
+                token.ThrowIfCancellationRequested();
+                return _guidInternalId;
+            }
+            finally
+            {
+                await objLocker.DisposeAsync().ConfigureAwait(false);
+            }
+        }
+
+        private async Task SetIdAsync(Guid value, CancellationToken token = default)
+        {
+            token.ThrowIfCancellationRequested();
+            IAsyncDisposable objLocker = await LockObject.EnterReadLockAsync(token).ConfigureAwait(false);
+            try
+            {
+                token.ThrowIfCancellationRequested();
+                if (_guidInternalId == value)
+                    return;
+            }
+            finally
+            {
+                await objLocker.DisposeAsync().ConfigureAwait(false);
+            }
+
+            objLocker = await LockObject.EnterUpgradeableReadLockAsync(token).ConfigureAwait(false);
+            try
+            {
+                token.ThrowIfCancellationRequested();
+                if (_guidInternalId == value)
+                    return;
+                IAsyncDisposable objLocker2 = await LockObject.EnterWriteLockAsync(token).ConfigureAwait(false);
+                try
+                {
+                    token.ThrowIfCancellationRequested();
+                    _guidInternalId = value;
+                    await OnPropertyChangedAsync(nameof(Id), token).ConfigureAwait(false);
+                }
+                finally
+                {
+                    await objLocker2.DisposeAsync().ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                await objLocker.DisposeAsync().ConfigureAwait(false);
+            }
+        }
+
         public string InternalId
         {
             get
@@ -4658,6 +4711,12 @@ namespace Chummer.Backend.Skills
         public void CopyInternalId(Skill objOtherSkill)
         {
             Id = objOtherSkill.Id;
+        }
+
+        public async Task CopyInternalIdAsync(Skill objOtherSkill, CancellationToken token = default)
+        {
+            token.ThrowIfCancellationRequested();
+            await SetIdAsync(await objOtherSkill.GetIdAsync(token).ConfigureAwait(false), token).ConfigureAwait(false);
         }
 
         public Guid SourceID => SkillId;
@@ -5031,7 +5090,7 @@ namespace Chummer.Backend.Skills
                 using (Specializations.LockObject.EnterWriteLock())
                 {
                     int intIndexToReplace = Specializations.FindIndex(x => !x.Free);
-                    SkillSpecialization objNewSpec = new SkillSpecialization(CharacterObject, value);
+                    SkillSpecialization objNewSpec = new SkillSpecialization(CharacterObject, this, value);
                     try
                     {
                         if (intIndexToReplace < 0)
@@ -5112,7 +5171,7 @@ namespace Chummer.Backend.Skills
                 {
                     token.ThrowIfCancellationRequested();
                     int intIndexToReplace = await lstSpecs.FindIndexAsync(async x => !await x.GetFreeAsync(token).ConfigureAwait(false), token).ConfigureAwait(false);
-                    SkillSpecialization objNewSpec = new SkillSpecialization(CharacterObject, value);
+                    SkillSpecialization objNewSpec = new SkillSpecialization(CharacterObject, this, value);
                     try
                     {
                         if (intIndexToReplace < 0)
@@ -5427,7 +5486,7 @@ namespace Chummer.Backend.Skills
                             lstConditionalImprovements.Select(
                                 x => CharacterObject.GetObjectName(x) + strSpace + "("
                                      + x.Value.ToString(GlobalSettings.CultureInfo) + "," + strSpace
-                                     + x.Condition + ")"), ')');
+                                     + x.CurrentDisplayCondition + ")"), ')');
                     }
 
                     int wound = CharacterObject.WoundModifier;
@@ -5771,7 +5830,8 @@ namespace Chummer.Backend.Skills
                             await CharacterObject.GetObjectNameAsync(source, token: token).ConfigureAwait(false));
                         if (!string.IsNullOrEmpty(source.Condition))
                         {
-                            sbdReturn.Append(strSpace, '(').Append(source.Condition, ')');
+                            string strDisplayCondition = await source.GetCurrentDisplayConditionAsync(token).ConfigureAwait(false);
+                            sbdReturn.Append(strSpace, '(').Append(strDisplayCondition, ')');
                         }
 
                         sbdReturn.Append(strSpace, '(').Append(source.Value.ToString(GlobalSettings.CultureInfo), ')');
@@ -7867,7 +7927,9 @@ namespace Chummer.Backend.Skills
             token.ThrowIfCancellationRequested();
             if (_intSkipSpecializationRefresh > 0)
                 return;
-            IAsyncDisposable objLocker = await LockObject.EnterWriteLockAsync(token).ConfigureAwait(false);
+            
+            // Use upgradeable read lock like other collection change handlers in the codebase
+            IAsyncDisposable objLocker = await LockObject.EnterUpgradeableReadLockAsync(token).ConfigureAwait(false);
             try
             {
                 token.ThrowIfCancellationRequested();
@@ -7885,46 +7947,21 @@ namespace Chummer.Backend.Skills
                         _strDictionaryKey = null;
                     switch (e.Action)
                     {
-                        case NotifyCollectionChangedAction.Add:
-                            foreach (SkillSpecialization objSkillSpecialization in e.NewItems)
-                                objSkillSpecialization.Parent = this;
-                            break;
-
                         case NotifyCollectionChangedAction.Remove:
-                            foreach (SkillSpecialization objSkillSpecialization in e.OldItems)
-                            {
-                                if (objSkillSpecialization.Parent == this)
-                                    objSkillSpecialization.Parent = null;
-                                await objSkillSpecialization.DisposeAsync().ConfigureAwait(false);
-                            }
-
-                            break;
-
                         case NotifyCollectionChangedAction.Replace:
                             foreach (SkillSpecialization objSkillSpecialization in e.OldItems)
                             {
-                                if (objSkillSpecialization.Parent == this)
-                                    objSkillSpecialization.Parent = null;
                                 await objSkillSpecialization.DisposeAsync().ConfigureAwait(false);
                             }
-
-                            foreach (SkillSpecialization objSkillSpecialization in e.NewItems)
-                                objSkillSpecialization.Parent = this;
-                            break;
-
-                        case NotifyCollectionChangedAction.Reset:
-                            await Specializations
-                                .ForEachAsync(objSkillSpecialization => objSkillSpecialization.Parent = this,
-                                    token: token).ConfigureAwait(false);
                             break;
                     }
+
+                    await OnPropertyChangedAsync(nameof(Specializations), token).ConfigureAwait(false);
                 }
                 finally
                 {
                     Interlocked.Decrement(ref _intSkipSpecializationRefresh);
                 }
-
-                await OnPropertyChangedAsync(nameof(Specializations), token).ConfigureAwait(false);
             }
             finally
             {
@@ -7938,7 +7975,7 @@ namespace Chummer.Backend.Skills
             token.ThrowIfCancellationRequested();
             if (_intSkipSpecializationRefresh > 0)
                 return;
-            IAsyncDisposable objLocker = await LockObject.EnterWriteLockAsync(token).ConfigureAwait(false);
+            IAsyncDisposable objLocker = await LockObject.EnterUpgradeableReadLockAsync(token).ConfigureAwait(false);
             try
             {
                 token.ThrowIfCancellationRequested();
@@ -7953,8 +7990,6 @@ namespace Chummer.Backend.Skills
                 {
                     foreach (SkillSpecialization objSkillSpecialization in e.OldItems)
                     {
-                        if (objSkillSpecialization.Parent == this)
-                            objSkillSpecialization.Parent = null;
                         await objSkillSpecialization.DisposeAsync().ConfigureAwait(false);
                     }
                 }
@@ -8581,7 +8616,7 @@ namespace Chummer.Backend.Skills
             try
             {
                 token.ThrowIfCancellationRequested();
-                SkillSpecialization nspec = new SkillSpecialization(CharacterObject, strName);
+                SkillSpecialization nspec = new SkillSpecialization(CharacterObject, this, strName);
                 try
                 {
                     bool blnCreated = await CharacterObject.GetCreatedAsync(token).ConfigureAwait(false);

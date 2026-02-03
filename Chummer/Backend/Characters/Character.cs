@@ -2956,7 +2956,7 @@ namespace Chummer
                         if (string.IsNullOrEmpty(strSpec)) continue;
                         if (objSkill.Specializations.All(x => x.Name != strSpec, token))
                         {
-                            SkillSpecialization objSpec = new SkillSpecialization(this, strSpec);
+                            SkillSpecialization objSpec = new SkillSpecialization(this, objSkill, strSpec, false, false);
                             try
                             {
                                 token.ThrowIfCancellationRequested();
@@ -3743,7 +3743,7 @@ namespace Chummer
                         if (await objSkill.Specializations.AllAsync(async x => await x.GetNameAsync(token).ConfigureAwait(false) != strSpec, token)
                                 .ConfigureAwait(false))
                         {
-                            SkillSpecialization objSpec = new SkillSpecialization(this, strSpec);
+                            SkillSpecialization objSpec = new SkillSpecialization(this, objSkill, strSpec, false, false);
                             try
                             {
                                 token.ThrowIfCancellationRequested();
@@ -16455,7 +16455,8 @@ namespace Chummer
                     if (sbdFilter.Length != 0)
                     {
                         sbdFilter.Length -= 5;
-                        strXPath = sbdFilter.Insert(0, "/chummer/grades/grade[(").Append(")]").ToString();
+                        // StringBuilder.Insert can be slow because of in-place replaces, so use concat instead
+                        strXPath = string.Concat("/chummer/grades/grade[(", sbdFilter.Append(")]").ToString());
                     }
                     else
                         strXPath = "/chummer/grades/grade";
@@ -16533,7 +16534,8 @@ namespace Chummer
                     if (sbdFilter.Length != 0)
                     {
                         sbdFilter.Length -= 5;
-                        strXPath = sbdFilter.Insert(0, "/chummer/grades/grade[(").Append(")]").ToString();
+                        // StringBuilder.Insert can be slow because of in-place replaces, so use concat instead
+                        strXPath = string.Concat("/chummer/grades/grade[(", sbdFilter.Append(")]").ToString());
                     }
                     else
                         strXPath = "/chummer/grades/grade";
@@ -16608,7 +16610,8 @@ namespace Chummer
                     if (sbdFilter.Length != 0)
                     {
                         sbdFilter.Length -= 5;
-                        strXPath = sbdFilter.Insert(0, "/chummer/grades/grade[(").Append(")]").ToString();
+                        // StringBuilder.Insert can be slow because of in-place replaces, so use concat instead
+                        strXPath = string.Concat("/chummer/grades/grade[(", sbdFilter.Append(")]").ToString());
                     }
                     else
                         strXPath = "/chummer/grades/grade";
@@ -21925,7 +21928,7 @@ namespace Chummer
             try
             {
                 token.ThrowIfCancellationRequested();
-                Interlocked.Add(ref _intBurntStreetCred, _intBurntStreetCred);
+                Interlocked.Add(ref _intBurntStreetCred, value);
                 await OnPropertyChangedAsync(nameof(BurntStreetCred), token).ConfigureAwait(false);
             }
             finally
@@ -45437,6 +45440,29 @@ namespace Chummer
                 ConcurrentStack<string> stkPushText = _dicQualityGroupPushText.Value.GetOrAdd(strQualityGroup, 
                     _ => new ConcurrentStack<string>());
                 stkPushText.Push(strText);
+            }
+        }
+
+        /// <summary>
+        /// Push a value for a specific quality group that will be used instead of dialog in next <selecttext />
+        /// </summary>
+        public async Task PushTextForQualityGroupAsync(string strQualityGroup, string strText, CancellationToken token = default)
+        {
+            token.ThrowIfCancellationRequested();
+            if (string.IsNullOrEmpty(strQualityGroup) || string.IsNullOrEmpty(strText))
+                return;
+
+            IAsyncDisposable objLocker = await LockObject.EnterReadLockAsync(token).ConfigureAwait(false);
+            try
+            {
+                token.ThrowIfCancellationRequested();
+                ConcurrentStack<string> stkPushText = _dicQualityGroupPushText.Value.GetOrAdd(strQualityGroup,
+                    _ => new ConcurrentStack<string>());
+                stkPushText.Push(strText);
+            }
+            finally
+            {
+                await objLocker.DisposeAsync().ConfigureAwait(false);
             }
         }
 

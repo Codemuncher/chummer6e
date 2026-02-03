@@ -81,6 +81,7 @@ namespace Chummer
             _guiID = Guid.NewGuid();
             _objCharacter = objCharacter ?? throw new ArgumentNullException(nameof(objCharacter));
             LockObject = objCharacter.LockObject;
+            _setDescriptors = Utils.StringHashSetPool.Get();
         }
 
         /// <summary>
@@ -1510,7 +1511,7 @@ namespace Chummer
 
                             if (BarehandedAdept && !blnForce)
                             {
-                                sbdReturn.Insert(0, "2*(", ')');
+                                sbdReturn.Insert(0, "2*(").Append(')');
                             }
 
                             _objCharacter.ProcessAttributesInXPath(sbdReturn);
@@ -1616,7 +1617,7 @@ namespace Chummer
 
                         if (BarehandedAdept && !blnForce)
                         {
-                            sbdReturn.Insert(0, "2*(", ')');
+                            sbdReturn.Insert(0, "2*(").Append(')');
                         }
 
                         await _objCharacter.ProcessAttributesInXPathAsync(sbdReturn, token: token).ConfigureAwait(false);
@@ -2207,7 +2208,7 @@ namespace Chummer
                             return null;
                         objCategoryNode.TryGetStringFieldQuickly("@useskill", ref strSkillKey);
                         strSkillKey =
-                            RelevantImprovements(o => o.ImproveType == Improvement.ImprovementType.ReplaceSkillSpell)
+                            RelevantImprovements(o => o.ImproveType == Improvement.ImprovementType.ReplaceSkillSpell, true)
                                 .FirstOrDefault()?.Target ?? strSkillKey;
                         if (Alchemical)
                         {
@@ -2249,7 +2250,7 @@ namespace Chummer
                         return null;
                     objCategoryNode.TryGetStringFieldQuickly("@useskill", ref strSkillKey);
                     strSkillKey =
-                        (await RelevantImprovementsAsync(o => o.ImproveType == Improvement.ImprovementType.ReplaceSkillSpell, token: token).ConfigureAwait(false))
+                        (await RelevantImprovementsAsync(o => o.ImproveType == Improvement.ImprovementType.ReplaceSkillSpell, true, token: token).ConfigureAwait(false))
                             .FirstOrDefault()?.Target ?? strSkillKey;
                     if (Alchemical)
                     {
@@ -2477,7 +2478,7 @@ namespace Chummer
 
         private XPathNavigator _objCachedMyXPathNode;
         private string _strCachedXPathNodeLanguage = string.Empty;
-        private HashSet<string> _setDescriptors = Utils.StringHashSetPool.Get();
+        private HashSet<string> _setDescriptors;
 
         public async Task<XPathNavigator> GetNodeXPathCoreAsync(bool blnSync, string strLanguage, CancellationToken token = default)
         {

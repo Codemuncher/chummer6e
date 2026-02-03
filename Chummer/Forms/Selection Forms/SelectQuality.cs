@@ -667,8 +667,15 @@ namespace Chummer
                 {
                     if (_blnXPathMode)
                     {
-                        // In XPath mode, use the query directly
-                        sbdFilter.Append(" and (", strSearch, ')');
+                        // In XPath mode, validate to avoid exceptions on invalid expressions.
+                        if (IsXPathExpressionValid(strSearch, token))
+                        {
+                            sbdFilter.Append(" and (", strSearch, ')');
+                        }
+                        else
+                        {
+                            sbdFilter.Append(" and false()");
+                        }
                     }
                     else
                     {
@@ -678,7 +685,8 @@ namespace Chummer
                 }
 
                 if (sbdFilter.Length > 0)
-                    strFilter = sbdFilter.Insert(0, '[').Append(']').ToString();
+                    // StringBuilder.Insert can be slow because of in-place replaces, so use concat instead
+                    strFilter = string.Concat("[", sbdFilter.Append(']').ToString());
             }
 
             string strCategoryLower = strCategory == "Show All" ? "*" : strCategory.ToLowerInvariant();
@@ -823,6 +831,22 @@ namespace Chummer
                     x.ValueMember = string.Empty;
                 }
             }, token: token);
+        }
+
+        private static bool IsXPathExpressionValid(string strXPathExpression, CancellationToken token = default)
+        {
+            token.ThrowIfCancellationRequested();
+            if (string.IsNullOrWhiteSpace(strXPathExpression))
+                return true;
+            try
+            {
+                XPathExpression.Compile(strXPathExpression);
+                return true;
+            }
+            catch (Exception ex) when (ex is ArgumentException || ex is XPathException || ex is FormatException)
+            {
+                return false;
+            }
         }
         #endregion Methods
     }

@@ -336,7 +336,8 @@ namespace Chummer
                         if (sbdCategoryFilter.Length > 0)
                         {
                             sbdCategoryFilter.Length -= 4;
-                            strFilter = sbdCategoryFilter.Insert(0, strFilter, " and (", ')').ToString();
+                            // StringBuilder.Insert can be slow because of in-place replaces, so use concat instead
+                            strFilter = string.Concat(strFilter, " and (", sbdCategoryFilter.Append(')').ToString());
                         }
                     }
                 }
@@ -362,7 +363,8 @@ namespace Chummer
                 }
 
                 if (sbdFilter.Length > 0)
-                    strFilter = sbdFilter.Insert(0, '[').Append(']').ToString();
+                    // StringBuilder.Insert can be slow because of in-place replaces, so use concat instead
+                    strFilter = string.Concat("[", sbdFilter.Append(']').ToString());
             }
 
             // Retrieve the list of Mods for the selected Category.
@@ -712,7 +714,7 @@ namespace Chummer
                                                    .ConfigureAwait(false);
 
                     // Slots (part 2, if we do need a rating)
-                    if (strSlots.StartsWith("FixedValues(", StringComparison.Ordinal))
+                    if (strSlots.StartsWith("FixedValues(", StringComparison.Ordinal) || strSlots.Contains("Rating", StringComparison.OrdinalIgnoreCase))
                     {
                         intExtraSlots = (await ProcessInvariantXPathExpression(strSlots, intRating, token: token).ConfigureAwait(false)).Item1.StandardRound();
                         string strInnerText = intExtraSlots.ToString(GlobalSettings.CultureInfo);

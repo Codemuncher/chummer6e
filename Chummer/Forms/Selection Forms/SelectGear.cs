@@ -1277,7 +1277,8 @@ namespace Chummer
                 }
 
                 if (sbdFilter.Length > 0)
-                    strFilter = sbdFilter.Insert(0, '[').Append(']').ToString();
+                    // StringBuilder.Insert can be slow because of in-place replaces, so use concat instead
+                    strFilter = string.Concat("[", sbdFilter.Append(']').ToString());
             }
 
             int intOverLimit = 0;
@@ -1323,7 +1324,7 @@ namespace Chummer
                         continue;
                     }
 
-                    if (!await objXmlGear.RequirementsMetAsync(_objCharacter, token: token).ConfigureAwait(false))
+                    if (!await objXmlGear.RequirementsMetAsync(_objCharacter, _objGearParent, token: token).ConfigureAwait(false))
                         continue;
 
                     if (!blnDoUIUpdate)
