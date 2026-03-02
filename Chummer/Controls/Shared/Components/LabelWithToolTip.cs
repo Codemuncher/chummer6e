@@ -58,18 +58,39 @@ namespace Chummer
                 : Task.CompletedTask;
         }
 
+
         // ReSharper disable once MemberCanBePrivate.Global
         public LabelWithToolTip(int intToolTipWrap = -1) : base()
         {
             _intToolTipWrap = intToolTipWrap;
-            _frmParent = FindForm();
-            _objToolTip = ToolTipFactory.GetToolTipForForm(_frmParent);
+            // Do not attempt to find the parent form or obtain the ToolTip here - the control
+            // may not yet be parented or have a handle. Defer initialization until the
+            // handle is created or the parent changes.
+            _frmParent = null;
+            _objToolTip = null;
+        }
+
+        // Parameterless ctor required for WinForms designer
+        // Keep minimal work here to avoid design-time side-effects.
+        public LabelWithToolTip() : this(-1)
+        {
+        }
+
+        protected override void OnHandleCreated(EventArgs e)
+        {
+            base.OnHandleCreated(e);
+            // Ensure the ToolTip is initialized when the control's handle is ready.
+            UpdateToolTipParent();
         }
 
         private Form _frmParent;
 
         public void UpdateToolTipParent()
         {
+            // Avoid runtime-only initialization during design-time.
+            if (System.ComponentModel.LicenseManager.UsageMode == System.ComponentModel.LicenseUsageMode.Designtime)
+                return;
+
             if (Interlocked.Exchange(ref _frmParent, FindForm()) != _frmParent)
             {
                 ToolTip objOldToolTip = Interlocked.Exchange(ref _objToolTip, ToolTipFactory.GetToolTipForForm(_frmParent));
